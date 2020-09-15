@@ -1378,7 +1378,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				EnterShortStopMarket(amount_short, BOLevel[0] - TicksToBO * TickSize, @"entryOrder");
 				stop_price_short = (BOLevel[0] - TicksToBO * TickSize) + current_stop; //calculates the stop price level
 				trigger_price_short = (BOLevel[0] - TicksToBO * TickSize) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
-				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, Time[0]));
+				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, T
 				return false;
 			}
 			else
