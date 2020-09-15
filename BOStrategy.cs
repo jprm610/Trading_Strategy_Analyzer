@@ -1374,11 +1374,19 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (OrderType == "PendingOrder")
 			{
+<<<<<<< HEAD
 				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BOLevel[0] - TicksToBO * TickSize, @"entryOrder");
 				stop_price_short = (BOLevel[0] - TicksToBO * TickSize) + current_stop; //calculates the stop price level
 				trigger_price_short = (BOLevel[0] - TicksToBO * TickSize) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
 				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, Time[0]));
+=======
+				AmountShort = Convert.ToInt32((RiskUnit / ((CurrentStop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
+				EnterShortStopMarket(AmountShort, BOLevel[0] - TicksToBO * TickSize, @"entryOrder");							
+				StopPriceShort = (BOLevel[0] - TicksToBO * TickSize) + CurrentStop; //calculates the stop price level
+				TriggerPriceShort = (BOLevel[0] - TicksToBO * TickSize) - CurrentStop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
+ 				Print (String.Format("{0} // {1} // {2} // {3}", AmountShort, BOLevel[0], StopPriceShort, Time[0]));
+>>>>>>> 3f216bdb933e7d2c5a596632ea256997c92954cb
 				return false;
 			}
 			else
