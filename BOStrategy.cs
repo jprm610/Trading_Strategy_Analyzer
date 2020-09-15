@@ -1157,50 +1157,50 @@ namespace NinjaTrader.NinjaScript.Strategies
         #region Properties
         [NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "SMA1", Order = 1, GroupName = "Parameters")]
+		[Display(Name = "SMA1 (Max)", Order = 1, GroupName = "Parameters")]
 		public int SMA1
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "SMA2", Order = 2, GroupName = "Parameters")]
+		[Display(Name = "SMA2 (Mid)", Order = 2, GroupName = "Parameters")]
 		public int SMA2
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "SMA3", Order = 3, GroupName = "Parameters")]
+		[Display(Name = "SMA3 (Min)", Order = 3, GroupName = "Parameters")]
 		public int SMA3
 		{ get; set; }
 
 		[NinjaScriptProperty]
-		[Range(0, int.MaxValue)]
-		[Display(Name = "UnitsTriggerForTrailing", Order = 4, GroupName = "Parameters")]
-		public double UnitsTriggerForTrailing
-		{ get; set; }
-
-		[NinjaScriptProperty]
-		[Range(0, int.MaxValue)]
-		[Display(Name = "TrailingUnitsStop", Order = 5, GroupName = "Parameters")]
-		public double TrailingUnitsStop
-		{ get; set; }
-
-		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "ATR1", Order = 6, GroupName = "Parameters")]
+		[Display(Name = "ATR1", Order = 4, GroupName = "Parameters")]
 		public int ATR1
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "Swing1", Order = 7, GroupName = "Parameters")]
+		[Display(Name = "Swing1", Order = 5, GroupName = "Parameters")]
 		public int Swing1
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "Swing2", Order = 8, GroupName = "Parameters")]
+		[Display(Name = "Swing2", Order = 6, GroupName = "Parameters")]
 		public int Swing2
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "TrailingUnitsStop", Order = 7, GroupName = "Parameters")]
+		public double TrailingUnitsStop
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "UnitsTriggerForTrailing", Order = 8, GroupName = "Parameters")]
+		public double UnitsTriggerForTrailing
 		{ get; set; }
 
 		[NinjaScriptProperty]
