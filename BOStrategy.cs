@@ -447,15 +447,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 				gray_ellipse_short = false; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_short = false;
 			}
-			#endregion
-			#endregion
+            #endregion
+            #endregion
 
-			#region Trade_Identification
-			////		TRADE IDENTIFICATION			
-			////		Red Trade Type Process
-			#region Long
-			///Long			 
-			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+            #region Trade_Identification
+            #region Red_Trade
+            ////		TRADE IDENTIFICATION			
+            ////		Red Trade Type Process
+            #region Long
+            ///Long			 
+            if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -676,15 +677,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				#endregion
 			}
-			#endregion
-			#endregion
+            #endregion
+            #endregion
+            #endregion
 
-			#region Trade_Management
-			////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
-			///Stop Updating Process (by both trailing and SMA)
-			#region Long
-			///While Long	
-			if (Position.MarketPosition == MarketPosition.Long && !is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+            #region Trade_Management
+            ////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
+            ///Stop Updating Process (by both trailing and SMA)
+            #region Long
+            ///While Long	
+            if (Position.MarketPosition == MarketPosition.Long && !is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				is_long = true;
 				is_short = false;
