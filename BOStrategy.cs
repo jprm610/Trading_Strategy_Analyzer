@@ -178,7 +178,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
-		////	OnBarUpdate Method
 		protected override void OnBarUpdate()
 		{
 			#region Chart_Initialization
@@ -321,10 +320,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Print(string.Format("The SMAs have been sorted as follow: iSMA1: {0} // iSMA2: {1} // iSMA3: {2}", SMAv[0], SMAv[1], SMAv[2]));
 			}
 
-			#endregion
+            #endregion
 
-			////		SMA 50-200 Distance Method Calling 	
-			SMA_dis = SMADifferenceABS(iSMA1[0], iSMA2[0]); //Calculates the Distance Between the SMA 50-200			
+            #region Overall_Market_Movement
+            ////		SMA 50-200 Distance Method Calling 	
+            SMA_dis = Math.Abs(iSMA1[0] - iSMA2[0]); ; //Calculates the Distance Between the SMA 50-200			
 
 			////		Identifying the overall market  movement type Process and saving the ATR value at that time (SMA 50-200 Crossing Event) (if the SMA 50 is above the SMA 200 then there is an upward overall movement type, if the SMA 50 is below the SMA 200 then there is an downward overall movement type)	
 			///Above
@@ -344,10 +344,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 				is_upward = false; //Opposing movement Flag Lowering
 				cross_below_bar = CurrentBar; //Saves the bar number at the crossing time
 			}
+            #endregion
 
-			////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
-			///UpWard			
-			if (is_upward && SMA_dis >= IncipientTrandFactor * ATR_crossing_value && ATR_crossing_value != 0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
+            #region Incipient_Trend_Identification
+            ////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
+            ///UpWard			
+            if (is_upward && SMA_dis >= IncipientTrandFactor * ATR_crossing_value && ATR_crossing_value != 0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
 			{
 				is_incipient_up_trend = true; //is_incipient_up_trend turning on
 				is_incipient_down_trend = false; //is_incipient_down_trend turning off
@@ -361,22 +363,27 @@ namespace NinjaTrader.NinjaScript.Strategies
 				is_incipient_up_trend = false; //is_incipient_up_trend turning off
 				gray_ellipse_long = false; //gray_ellipse_long Flag Lowering
 			}
+            #endregion
 
-			////		GrayEllipse turn on/off inside an incipient trend (SMA 20-50 Crossing Event) (GrayEllipse: An SMAs 20-50 crossing event in the opposite direction of the overall market movement)
-			///Long			
-
-			if (CrossBelow(iSMA3, iSMA2, 1))
+            #region Gray_Ellipse
+            ////		GrayEllipse turn on/off inside an incipient trend (SMA 20-50 Crossing Event) (GrayEllipse: An SMAs 20-50 crossing event in the opposite direction of the overall market movement)
+            #region Long
+            ///Long
+            if (CrossBelow(iSMA3, iSMA2, 1))
 			{
 				cross_below_20_to_50 = true;
 			}
+
 			if (is_incipient_up_trend && cross_below_20_to_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
 			{
 				gray_ellipse_long = true; //gray_ellipse_long Flag turning on
+
 				int ArrayListSize = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize >= 240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
 					ArrayListSize = 240;
 				}
+
 				swingHigh14_max = iSwing14.SwingHigh[0]; //initializing the variable that is going to keep the reference high, with the array firts value for comparison purposes
 				for (int i = 0; i <= ArrayListSize; i++) //Loop that walk the array 
 				{
@@ -385,6 +392,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						swingHigh14_max = iSwing14.SwingHigh[i]; //And saves that value in this variable
 					}
 				}
+
 				cross_below_20_to_50 = false;
 			}
 			else if (iSwing14.SwingHigh[0] > swingHigh14_max && gray_ellipse_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
@@ -392,25 +400,31 @@ namespace NinjaTrader.NinjaScript.Strategies
 				swingHigh14_max_reentry = iSwing14.SwingHigh[0]; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_long = true;
 			}
+
 			if (High[0] > swingHigh14_max_reentry && is_reentry_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
 			{
 				gray_ellipse_long = false; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_long = false;
 			}
+            #endregion
 
-			///Short
-			if (CrossAbove(iSMA3, iSMA2, 1))
+            #region Short
+            ///Short
+            if (CrossAbove(iSMA3, iSMA2, 1))
 			{
 				cross_above_20_to_50 = true;
 			}
+
 			if (is_incipient_down_trend && cross_above_20_to_50/* && !gray_ellipse_short*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
 			{
 				gray_ellipse_short = true; //gray_ellipse_long Flag turning on
+
 				int ArrayListSize = CurrentBar - cross_below_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize >= 240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
 					ArrayListSize = 240;
 				}
+
 				swingLow14_min = iSwing14.SwingLow[0]; //initializing the variable that is going to keep the reference low, with the array firts value for comparison purposes
 				for (int i = 0; i <= ArrayListSize; i++) //Loop that walk the array
 				{
@@ -419,6 +433,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						swingLow14_min = iSwing14.SwingLow[i]; //And saves that value in this variable
 					}
 				}
+
 				cross_above_20_to_50 = false;
 			}
 			else if (iSwing14.SwingLow[0] < swingLow14_min && gray_ellipse_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
@@ -426,16 +441,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 				swingLow14_min_reentry = iSwing14.SwingLow[0]; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_short = true;
 			}
+
 			if (Low[0] < swingLow14_min_reentry && is_reentry_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
 			{
 				gray_ellipse_short = false; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_short = false;
 			}
+            #endregion
+            #endregion
 
-			////		TRADE IDENTIFICATION			
-			////		Red Trade Type Process			
-			///Long			 
-			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+            #region Trade_Identification
+            ////		TRADE IDENTIFICATION			
+            ////		Red Trade Type Process
+            #region Long
+            ///Long			 
+            if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -457,9 +477,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 					is_BO_up_swing14 = ReturnedValues.Item3;
 				}
 			}
+            #endregion
 
-			///Short		 
-			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+            #region Short
+            ///Short		 
+            else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
@@ -481,10 +503,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 					is_BO_down_swing14 = ReturnedValues.Item3;
 				}
 			}
+            #endregion
+            #endregion
 
-			////		TRADITIONAL RED Trade Type Process			
-			///Long			 
-			if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+            #region Traditional_Red
+            ////		TRADITIONAL RED Trade Type Process	
+            #region Long
+            ///Long			 
+            if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -506,9 +532,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 					is_BO_up_swing14 = ReturnedValues.Item3;
 				}
 			}
+            #endregion
 
-			///Short		 
-			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+            #region Short
+            ///Short		 
+            if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
@@ -530,13 +558,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 					is_BO_down_swing14 = ReturnedValues.Item3;
 				}
 			}
+            #endregion
+            #endregion
 
-			////		Traditional Trade Type Process
-			///Long
-			if (is_incipient_up_trend && gray_ellipse_long && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an is_incipient_up_trend, a gray_ellipse_long and there is no active position then...
+            #region Traditional
+            ////		Traditional Trade Type Process
+            #region Long
+            ///Long
+            if (is_incipient_up_trend && gray_ellipse_long && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an is_incipient_up_trend, a gray_ellipse_long and there is no active position then...
 			{
-				///Normal traditional
-				if (is_upward)
+                #region Normal_Traditional
+                ///Normal traditional
+                if (is_upward)
 				{
 					///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 					bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -558,9 +591,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 						is_BO_up_swing14 = ReturnedValues.Item3;
 					}
 				}
-				///Modified traditional
-				else
-				{
+                #endregion
+
+                #region Modified_Traditional
+                ///Modified traditional
+                else
+                {
 					///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4			
 					bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
 					bool isActiveLongPosition = false;
@@ -582,13 +618,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 						is_BO_up_swing14 = ReturnedValues.Item3;
 					}
 				}
-			}
+                #endregion
+            }
+            #endregion
 
-			///Short	
-			else if (is_incipient_down_trend && gray_ellipse_short && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an is_incipient_down_trend, a gray_ellipse_short and there is no active position then...
+            #region Short
+            ///Short	
+            else if (is_incipient_down_trend && gray_ellipse_short && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an is_incipient_down_trend, a gray_ellipse_short and there is no active position then...
 			{
-				///Normal traditional
-				if (is_downward)
+                #region Normal_Traditional
+                ///Normal traditional
+                if (is_downward)
 				{
 					///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4		
 					bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
@@ -609,9 +649,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 						is_BO_down_swing14 = ReturnedValues.Item3;
 					}
 				}
-				///Modified traditional
-				else
-				{
+                #endregion
+
+                #region Modified_Traditional
+                ///Modified traditional
+                else
+                {
 					///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 					bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
 					bool isActiveShortPosition = false;
@@ -631,12 +674,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 						is_BO_down_swing14 = ReturnedValues.Item3;
 					}
 				}
-			}
+                #endregion
+            }
+            #endregion
+            #endregion
 
-			////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
-			///Stop Updating Process (by both trailing and SMA)
-			///While Long	
-			if (Position.MarketPosition == MarketPosition.Long && !is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+            #region Trade_Management
+            ////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
+            ///Stop Updating Process (by both trailing and SMA)
+			#region Long
+            ///While Long	
+            if (Position.MarketPosition == MarketPosition.Long && !is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				is_long = true;
 				is_short = false;
@@ -871,9 +919,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
+            #endregion
 
-			///While Short	
-			if (Position.MarketPosition == MarketPosition.Short && !is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+            #region Short
+            ///While Short	
+            if (Position.MarketPosition == MarketPosition.Short && !is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				is_long = false;
 				is_short = true;
@@ -1100,10 +1150,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
-		}
+            #endregion
+            #endregion
+        }
 
-		#region Properties
-		[NinjaScriptProperty]
+        #region Properties
+        [NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name = "SMA1", Order = 1, GroupName = "Parameters")]
 		public int SMA1
@@ -1198,17 +1250,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Display(Name = "MagicNumber(Percent (%) of ATR)", Order = 16, GroupName = "Parameters")]
 		public double MagicNumber
 		{ get; set; }
-		#endregion
+        #endregion
 
-		////	METHODS			
-		////	SMA 50-200 Distance Calculate Method		
-		public double SMADifferenceABS(double SMAa, double SMAb) //Valor absoluto de la diferencia entre SMAs
-		{
-			return Math.Abs(SMAa - SMAb);
-		}
+        #region Functions
+        ////	METHODS			
 
-		////	Swing Identification Method				
-		public bool SwingIdentifiacation(ISeries<double> BarClose, ISeries<double> OppositeSwing, int ReferenceSwingBar, bool isPotentialSwing, string SwingType)
+        ////	Swing Identification Method				
+        public bool SwingIdentifiacation(ISeries<double> BarClose, ISeries<double> OppositeSwing, int ReferenceSwingBar, bool isPotentialSwing, string SwingType)
 		{
 			if (SwingType == "SwingHigh")
 			{
@@ -2199,5 +2247,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			return new Tuple<bool, bool>(isBO, isActiveLongPosition);
 		}
-	}
+        #endregion
+    }
 }
