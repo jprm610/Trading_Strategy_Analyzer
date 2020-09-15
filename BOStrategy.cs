@@ -26,22 +26,22 @@ using NinjaTrader.NinjaScript.DrawingTools;
 //This namespace holds Strategies in this folder and is required. Do not change it. 
 namespace NinjaTrader.NinjaScript.Strategies
 {
-	public class BOStrategyV93 : Strategy
+	public class BOStrategy : Strategy
 	{
 		#region Variables
-		private SMA iSMA200, iSMA50, iSMA20;
+		private SMA iSMA1, iSMA2, iSMA3;
 		private ATR iATR;
 		private Swing iSwing4, iSwing14;
 		private ArrayList LastSwingHigh14Cache, LastSwingLow14Cache;
-		private int CrossAboveBar, CrossBelowBar, AmountLong, FixAmountLong, AmountShort, FixAmountShort;
-		private double ATRCrossingTime, SMAdif, StopPriceLong, TriggerPriceLong, StopPriceShort, TriggerPriceShort, SwingHigh14max, SwingLow14min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
-		private double LastMaxHighSwingHigh4, LastMaxHighSwingHigh14, LastMinLowSwingLow4, LastMinLowSwingLow14;
-		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, SwingHigh14maxReentry, SwingLow14minReentry, MaxHighSwingHigh4, MaxHighSwingHigh14, MinLowSwingLow4, MinLowSwingLow14;
-		private double CurrentSwingHigh14, CurrentSwingLow14, CurrentSwingHigh4, CurrentSwingLow4, CurrentATR, CurrentStop, CurrentOpen, CurrentClose, CurrentHigh, CurrentLow, FixStopPriceLong, FixTriggerPriceLong, FixStopPriceShort, FixTriggerPriceShort;
-		private bool isIncipientUpTrend, isIncipientDownTrend, IsUpWard = true, IsDownWard = true, GrayEllipseLong, GrayEllipseShort, isReentryLong, isReentryShort, isLong, isShort, isBO, isBOUpSwing4, isBOUpSwing14, isBODownSwing4, isBODownSwing14;
-		private bool CrossBelow20_50, CrossAbove20_50;
+		private int cross_above_bar, cross_below_bar, amount_long, fix_amount_long, amount_short, fix_amount_short;
+		private double ATR_crossing_value, SMA_dis, stop_price_long, trigger_price_long, stop_price_short, trigger_price_short, swingHigh14_max, swingLow14_min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
+		private double last_max_high_swingHigh4, last_max_high_swingHigh14, last_min_low_swingLow4, last_min_low_swingLow14;
+		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, swingHigh14_max_reentry, swingLow14_min_reentry, max_high_swingHigh4, max_high_swingHigh14, min_low_swingLow4, min_low_swingLow14;
+		private double current_swingHigh14, current_swingLow14, current_swingHigh4, current_swingLow4, current_ATR, current_stop, CurrentOpen, CurrentClose, CurrentHigh, CurrentLow, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
+		private bool is_incipient_up_trend, is_incipient_down_trend, is_upward = true, is_downward = true, gray_ellipse_long, gray_ellipse_short, is_reentry_long, is_reentry_short, is_long, is_short, isBO, is_BO_up_swing4, is_BO_up_swing14, is_BO_down_swing4, is_BO_down_swing14;
+		private bool cross_below_20_to_50, cross_above_20_to_50;
 		private Account myAccount;
-		private Order myEntryOrder = null, myEntryMarket = null, myExitOrder = null;
+		private Order my_entry_order = null, my_entry_market = null, my_exit_order = null;
 		#endregion
 
 		protected override void OnStateChange()
@@ -49,7 +49,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			if (State == State.SetDefaults)
 			{
 				Description = @"Strategy that Operates Breakouts";
-				Name = "BOStrategyV93";
+				Name = "BOStrategy";
 				Calculate = Calculate.OnBarClose;
 				EntriesPerDirection = 1;
 				EntryHandling = EntryHandling.AllEntries;
@@ -91,23 +91,23 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (State == State.DataLoaded)
 			{
-				iSMA200 = SMA(Close, SMA1);
-				iSMA50 = SMA(Close, SMA2);
-				iSMA20 = SMA(Close, SMA3);
+				iSMA1 = SMA(Close, SMA1);
+				iSMA2 = SMA(Close, SMA2);
+				iSMA3 = SMA(Close, SMA3);
 				iATR = ATR(Close, ATR1);
 				iSwing4 = Swing(Close, Swing1);
 				iSwing14 = Swing(Close, Swing2);
-				iSMA200.Plots[0].Brush = Brushes.Red;
-				iSMA50.Plots[0].Brush = Brushes.Gold;
-				iSMA20.Plots[0].Brush = Brushes.Lime;
+				iSMA1.Plots[0].Brush = Brushes.Red;
+				iSMA2.Plots[0].Brush = Brushes.Gold;
+				iSMA3.Plots[0].Brush = Brushes.Lime;
 				iATR.Plots[0].Brush = Brushes.White;
 				iSwing4.Plots[0].Brush = Brushes.Fuchsia;
 				iSwing4.Plots[1].Brush = Brushes.Gold;
 				iSwing14.Plots[0].Brush = Brushes.Silver;
 				iSwing14.Plots[1].Brush = Brushes.Silver;
-				AddChartIndicator(iSMA200);
-				AddChartIndicator(iSMA50);
-				AddChartIndicator(iSMA20);
+				AddChartIndicator(iSMA1);
+				AddChartIndicator(iSMA2);
+				AddChartIndicator(iSMA3);
 				AddChartIndicator(iATR);
 				AddChartIndicator(iSwing4);
 				AddChartIndicator(iSwing14);
@@ -123,49 +123,49 @@ namespace NinjaTrader.NinjaScript.Strategies
 			// This is more reliable than assigning Order objects in OnBarUpdate, as the assignment is not gauranteed to be complete if it is referenced immediately after submitting
 			if (order.Name == "entryOrder")
 			{
-				myEntryOrder = order;
+				my_entry_order = order;
 			}
 			if (order.Name == "entryMarket")
 			{
-				myEntryMarket = order;
+				my_entry_market = order;
 			}
 			if (order.Name == "exit")
 			{
-				myExitOrder = order;
+				my_exit_order = order;
 			}
 		}
 
 		protected override void OnExecutionUpdate(Execution execution, string executionId, double price, int quantity, MarketPosition marketPosition, string orderId, DateTime time)
 		{
 			// Reset our stop order and target orders' Order objects after our position is closed. (1st Entry)
-			if (myExitOrder != null)
+			if (my_exit_order != null)
 			{
-				if (myExitOrder == execution.Order)
+				if (my_exit_order == execution.Order)
 				{
 					if (execution.Order.OrderState == OrderState.Filled || execution.Order.OrderState == OrderState.PartFilled)
 					{
-						if (myEntryOrder != null)
+						if (my_entry_order != null)
 						{
-							myEntryOrder.OrderState = OrderState.Cancelled;
+							my_entry_order.OrderState = OrderState.Cancelled;
 						}
-						if (myEntryMarket != null)
+						if (my_entry_market != null)
 						{
-							myEntryMarket.OrderState = OrderState.Cancelled;
+							my_entry_market.OrderState = OrderState.Cancelled;
 						}
 					}
 				}
 			}
-			if (myEntryMarket != null)
+			if (my_entry_market != null)
 			{
-				if (myEntryMarket == execution.Order)
+				if (my_entry_market == execution.Order)
 				{
 					if (execution.Order.OrderState == OrderState.Filled || execution.Order.OrderState == OrderState.PartFilled)
 					{
-						if (myEntryOrder != null)
+						if (my_entry_order != null)
 						{
-							if (myEntryOrder.OrderState == OrderState.Filled)
+							if (my_entry_order.OrderState == OrderState.Filled)
 							{
-								myEntryOrder.OrderState = OrderState.Cancelled;
+								my_entry_order.OrderState = OrderState.Cancelled;
 							}
 						}
 					}
@@ -176,17 +176,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	OnBarUpdate Method
 		protected override void OnBarUpdate()
 		{
-			//			if (myEntryOrder != null)
+			//			if (my_entry_order != null)
 			//			{
-			//				Print (String.Format("{0} // {1} // {2}", myEntryOrder, myEntryOrder.Quantity, Time[0]));
+			//				Print (String.Format("{0} // {1} // {2}", my_entry_order, my_entry_order.Quantity, Time[0]));
 			//			}
-			//			if (myEntryMarket != null)
+			//			if (my_entry_market != null)
 			//			{
-			//				Print (String.Format("{0} // {1} // {2}", myEntryMarket, myEntryMarket.Quantity, Time[0]));
+			//				Print (String.Format("{0} // {1} // {2}", my_entry_market, my_entry_market.Quantity, Time[0]));
 			//			}
-			//			if (myExitOrder != null)
+			//			if (my_exit_order != null)
 			//			{
-			//				Print (String.Format("{0} // {1} // {2}", myExitOrder, myExitOrder.Quantity, Time[0]));
+			//				Print (String.Format("{0} // {1} // {2}", my_exit_order, my_exit_order.Quantity, Time[0]));
 			//			}
 
 			////		Properly stop setting confirmation			
@@ -206,289 +206,289 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return;
 			}
 
-			LastMaxHighSwingHigh4 = MaxHighSwingHigh4;
-			LastMaxHighSwingHigh14 = MaxHighSwingHigh14;
-			LastMinLowSwingLow4 = MinLowSwingLow4;
-			LastMinLowSwingLow14 = MinLowSwingLow14;
+			last_max_high_swingHigh4 = max_high_swingHigh4;
+			last_max_high_swingHigh14 = max_high_swingHigh14;
+			last_min_low_swingLow4 = min_low_swingLow4;
+			last_min_low_swingLow14 = min_low_swingLow14;
 
 			////		Reset isBO variable once a new swing comes up	
-			if (CurrentSwingHigh4 != iSwing4.SwingHigh[0])
+			if (current_swingHigh4 != iSwing4.SwingHigh[0])
 			{
-				isBOUpSwing4 = false;
+				is_BO_up_swing4 = false;
 			}
-			if (CurrentSwingHigh14 != iSwing14.SwingHigh[0])
+			if (current_swingHigh14 != iSwing14.SwingHigh[0])
 			{
-				isBOUpSwing14 = false;
+				is_BO_up_swing14 = false;
 			}
-			if (CurrentSwingLow4 != iSwing4.SwingLow[0])
+			if (current_swingLow4 != iSwing4.SwingLow[0])
 			{
-				isBODownSwing4 = false;
+				is_BO_down_swing4 = false;
 			}
-			if (CurrentSwingLow14 != iSwing14.SwingLow[0])
+			if (current_swingLow14 != iSwing14.SwingLow[0])
 			{
-				isBODownSwing14 = false;
+				is_BO_down_swing14 = false;
 			}
 
 			////		Variable setting for recurrent data sources				
-			CurrentSwingHigh4 = iSwing4.SwingHigh[0];
-			CurrentSwingLow4 = iSwing4.SwingLow[0];
-			CurrentSwingHigh14 = iSwing14.SwingHigh[0];
-			CurrentSwingLow14 = iSwing14.SwingLow[0];
-			CurrentATR = iATR[0];
-			CurrentStop = CurrentATR * ATRStopFactor;
+			current_swingHigh4 = iSwing4.SwingHigh[0];
+			current_swingLow4 = iSwing4.SwingLow[0];
+			current_swingHigh14 = iSwing14.SwingHigh[0];
+			current_swingLow14 = iSwing14.SwingLow[0];
+			current_ATR = iATR[0];
+			current_stop = current_ATR * ATRStopFactor;
 			CurrentOpen = Open[0];
 			CurrentClose = Close[0];
 			CurrentHigh = High[0];
 			CurrentLow = Low[0];
 
-			////		isLong, isShort reseting 		
+			////		is_long, is_short reseting 		
 			if (Position.MarketPosition == MarketPosition.Flat) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
-				isLong = false;
-				isShort = false;
+				is_long = false;
+				is_short = false;
 			}
 
 			////		SMA 50-200 Distance Method Calling 	
-			SMAdif = SMADifferenceABS(iSMA200[0], iSMA50[0]); //Calculates the Distance Between the SMA 50-200			
+			SMA_dis = SMADifferenceABS(iSMA1[0], iSMA2[0]); //Calculates the Distance Between the SMA 50-200			
 
 			////		Identifying the overall market  movement type Process and saving the ATR value at that time (SMA 50-200 Crossing Event) (if the SMA 50 is above the SMA 200 then there is an upward overall movement type, if the SMA 50 is below the SMA 200 then there is an downward overall movement type)	
 			///Above
-			if (CrossAbove(iSMA50, iSMA200, 1) && IsDownWard) //Once an SMAs 50-200 crossabove happens and there exists a downward overall movement then...
+			if (CrossAbove(iSMA2, iSMA1, 1) && is_downward) //Once an SMAs 50-200 crossabove happens and there exists a downward overall movement then...
 			{
-				ATRCrossingTime = iATR[0]; //Tomar valor del ATR en el cruce
-				IsUpWard = true; //Defining overall movement type
-				IsDownWard = false; //Opposing movement Flag Lowering
-				CrossAboveBar = CurrentBar; //Saves the bar number at the crossing time
+				ATR_crossing_value = iATR[0]; //Tomar valor del ATR en el cruce
+				is_upward = true; //Defining overall movement type
+				is_downward = false; //Opposing movement Flag Lowering
+				cross_above_bar = CurrentBar; //Saves the bar number at the crossing time
 			}
 
 			///Below
-			else if (CrossBelow(iSMA50, iSMA200, 1) && IsUpWard) //Once an SMAs 50-200 crossbelow happens and there exists an upward overall movement then...
+			else if (CrossBelow(iSMA2, iSMA1, 1) && is_upward) //Once an SMAs 50-200 crossbelow happens and there exists an upward overall movement then...
 			{
-				ATRCrossingTime = iATR[0]; //Tomar valor ATR en el cruce
-				IsDownWard = true; //Defining overall movement type
-				IsUpWard = false; //Opposing movement Flag Lowering
-				CrossBelowBar = CurrentBar; //Saves the bar number at the crossing time
+				ATR_crossing_value = iATR[0]; //Tomar valor ATR en el cruce
+				is_downward = true; //Defining overall movement type
+				is_upward = false; //Opposing movement Flag Lowering
+				cross_below_bar = CurrentBar; //Saves the bar number at the crossing time
 			}
 
 			////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
 			///UpWard			
-			if (IsUpWard && SMAdif >= IncipientTrandFactor * ATRCrossingTime && ATRCrossingTime != 0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
+			if (is_upward && SMA_dis >= IncipientTrandFactor * ATR_crossing_value && ATR_crossing_value != 0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
 			{
-				isIncipientUpTrend = true; //isIncipientUpTrend turning on
-				isIncipientDownTrend = false; //isIncipientDownTrend turning off
-				GrayEllipseShort = false; // GrayEllipseShort Flag Lowering
+				is_incipient_up_trend = true; //is_incipient_up_trend turning on
+				is_incipient_down_trend = false; //is_incipient_down_trend turning off
+				gray_ellipse_short = false; // gray_ellipse_short Flag Lowering
 			}
 
 			///DownWard		
-			else if (IsDownWard && SMAdif >= IncipientTrandFactor * ATRCrossingTime && ATRCrossingTime != 0) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
+			else if (is_downward && SMA_dis >= IncipientTrandFactor * ATR_crossing_value && ATR_crossing_value != 0) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
 			{
-				isIncipientDownTrend = true; //isIncipientDownTrend turning on
-				isIncipientUpTrend = false; //isIncipientUpTrend turning off
-				GrayEllipseLong = false; //GrayEllipseLong Flag Lowering
+				is_incipient_down_trend = true; //is_incipient_down_trend turning on
+				is_incipient_up_trend = false; //is_incipient_up_trend turning off
+				gray_ellipse_long = false; //gray_ellipse_long Flag Lowering
 			}
 
 			////		GrayEllipse turn on/off inside an incipient trend (SMA 20-50 Crossing Event) (GrayEllipse: An SMAs 20-50 crossing event in the opposite direction of the overall market movement)
 			///Long			
 
-			if (CrossBelow(iSMA20, iSMA50, 1))
+			if (CrossBelow(iSMA3, iSMA2, 1))
 			{
-				CrossBelow20_50 = true;
+				cross_below_20_to_50 = true;
 			}
-			if (isIncipientUpTrend && CrossBelow20_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
+			if (is_incipient_up_trend && cross_below_20_to_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
 			{
-				if (isReentryLong)
+				if (is_reentry_long)
 				{
-					isReentryLong = false;
+					is_reentry_long = false;
 				}
-				GrayEllipseLong = true; //GrayEllipseLong Flag turning on
-				int ArrayListSize = CurrentBar - CrossAboveBar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
+				gray_ellipse_long = true; //gray_ellipse_long Flag turning on
+				int ArrayListSize = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize >= 240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
 					ArrayListSize = 240;
 				}
-				SwingHigh14max = iSwing14.SwingHigh[0]; //initializing the variable that is going to keep the reference high, with the array firts value for comparison purposes
+				swingHigh14_max = iSwing14.SwingHigh[0]; //initializing the variable that is going to keep the reference high, with the array firts value for comparison purposes
 				for (int i = 0; i <= ArrayListSize; i++) //Loop that walk the array 
 				{
-					if (iSwing14.SwingHigh[i] > SwingHigh14max && iSwing14.SwingHigh[i] != 0) //To determine the highest value (highest swinghigh 14)
+					if (iSwing14.SwingHigh[i] > swingHigh14_max && iSwing14.SwingHigh[i] != 0) //To determine the highest value (highest swinghigh 14)
 					{
-						SwingHigh14max = iSwing14.SwingHigh[i]; //And saves that value in this variable
+						swingHigh14_max = iSwing14.SwingHigh[i]; //And saves that value in this variable
 					}
 				}
-				CrossBelow20_50 = false;
+				cross_below_20_to_50 = false;
 			}
-			else if (iSwing14.SwingHigh[0] > SwingHigh14max && GrayEllipseLong) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the GrayEllipseLong was originated 
+			else if (iSwing14.SwingHigh[0] > swingHigh14_max && gray_ellipse_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
 			{
-				SwingHigh14maxReentry = iSwing14.SwingHigh[0]; //Then lower the flag of the GrayEllipse in that direction
-				isReentryLong = true;
+				swingHigh14_max_reentry = iSwing14.SwingHigh[0]; //Then lower the flag of the GrayEllipse in that direction
+				is_reentry_long = true;
 			}
-			if (High[0] > SwingHigh14maxReentry && isReentryLong) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the GrayEllipseLong was originated 
+			if (High[0] > swingHigh14_max_reentry && is_reentry_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
 			{
-				GrayEllipseLong = false; //Then lower the flag of the GrayEllipse in that direction
-				isReentryLong = false;
+				gray_ellipse_long = false; //Then lower the flag of the GrayEllipse in that direction
+				is_reentry_long = false;
 			}
 
 			///Short
-			if (CrossAbove(iSMA20, iSMA50, 1))
+			if (CrossAbove(iSMA3, iSMA2, 1))
 			{
-				CrossAbove20_50 = true;
+				cross_above_20_to_50 = true;
 			}
-			if (isIncipientDownTrend && CrossAbove20_50/* && !GrayEllipseShort*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
+			if (is_incipient_down_trend && cross_above_20_to_50/* && !gray_ellipse_short*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
 			{
-				if (isReentryShort)
+				if (is_reentry_short)
 				{
-					isReentryShort = false;
+					is_reentry_short = false;
 				}
-				GrayEllipseShort = true; //GrayEllipseLong Flag turning on
-				int ArrayListSize = CurrentBar - CrossBelowBar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
+				gray_ellipse_short = true; //gray_ellipse_long Flag turning on
+				int ArrayListSize = CurrentBar - cross_below_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize >= 240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
 					ArrayListSize = 240;
 				}
-				SwingLow14min = iSwing14.SwingLow[0]; //initializing the variable that is going to keep the reference low, with the array firts value for comparison purposes
+				swingLow14_min = iSwing14.SwingLow[0]; //initializing the variable that is going to keep the reference low, with the array firts value for comparison purposes
 				for (int i = 0; i <= ArrayListSize; i++) //Loop that walk the array
 				{
-					if (iSwing14.SwingLow[i] < SwingLow14min && iSwing14.SwingLow[i] != 0) //To determine the lowest value (lowest swinglow 14)
+					if (iSwing14.SwingLow[i] < swingLow14_min && iSwing14.SwingLow[i] != 0) //To determine the lowest value (lowest swinglow 14)
 					{
-						SwingLow14min = iSwing14.SwingLow[i]; //And saves that value in this variable
+						swingLow14_min = iSwing14.SwingLow[i]; //And saves that value in this variable
 					}
 				}
-				CrossAbove20_50 = false;
+				cross_above_20_to_50 = false;
 			}
-			else if (iSwing14.SwingLow[0] < SwingLow14min && GrayEllipseShort) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the GrayEllipseShort was originated
+			else if (iSwing14.SwingLow[0] < swingLow14_min && gray_ellipse_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
 			{
-				SwingLow14minReentry = iSwing14.SwingLow[0]; //Then lower the flag of the GrayEllipse in that direction
-				isReentryShort = true;
+				swingLow14_min_reentry = iSwing14.SwingLow[0]; //Then lower the flag of the GrayEllipse in that direction
+				is_reentry_short = true;
 			}
-			if (Low[0] < SwingLow14minReentry && isReentryShort) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the GrayEllipseShort was originated
+			if (Low[0] < swingLow14_min_reentry && is_reentry_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
 			{
-				GrayEllipseShort = false; //Then lower the flag of the GrayEllipse in that direction
-				isReentryShort = false;
+				gray_ellipse_short = false; //Then lower the flag of the GrayEllipse in that direction
+				is_reentry_short = false;
 			}
 
 			////		TRADE IDENTIFICATION			
 			////		Red Trade Type Process			
 			///Long			 
-			if (isIncipientDownTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
 				bool isActiveLongPosition = false;
-				if (iSwing4.SwingHigh[0] >= iSMA200[0] - iATR[0] * ClosnessToTrade && ((iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop || (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA50[0] <= CurrentStop)) // If the reference Swing High 4 is above the SMA 50 then...
+				if (iSwing4.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && ((iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop || (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA2[0] <= current_stop)) // If the reference Swing High 4 is above the SMA 50 then...
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA200, "High");
+					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "High");
 					isSwingHigh4 = ReturnedValues.Item1;
 					isActiveLongPosition = ReturnedValues.Item2;
-					isBOUpSwing4 = ReturnedValues.Item3;
+					is_BO_up_swing4 = ReturnedValues.Item3;
 				}
 
 				///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14				
-				if (iSwing14.SwingHigh[0] >= iSMA200[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && ((iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop || (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA50[0] <= CurrentStop)) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+				if (iSwing14.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && ((iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop || (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA2[0] <= current_stop)) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA200, "High");
+					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
 					bool isSwingHigh14 = ReturnedValues.Item1;
 					isActiveLongPosition = ReturnedValues.Item2;
-					isBOUpSwing14 = ReturnedValues.Item3;
+					is_BO_up_swing14 = ReturnedValues.Item3;
 				}
 			}
 
 			///Short		 
-			else if (isIncipientUpTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
 				bool isActiveShortPosition = false;
-				if (iSwing4.SwingLow[0] <= iSMA200[0] + iATR[0] * ClosnessToTrade && (iSMA200[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop || iSMA50[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop))
+				if (iSwing4.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && (iSMA1[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= current_stop || iSMA2[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= current_stop))
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA200, "Low");
+					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "Low");
 					isSwingLow4 = ReturnedValues.Item1;
 					isActiveShortPosition = ReturnedValues.Item2;
-					isBODownSwing4 = ReturnedValues.Item3;
+					is_BO_down_swing4 = ReturnedValues.Item3;
 				}
 
 				///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14			
-				if (iSwing14.SwingLow[0] <= iSMA200[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && (iSMA200[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop || iSMA50[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop))
+				if (iSwing14.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && (iSMA1[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= current_stop || iSMA2[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= current_stop))
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA200, "Low");
+					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "Low");
 					bool isSwingLow14 = ReturnedValues.Item1;
 					isActiveShortPosition = ReturnedValues.Item2;
-					isBODownSwing14 = ReturnedValues.Item3;
+					is_BO_down_swing14 = ReturnedValues.Item3;
 				}
 			}
 
 			////		TRADITIONAL RED Trade Type Process			
 			///Long			 
-			if (isIncipientUpTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+			if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
 				bool isActiveLongPosition = false;
-				if (iSwing4.SwingHigh[0] >= iSMA200[0] - iATR[0] * ClosnessToTrade && (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop && iSMA50[0] - iSwing4.SwingHigh[0] > iATR[0] * ClosnessFactor) // If the reference Swing High 4 is above the SMA 50 then...
+				if (iSwing4.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop && iSMA2[0] - iSwing4.SwingHigh[0] > iATR[0] * ClosnessFactor) // If the reference Swing High 4 is above the SMA 50 then...
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA200, "High");
+					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "High");
 					isSwingHigh4 = ReturnedValues.Item1;
 					isActiveLongPosition = ReturnedValues.Item2;
-					isBOUpSwing4 = ReturnedValues.Item3;
+					is_BO_up_swing4 = ReturnedValues.Item3;
 				}
 
 				///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14				
-				if (iSwing14.SwingHigh[0] >= iSMA200[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop && iSMA50[0] - iSwing14.SwingHigh[0] > iATR[0] * ClosnessFactor) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+				if (iSwing14.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop && iSMA2[0] - iSwing14.SwingHigh[0] > iATR[0] * ClosnessFactor) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA200, "High");
+					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
 					bool isSwingHigh14 = ReturnedValues.Item1;
 					isActiveLongPosition = ReturnedValues.Item2;
-					isBOUpSwing14 = ReturnedValues.Item3;
+					is_BO_up_swing14 = ReturnedValues.Item3;
 				}
 			}
 
 			///Short		 
-			if (isIncipientDownTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
 				bool isActiveShortPosition = false;
-				if (iSwing4.SwingLow[0] <= iSMA200[0] + iATR[0] * ClosnessToTrade && iSMA200[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop && iSwing4.SwingLow[0] - iSMA50[0] > iATR[0] * ClosnessFactor)
+				if (iSwing4.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && iSMA1[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= current_stop && iSwing4.SwingLow[0] - iSMA2[0] > iATR[0] * ClosnessFactor)
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA200, "Low");
+					Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "Low");
 					isSwingLow4 = ReturnedValues.Item1;
 					isActiveShortPosition = ReturnedValues.Item2;
-					isBODownSwing4 = ReturnedValues.Item3;
+					is_BO_down_swing4 = ReturnedValues.Item3;
 				}
 
 				///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14			
-				if (iSwing14.SwingLow[0] <= iSMA200[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA200[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop && iSwing14.SwingLow[0] - iSMA50[0] > iATR[0] * ClosnessFactor)
+				if (iSwing14.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA1[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= current_stop && iSwing14.SwingLow[0] - iSMA2[0] > iATR[0] * ClosnessFactor)
 				{
-					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA200, "Low");
+					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "Low");
 					bool isSwingLow14 = ReturnedValues.Item1;
 					isActiveShortPosition = ReturnedValues.Item2;
-					isBODownSwing14 = ReturnedValues.Item3;
+					is_BO_down_swing14 = ReturnedValues.Item3;
 				}
 			}
 
 			////		Traditional Trade Type Process
 			///Long
-			if (isIncipientUpTrend && GrayEllipseLong && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an isIncipientUpTrend, a GrayEllipseLong and there is no active position then...
+			if (is_incipient_up_trend && gray_ellipse_long && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an is_incipient_up_trend, a gray_ellipse_long and there is no active position then...
 			{
 				///Normal traditional
-				if (IsUpWard)
+				if (is_upward)
 				{
 					///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 					bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
 					bool isActiveLongPosition = false;
-					if (iSwing4.SwingHigh[0] >= iSMA50[0] - iATR[0] * ClosnessToTrade && (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA50[0] <= CurrentStop) // If the reference Swing High 4 is above the SMA 50 then...
+					if (iSwing4.SwingHigh[0] >= iSMA2[0] - iATR[0] * ClosnessToTrade && (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA2[0] <= current_stop) // If the reference Swing High 4 is above the SMA 50 then...
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA50, "High");
+						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA2, "High");
 						isSwingHigh4 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
-						isBOUpSwing4 = ReturnedValues.Item3;
+						is_BO_up_swing4 = ReturnedValues.Item3;
 					}
 
 					///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14					
-					if (iSwing14.SwingHigh[0] >= iSMA50[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA50[0] <= CurrentStop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+					if (iSwing14.SwingHigh[0] >= iSMA2[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA2[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA50, "High");
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA2, "High");
 						bool isSwingHigh14 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
-						isBOUpSwing14 = ReturnedValues.Item3;
+						is_BO_up_swing14 = ReturnedValues.Item3;
 					}
 				}
 				///Modified traditional
@@ -497,49 +497,49 @@ namespace NinjaTrader.NinjaScript.Strategies
 					///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4			
 					bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
 					bool isActiveLongPosition = false;
-					if (iSwing4.SwingHigh[0] >= iSMA200[0] - iATR[0] * ClosnessToTrade && (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop) // If the reference Swing High 4 is above the SMA 50 then...
+					if (iSwing4.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && (iSwing4.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop) // If the reference Swing High 4 is above the SMA 50 then...
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA200, "High");
+						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "High");
 						isSwingHigh4 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
-						isBOUpSwing4 = ReturnedValues.Item3;
+						is_BO_up_swing4 = ReturnedValues.Item3;
 					}
 
 					///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14				
-					if (iSwing14.SwingHigh[0] >= iSMA200[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+					if (iSwing14.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
 					{
 
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA200, "High");
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
 						bool isSwingHigh14 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
-						isBOUpSwing14 = ReturnedValues.Item3;
+						is_BO_up_swing14 = ReturnedValues.Item3;
 					}
 				}
 			}
 
 			///Short	
-			else if (isIncipientDownTrend && GrayEllipseShort && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an isIncipientDownTrend, a GrayEllipseShort and there is no active position then...
+			else if (is_incipient_down_trend && gray_ellipse_short && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an is_incipient_down_trend, a gray_ellipse_short and there is no active position then...
 			{
 				///Normal traditional
-				if (IsDownWard)
+				if (is_downward)
 				{
 					///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4		
 					bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
 					bool isActiveShortPosition = false;
-					if (iSwing4.SwingLow[0] <= iSMA50[0] + iATR[0] * ClosnessToTrade && iSMA50[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop)
+					if (iSwing4.SwingLow[0] <= iSMA2[0] + iATR[0] * ClosnessToTrade && iSMA2[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA50, "Low");
+						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA2, "Low");
 						isSwingLow4 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
-						isBODownSwing4 = ReturnedValues.Item3;
+						is_BO_down_swing4 = ReturnedValues.Item3;
 					}
 					///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14				
-					if (iSwing14.SwingLow[0] <= iSMA50[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA50[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop)
+					if (iSwing14.SwingLow[0] <= iSMA2[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA2[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA50, "Low");
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA2, "Low");
 						bool isSwingLow14 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
-						isBODownSwing14 = ReturnedValues.Item3;
+						is_BO_down_swing14 = ReturnedValues.Item3;
 					}
 				}
 				///Modified traditional
@@ -548,20 +548,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 					///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 					bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
 					bool isActiveShortPosition = false;
-					if (iSwing4.SwingLow[0] <= iSMA200[0] + iATR[0] * ClosnessToTrade && iSMA200[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop)
+					if (iSwing4.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && iSMA1[0] - (iSwing4.SwingLow[0] - TicksToBO * TickSize) <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA200, "Low");
+						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "Low");
 						isSwingLow4 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
-						isBODownSwing4 = ReturnedValues.Item3;
+						is_BO_down_swing4 = ReturnedValues.Item3;
 					}
 					///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14				
-					if (iSwing14.SwingLow[0] <= iSMA200[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA200[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= CurrentStop)
+					if (iSwing14.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA1[0] - (iSwing14.SwingLow[0] - TicksToBO * TickSize) <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA200, "Low");
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "Low");
 						bool isSwingLow14 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
-						isBODownSwing14 = ReturnedValues.Item3;
+						is_BO_down_swing14 = ReturnedValues.Item3;
 					}
 				}
 			}
@@ -569,38 +569,38 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
 			///Stop Updating Process (by both trailing and SMA)
 			///While Long	
-			if (Position.MarketPosition == MarketPosition.Long && !isLong) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			if (Position.MarketPosition == MarketPosition.Long && !is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
-				isLong = true;
-				isShort = false;
-				FixAmountLong = AmountLong;
-				FixStopPriceLong = StopPriceLong;
-				FixTriggerPriceLong = TriggerPriceLong;
-				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, FixStopPriceLong);
+				is_long = true;
+				is_short = false;
+				fix_amount_long = amount_long;
+				fix_stop_price_long = stop_price_long;
+				fix_trigger_price_long = trigger_price_long;
+				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
 			}
-			if (Position.MarketPosition == MarketPosition.Long && isLong) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			if (Position.MarketPosition == MarketPosition.Long && is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
-				if (myEntryOrder == null || myEntryMarket == null)
+				if (my_entry_order == null || my_entry_market == null)
 				{
-					if (myEntryMarket == null && myEntryOrder.OrderState == OrderState.Filled)
+					if (my_entry_market == null && my_entry_order.OrderState == OrderState.Filled)
 					{
-						//						if (myEntryOrder.OrderState == OrderState.Filled)
+						//						if (my_entry_order.OrderState == OrderState.Filled)
 						//						{
-						//							if (myEntryOrder.OrderType == OrderType.StopMarket && myEntryOrder.OrderState == OrderState.Working && myEntryOrder.OrderAction == OrderAction.SellShort)
+						//							if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
 						//							{
-						//								Print (String.Format("{0} // {1} // {2} // {3}", myEntryOrder.StopPrice, FixStopPriceLong,  myEntryOrder.Quantity, Time[0]));
+						//								Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
 						//							}
 						//							else
 						//							{
-						ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryOrder");
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 						//							}
 						//						}										
-						if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA50[BarsSinceEntryExecution(0, @"entryOrder", 0)] + TicksToBO * TickSize)
+						if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] + TicksToBO * TickSize)
 						{
 							bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 							for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
 							{
-								if (High[i] >= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+								if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 								{
 									HighCrossEma50 = true; //And saves that value in this variable
 									break;
@@ -608,48 +608,48 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							if (HighCrossEma50 == false)
 							{
-								if (Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-									ExitLong(FixAmountLong, @"exit", @"entryOrder");
+									ExitLong(fix_amount_long, @"exit", @"entryOrder");
 								}
 							}
 							else
 							{
-								if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-									ExitLong(FixAmountLong, @"exit", @"entryOrder");
+									ExitLong(fix_amount_long, @"exit", @"entryOrder");
 								}
 							}
 						}
 						else
 						{
-							if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-								ExitLong(FixAmountLong, @"exit", @"entryOrder");
+								ExitLong(fix_amount_long, @"exit", @"entryOrder");
 							}
 						}
-						if (High[0] >= FixTriggerPriceLong)
+						if (High[0] >= fix_trigger_price_long)
 						{
-							FixStopPriceLong = High[0] - CurrentStop * TrailerUnitsStop;
-							FixTriggerPriceLong = High[0];
-							ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryOrder");
+							fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+							fix_trigger_price_long = High[0];
+							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
 						}
 					}
-					else if (myEntryOrder == null && myEntryMarket.OrderState == OrderState.Filled)
+					else if (my_entry_order == null && my_entry_market.OrderState == OrderState.Filled)
 					{
-						ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryMarket");
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 						//						}
 						//					}				
-						if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA50[BarsSinceEntryExecution(0, @"entryMarket", 0)] + TicksToBO * TickSize)
+						if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + TicksToBO * TickSize)
 						{
 							bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 							for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
 							{
-								if (High[i] >= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+								if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 								{
 									HighCrossEma50 = true; //And saves that value in this variable
 									break;
@@ -657,57 +657,57 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							if (HighCrossEma50 == false)
 							{
-								if (Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-									ExitLong(FixAmountLong, @"exit", @"entryMarket");
+									ExitLong(fix_amount_long, @"exit", @"entryMarket");
 								}
 							}
 							else
 							{
-								if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-									ExitLong(FixAmountLong, @"exit", @"entryMarket");
+									ExitLong(fix_amount_long, @"exit", @"entryMarket");
 								}
 							}
 						}
 						else
 						{
-							if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-								ExitLong(FixAmountLong, @"exit", @"entryMarket");
+								ExitLong(fix_amount_long, @"exit", @"entryMarket");
 							}
 						}
-						if (High[0] >= FixTriggerPriceLong)
+						if (High[0] >= fix_trigger_price_long)
 						{
-							FixStopPriceLong = High[0] - CurrentStop * TrailerUnitsStop;
-							FixTriggerPriceLong = High[0];
-							ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryMarket");
+							fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+							fix_trigger_price_long = High[0];
+							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
 						}
 					}
 				}
-				else if (myEntryOrder.OrderState == OrderState.Filled/* && myEntryMarket.OrderState != OrderState.Filled*/)
+				else if (my_entry_order.OrderState == OrderState.Filled/* && my_entry_market.OrderState != OrderState.Filled*/)
 				{
-					//					if (myEntryOrder.OrderState == OrderState.Filled && myEntryMarket.OrderState != OrderState.Filled)
+					//					if (my_entry_order.OrderState == OrderState.Filled && my_entry_market.OrderState != OrderState.Filled)
 					//					{
-					//						if (myEntryOrder.OrderType == OrderType.StopMarket && myEntryOrder.OrderState == OrderState.Working && myEntryOrder.OrderAction == OrderAction.SellShort)
+					//						if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
 					//						{
-					//							Print (String.Format("{0} // {1} // {2} // {3}", myEntryOrder.StopPrice, FixStopPriceLong,  myEntryOrder.Quantity, Time[0]));
+					//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
 					//						}
 					//						else
 					//						{
-					ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryOrder");
+					ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 					//						}
 					//					}				
-					if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA50[BarsSinceEntryExecution(0, @"entryOrder", 0)] + TicksToBO * TickSize)
+					if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] + TicksToBO * TickSize)
 					{
 						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
 						{
-							if (High[i] >= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+							if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 							{
 								HighCrossEma50 = true; //And saves that value in this variable
 								break;
@@ -715,56 +715,56 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (HighCrossEma50 == false)
 						{
-							if (Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-								ExitLong(FixAmountLong, @"exit", @"entryOrder");
+								ExitLong(fix_amount_long, @"exit", @"entryOrder");
 							}
 						}
 						else
 						{
-							if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-								ExitLong(FixAmountLong, @"exit", @"entryOrder");
+								ExitLong(fix_amount_long, @"exit", @"entryOrder");
 							}
 						}
 					}
 					else
 					{
-						if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+						if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 						{
 							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-							ExitLong(FixAmountLong, @"exit", @"entryOrder");
+							ExitLong(fix_amount_long, @"exit", @"entryOrder");
 						}
 					}
-					if (High[0] >= FixTriggerPriceLong)
+					if (High[0] >= fix_trigger_price_long)
 					{
-						FixStopPriceLong = High[0] - CurrentStop * TrailerUnitsStop;
-						FixTriggerPriceLong = High[0];
-						ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryOrder");
+						fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+						fix_trigger_price_long = High[0];
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
 					}
 				}
-				else if (myEntryMarket.OrderState == OrderState.Filled/* && myEntryOrder.OrderState != OrderState.Filled*/)
+				else if (my_entry_market.OrderState == OrderState.Filled/* && my_entry_order.OrderState != OrderState.Filled*/)
 				{
-					//					if (myEntryMarket.OrderState == OrderState.Filled && myEntryOrder.OrderState != OrderState.Filled)
+					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
 					//					{
-					if (myEntryOrder.OrderType == OrderType.StopMarket && myEntryOrder.OrderState == OrderState.Working && myEntryOrder.OrderAction == OrderAction.SellShort)
+					if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
 					{
-						//							Print (String.Format("{0} // {1} // {2} // {3}", myEntryOrder.StopPrice, FixStopPriceLong,  myEntryMarket.Quantity, Time[0]));
+						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
 					}
 					else
 					{
-						ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryMarket");
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 					}
 					//					}				
-					if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA50[BarsSinceEntryExecution(0, @"entryMarket", 0)] + TicksToBO * TickSize)
+					if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + TicksToBO * TickSize)
 					{
 						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
 						{
-							if (High[i] >= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+							if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 							{
 								HighCrossEma50 = true; //And saves that value in this variable
 								break;
@@ -772,64 +772,64 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (HighCrossEma50 == false)
 						{
-							if (Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-								ExitLong(FixAmountLong, @"exit", @"entryMarket");
+								ExitLong(fix_amount_long, @"exit", @"entryMarket");
 							}
 						}
 						else
 						{
-							if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-								ExitLong(FixAmountLong, @"exit", @"entryMarket");
+								ExitLong(fix_amount_long, @"exit", @"entryMarket");
 							}
 						}
 					}
 					else
 					{
-						if (Close[0] < iSMA50[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA200[0] - iATR[0] * (MagicNumber / 100))
+						if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
 						{
 							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Lime);
-							ExitLong(FixAmountLong, @"exit", @"entryMarket");
+							ExitLong(fix_amount_long, @"exit", @"entryMarket");
 						}
 					}
-					if (High[0] >= FixTriggerPriceLong)
+					if (High[0] >= fix_trigger_price_long)
 					{
-						FixStopPriceLong = High[0] - CurrentStop * TrailerUnitsStop;
-						FixTriggerPriceLong = High[0];
-						ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryMarket");
+						fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+						fix_trigger_price_long = High[0];
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
 					}
 				}
 			}
 
 			///While Short	
-			if (Position.MarketPosition == MarketPosition.Short && !isShort) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			if (Position.MarketPosition == MarketPosition.Short && !is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
-				isLong = false;
-				isShort = true;
-				FixAmountShort = AmountShort;
-				FixStopPriceShort = StopPriceShort;
-				FixTriggerPriceShort = TriggerPriceShort;
-				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, FixStopPriceShort);
+				is_long = false;
+				is_short = true;
+				fix_amount_short = amount_short;
+				fix_stop_price_short = stop_price_short;
+				fix_trigger_price_short = trigger_price_short;
+				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
 			}
-			if (Position.MarketPosition == MarketPosition.Short && isShort)
+			if (Position.MarketPosition == MarketPosition.Short && is_short)
 			{
-				if (myEntryOrder == null || myEntryMarket == null)
+				if (my_entry_order == null || my_entry_market == null)
 				{
-					if (myEntryMarket == null && myEntryOrder.OrderState == OrderState.Filled)
+					if (my_entry_market == null && my_entry_order.OrderState == OrderState.Filled)
 					{
-						ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryOrder");
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 						//						}
 						//					}
-						if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA50[BarsSinceEntryExecution(0, @"entryOrder", 0)] - TicksToBO * TickSize)
+						if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] - TicksToBO * TickSize)
 						{
 							bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 							for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
 							{
-								if (Low[i] <= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+								if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 								{
 									LowCrossEma50 = true; //And saves that value in this variable
 									break;
@@ -837,48 +837,48 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							if (LowCrossEma50 == false)
 							{
-								if (Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-									ExitShort(FixAmountShort, @"exit", @"entryOrder");
+									ExitShort(fix_amount_short, @"exit", @"entryOrder");
 								}
 							}
 							else
 							{
-								if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-									ExitShort(FixAmountShort, @"exit", @"entryOrder");
+									ExitShort(fix_amount_short, @"exit", @"entryOrder");
 								}
 							}
 						}
 						else
 						{
-							if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-								ExitShort(FixAmountShort, @"exit", @"entryOrder");
+								ExitShort(fix_amount_short, @"exit", @"entryOrder");
 							}
 						}
-						if (Low[0] <= FixTriggerPriceShort)
+						if (Low[0] <= fix_trigger_price_short)
 						{
-							FixStopPriceShort = Low[0] + CurrentStop * TrailerUnitsStop;
-							FixTriggerPriceShort = Low[0];
-							ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryOrder");
+							fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+							fix_trigger_price_short = Low[0];
+							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 						}
 					}
-					else if (myEntryOrder == null && myEntryMarket.OrderState == OrderState.Filled)
+					else if (my_entry_order == null && my_entry_market.OrderState == OrderState.Filled)
 					{
-						ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryMarket");
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 						//						}
 						//					}
-						if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA50[BarsSinceEntryExecution(0, @"entryMarket", 0)] - TicksToBO * TickSize)
+						if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - TicksToBO * TickSize)
 						{
 							bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 							for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
 							{
-								if (Low[i] <= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+								if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 								{
 									LowCrossEma50 = true; //And saves that value in this variable
 									break;
@@ -886,57 +886,57 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							if (LowCrossEma50 == false)
 							{
-								if (Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-									ExitShort(FixAmountShort, @"exit", @"entryMarket");
+									ExitShort(fix_amount_short, @"exit", @"entryMarket");
 								}
 							}
 							else
 							{
-								if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-									ExitShort(FixAmountShort, @"exit", @"entryMarket");
+									ExitShort(fix_amount_short, @"exit", @"entryMarket");
 								}
 							}
 						}
 						else
 						{
-							if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-								ExitShort(FixAmountShort, @"exit", @"entryMarket");
+								ExitShort(fix_amount_short, @"exit", @"entryMarket");
 							}
 						}
-						if (Low[0] <= FixTriggerPriceShort)
+						if (Low[0] <= fix_trigger_price_short)
 						{
-							FixStopPriceShort = Low[0] + CurrentStop * TrailerUnitsStop;
-							FixTriggerPriceShort = Low[0];
-							ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryMarket");
+							fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+							fix_trigger_price_short = Low[0];
+							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 						}
 					}
 				}
-				else if (myEntryOrder.OrderState == OrderState.Filled/* && myEntryMarket.OrderState != OrderState.Filled*/)
+				else if (my_entry_order.OrderState == OrderState.Filled/* && my_entry_market.OrderState != OrderState.Filled*/)
 				{
-					//					if (myEntryOrder.OrderState == OrderState.Filled && myEntryMarket.OrderState != OrderState.Filled)
+					//					if (my_entry_order.OrderState == OrderState.Filled && my_entry_market.OrderState != OrderState.Filled)
 					//					{
-					//						if (myEntryOrder.OrderType == OrderType.StopMarket && myEntryOrder.OrderState == OrderState.Working && myEntryOrder.OrderAction == OrderAction.Buy)
+					//						if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.Buy)
 					//						{
-					//							Print (String.Format("{0} // {1} // {2} // {3}", myEntryOrder.StopPrice, FixStopPriceLong,  myEntryOrder.Quantity, Time[0]));
+					//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
 					//						}
 					//						else
 					//						{
-					ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryOrder");
+					ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 					//						}
 					//					}
-					if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA50[BarsSinceEntryExecution(0, @"entryOrder", 0)] - TicksToBO * TickSize)
+					if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] - TicksToBO * TickSize)
 					{
 						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
 						{
-							if (Low[i] <= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+							if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 							{
 								LowCrossEma50 = true; //And saves that value in this variable
 								break;
@@ -944,56 +944,56 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (LowCrossEma50 == false)
 						{
-							if (Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-								ExitShort(FixAmountShort, @"exit", @"entryOrder");
+								ExitShort(fix_amount_short, @"exit", @"entryOrder");
 							}
 						}
 						else
 						{
-							if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-								ExitShort(FixAmountShort, @"exit", @"entryOrder");
+								ExitShort(fix_amount_short, @"exit", @"entryOrder");
 							}
 						}
 					}
 					else
 					{
-						if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+						if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 						{
 							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-							ExitShort(FixAmountShort, @"exit", @"entryOrder");
+							ExitShort(fix_amount_short, @"exit", @"entryOrder");
 						}
 					}
-					if (Low[0] <= FixTriggerPriceShort)
+					if (Low[0] <= fix_trigger_price_short)
 					{
-						FixStopPriceShort = Low[0] + CurrentStop * TrailerUnitsStop;
-						FixTriggerPriceShort = Low[0];
-						ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryOrder");
+						fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+						fix_trigger_price_short = Low[0];
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 					}
 				}
-				else if (myEntryMarket.OrderState == OrderState.Filled/* && myEntryOrder.OrderState != OrderState.Filled*/)
+				else if (my_entry_market.OrderState == OrderState.Filled/* && my_entry_order.OrderState != OrderState.Filled*/)
 				{
-					//					if (myEntryMarket.OrderState == OrderState.Filled && myEntryOrder.OrderState != OrderState.Filled)
+					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
 					//					{
-					if (myEntryOrder.OrderType == OrderType.StopMarket && myEntryOrder.OrderState == OrderState.Working && myEntryOrder.OrderAction == OrderAction.Buy)
+					if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.Buy)
 					{
-						//							Print (String.Format("{0} // {1} // {2} // {3}", myEntryOrder.StopPrice, FixStopPriceShort,  myEntryMarket.Quantity, Time[0]));
+						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
 					}
 					else
 					{
-						ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryMarket");
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 					}
 					//					}
-					if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA50[BarsSinceEntryExecution(0, @"entryMarket", 0)] - TicksToBO * TickSize)
+					if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - TicksToBO * TickSize)
 					{
 						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
 						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
 						{
-							if (Low[i] <= iSMA50[i]) //To determine the highest value (max close value of the swinglow4)
+							if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
 							{
 								LowCrossEma50 = true; //And saves that value in this variable
 								break;
@@ -1001,34 +1001,34 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (LowCrossEma50 == false)
 						{
-							if (Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-								ExitShort(FixAmountShort, @"exit", @"entryMarket");
+								ExitShort(fix_amount_short, @"exit", @"entryMarket");
 							}
 						}
 						else
 						{
-							if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-								ExitShort(FixAmountShort, @"exit", @"entryMarket");
+								ExitShort(fix_amount_short, @"exit", @"entryMarket");
 							}
 						}
 					}
 					else
 					{
-						if (Close[0] > iSMA50[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA200[0] + iATR[0] * (MagicNumber / 100))
+						if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
 						{
 							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Red);
-							ExitShort(FixAmountShort, @"exit", @"entryMarket");
+							ExitShort(fix_amount_short, @"exit", @"entryMarket");
 						}
 					}
-					if (Low[0] <= FixTriggerPriceShort)
+					if (Low[0] <= fix_trigger_price_short)
 					{
-						FixStopPriceShort = Low[0] + CurrentStop * TrailerUnitsStop;
-						FixTriggerPriceShort = Low[0];
-						ExitShortStopMarket(FixAmountShort, FixStopPriceShort, @"exit", @"entryMarket");
+						fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+						fix_trigger_price_short = Low[0];
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 					}
 				}
@@ -1226,18 +1226,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (OrderType == "MarketOrder")
 			{
-				AmountLong = Convert.ToInt32((RiskUnit / ((CurrentStop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount
-				EnterLong(AmountLong, @"entryMarket"); // Long Stop order activation							
-				StopPriceLong = Close[0] - CurrentStop; //calculates the stop price level
-				TriggerPriceLong = Close[0] + CurrentStop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
+				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount
+				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation							
+				stop_price_long = Close[0] - current_stop; //calculates the stop price level
+				trigger_price_long = Close[0] + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
 				return true;
 			}
 			else if (OrderType == "PendingOrder")
 			{
-				AmountLong = Convert.ToInt32((RiskUnit / ((CurrentStop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				EnterLongStopMarket(AmountLong, BOLevel[0] + TicksToBO * TickSize, @"entryOrder");
-				StopPriceLong = (BOLevel[0] + TicksToBO * TickSize) - CurrentStop; //calculates the stop price level
-				TriggerPriceLong = (BOLevel[0] + TicksToBO * TickSize) + CurrentStop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger							
+				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
+				EnterLongStopMarket(amount_long, BOLevel[0] + TicksToBO * TickSize, @"entryOrder");
+				stop_price_long = (BOLevel[0] + TicksToBO * TickSize) - current_stop; //calculates the stop price level
+				trigger_price_long = (BOLevel[0] + TicksToBO * TickSize) + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger							
 				return false;
 			}
 			else
@@ -1251,19 +1251,19 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (OrderType == "MarketOrder")
 			{
-				AmountShort = Convert.ToInt32((RiskUnit / ((CurrentStop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount
-				EnterShort(AmountShort, @"entryMarket"); // Long Stop order activation							
-				StopPriceShort = Close[0] + CurrentStop; //calculates the stop price level
-				TriggerPriceShort = Close[0] - CurrentStop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
+				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount
+				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation							
+				stop_price_short = Close[0] + current_stop; //calculates the stop price level
+				trigger_price_short = Close[0] - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
 				return true;
 			}
 			else if (OrderType == "PendingOrder")
 			{
-				AmountShort = Convert.ToInt32((RiskUnit / ((CurrentStop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				EnterShortStopMarket(AmountShort, BOLevel[0] - TicksToBO * TickSize, @"entryOrder");
-				StopPriceShort = (BOLevel[0] - TicksToBO * TickSize) + CurrentStop; //calculates the stop price level
-				TriggerPriceShort = (BOLevel[0] - TicksToBO * TickSize) - CurrentStop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
-				Print(String.Format("{0} // {1} // {2} // {3}", AmountShort, BOLevel[0], StopPriceShort, Time[0]));
+				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
+				EnterShortStopMarket(amount_short, BOLevel[0] - TicksToBO * TickSize, @"entryOrder");
+				stop_price_short = (BOLevel[0] - TicksToBO * TickSize) + current_stop; //calculates the stop price level
+				trigger_price_short = (BOLevel[0] - TicksToBO * TickSize) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
+				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, Time[0]));
 				return false;
 			}
 			else
@@ -1284,26 +1284,26 @@ namespace NinjaTrader.NinjaScript.Strategies
 				if (isSwingHigh4) //if the HL4 is confirmated after the Last two validations then...
 				{
 					Tuple<double, double, int> ReturnedValues = SwingLocation(High, iSwing4.SwingHigh, iSwing4.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
-					MaxHighSwingHigh4 = ReturnedValues.Item1;
+					max_high_swingHigh4 = ReturnedValues.Item1;
 					double SwingHigh4MidLevel = ReturnedValues.Item2;
 					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingHigh4MidLevel >= ReferenceSMA[0] /*&& MaxHighSwingHigh4 < iSwing4.SwingHigh[0] + TicksToBO * TickSize*/)
+					if (SwingHigh4MidLevel >= ReferenceSMA[0] /*&& max_high_swingHigh4 < iSwing4.SwingHigh[0] + TicksToBO * TickSize*/)
 					{
 						if (iSwing14.SwingHigh[0] > iSwing4.SwingHigh[0] && iSwing14.SwingHigh[0] <= iSwing4.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
-							if ((iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA200[0] <= CurrentStop || (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA50[0] <= CurrentStop)
+							if ((iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA1[0] <= current_stop || (iSwing14.SwingHigh[0] + TicksToBO * TickSize) - iSMA2[0] <= current_stop)
 							{
-								if (myEntryOrder != null && myExitOrder != null)
+								if (my_entry_order != null && my_exit_order != null)
 								{
-									if ((myEntryOrder.OrderType == OrderType.StopMarket || myExitOrder.OrderType == OrderType.StopMarket) && (myEntryOrder.OrderState == OrderState.Working || myEntryOrder.OrderState == OrderState.Filled || myExitOrder.OrderState == OrderState.Working) && (myEntryOrder.OrderAction == OrderAction.SellShort || myExitOrder.OrderAction == OrderAction.SellShort))
+									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 									{
-										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingHigh, iSwing4.SwingHigh, ReferenceSMA, ExtremeLevelBar, isBOUpSwing4, MaxHighSwingHigh4, "Up");
-										isBOUpSwing4 = ReturnedValues1.Item1;
+										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingHigh, iSwing4.SwingHigh, ReferenceSMA, ExtremeLevelBar, is_BO_up_swing4, max_high_swingHigh4, "Up");
+										is_BO_up_swing4 = ReturnedValues1.Item1;
 										isActiveLongPosition = ReturnedValues1.Item2;
 									}
 									else
 									{
-										if (MaxHighSwingHigh4 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
+										if (max_high_swingHigh4 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
 										{
 											Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing14.SwingHigh[0] + 3 * TicksToBO * TickSize, Brushes.Lime); //Draw a mark to know where all conditions have been met
 											isActiveLongPosition = Buy("PendingOrder", iSwing14.SwingHigh);
@@ -1311,13 +1311,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 										}
 										else
 										{
-											isBOUpSwing4 = true;
+											is_BO_up_swing4 = true;
 										}
 									}
 								}
 								else
 								{
-									if (MaxHighSwingHigh4 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
+									if (max_high_swingHigh4 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
 									{
 										Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing14.SwingHigh[0] + 3 * TicksToBO * TickSize, Brushes.Lime); //Draw a mark to know where all conditions have been met
 										isActiveLongPosition = Buy("PendingOrder", iSwing14.SwingHigh);
@@ -1325,24 +1325,24 @@ namespace NinjaTrader.NinjaScript.Strategies
 									}
 									else
 									{
-										isBOUpSwing4 = true;
+										is_BO_up_swing4 = true;
 									}
 								}
 							}
 						}
 						else
 						{
-							if (myEntryOrder != null && myExitOrder != null)
+							if (my_entry_order != null && my_exit_order != null)
 							{
-								if ((myEntryOrder.OrderType == OrderType.StopMarket || myExitOrder.OrderType == OrderType.StopMarket) && (myEntryOrder.OrderState == OrderState.Working || myEntryOrder.OrderState == OrderState.Filled || myExitOrder.OrderState == OrderState.Working) && (myEntryOrder.OrderAction == OrderAction.SellShort || myExitOrder.OrderAction == OrderAction.SellShort))
+								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 								{
-									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing4.SwingHigh, iSwing4.SwingHigh, ReferenceSMA, ExtremeLevelBar, isBOUpSwing4, MaxHighSwingHigh4, "Up");
-									isBOUpSwing4 = ReturnedValues1.Item1;
+									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing4.SwingHigh, iSwing4.SwingHigh, ReferenceSMA, ExtremeLevelBar, is_BO_up_swing4, max_high_swingHigh4, "Up");
+									is_BO_up_swing4 = ReturnedValues1.Item1;
 									isActiveLongPosition = ReturnedValues1.Item2;
 								}
 								else
 								{
-									if (MaxHighSwingHigh4 < iSwing4.SwingHigh[0] + TicksToBO * TickSize)
+									if (max_high_swingHigh4 < iSwing4.SwingHigh[0] + TicksToBO * TickSize)
 									{
 										Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing4.SwingHigh[0] + 3 * TicksToBO * TickSize, Brushes.Lime); //Draw a mark to know where all conditions have been met
 										isActiveLongPosition = Buy("PendingOrder", iSwing4.SwingHigh);
@@ -1350,13 +1350,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 									}
 									else
 									{
-										isBOUpSwing4 = true;
+										is_BO_up_swing4 = true;
 									}
 								}
 							}
 							else
 							{
-								if (MaxHighSwingHigh4 < iSwing4.SwingHigh[0] + TicksToBO * TickSize)
+								if (max_high_swingHigh4 < iSwing4.SwingHigh[0] + TicksToBO * TickSize)
 								{
 									Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing4.SwingHigh[0] + 3 * TicksToBO * TickSize, Brushes.Lime); //Draw a mark to know where all conditions have been met
 									isActiveLongPosition = Buy("PendingOrder", iSwing4.SwingHigh);
@@ -1364,7 +1364,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								}
 								else
 								{
-									isBOUpSwing4 = true;
+									is_BO_up_swing4 = true;
 								}
 							}
 						}
@@ -1373,14 +1373,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (iSwing14.SwingHigh[0] > iSwing4.SwingHigh[0] && iSwing14.SwingHigh[0] <= iSwing4.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingHigh, ReferenceSMA, MaxHighSwingHigh4, ExtremeLevelBar, 0, "Up", "Swing4", isBOUpSwing4);
-							isBOUpSwing4 = ReturnedValues1.Item1;
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingHigh, ReferenceSMA, max_high_swingHigh4, ExtremeLevelBar, 0, "Up", "Swing4", is_BO_up_swing4);
+							is_BO_up_swing4 = ReturnedValues1.Item1;
 							isActiveLongPosition = ReturnedValues1.Item2;
 						}
 						else
 						{
 							Tuple<bool, bool> ReturnedValues1 = BOProofSwing4(iSwing4.SwingHigh, ReferenceSMA, ExtremeLevelBar, 0, "Up");
-							isBOUpSwing4 = ReturnedValues1.Item1;
+							is_BO_up_swing4 = ReturnedValues1.Item1;
 							isActiveLongPosition = ReturnedValues1.Item2;
 						}
 					}
@@ -1390,30 +1390,30 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (iSwing14.SwingHigh[0] < ReferenceSMA[0])
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, MaxHighSwingHigh4, ExtremeLevelBar, ExtremeLevelBar, "Up", "Swing4", isBOUpSwing4);
-								isBOUpSwing4 = ReturnedValues1.Item1;
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, max_high_swingHigh4, ExtremeLevelBar, ExtremeLevelBar, "Up", "Swing4", is_BO_up_swing4);
+								is_BO_up_swing4 = ReturnedValues1.Item1;
 								isActiveLongPosition = ReturnedValues1.Item2;
 							}
 							else
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingHigh, ReferenceSMA, MaxHighSwingHigh4, ExtremeLevelBar, 0, "Up", "Swing4", isBOUpSwing4);
-								isBOUpSwing4 = ReturnedValues1.Item1;
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingHigh, ReferenceSMA, max_high_swingHigh4, ExtremeLevelBar, 0, "Up", "Swing4", is_BO_up_swing4);
+								is_BO_up_swing4 = ReturnedValues1.Item1;
 								isActiveLongPosition = ReturnedValues1.Item2;
 							}
 						}
 						else
 						{
 							Tuple<bool, bool> ReturnedValues1 = BOProofSwing4(ReferenceSMA, ReferenceSMA, ExtremeLevelBar, ExtremeLevelBar, "Up");
-							isBOUpSwing4 = ReturnedValues1.Item1;
+							is_BO_up_swing4 = ReturnedValues1.Item1;
 							isActiveLongPosition = ReturnedValues1.Item2;
 						}
 					}
 				}
-				if (isBOUpSwing4)
+				if (is_BO_up_swing4)
 				{
 					isSwingHigh4 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingHigh4, isActiveLongPosition, isBOUpSwing4);
+				return new Tuple<bool, bool, bool>(isSwingHigh4, isActiveLongPosition, is_BO_up_swing4);
 			}
 
 			////		SWING 4 LOW
@@ -1424,83 +1424,83 @@ namespace NinjaTrader.NinjaScript.Strategies
 				if (isSwingLow4)
 				{
 					Tuple<double, double, int> ReturnedValues = SwingLocation(Low, iSwing4.SwingLow, iSwing4.SwingLowBar(0, 1, CurrentBar), "SwingLow");
-					MinLowSwingLow4 = ReturnedValues.Item1;
+					min_low_swingLow4 = ReturnedValues.Item1;
 					double SwingLow4MidLevel = ReturnedValues.Item2;
 					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingLow4MidLevel <= ReferenceSMA[0] /*&& MinLowSwingLow4 > iSwing4.SwingLow[0] - TicksToBO * TickSize*/)
+					if (SwingLow4MidLevel <= ReferenceSMA[0] /*&& min_low_swingLow4 > iSwing4.SwingLow[0] - TicksToBO * TickSize*/)
 					{
 						if (iSwing14.SwingLow[0] < iSwing4.SwingLow[0] && iSwing14.SwingLow[0] >= iSwing4.SwingLow[0] - iATR[0] * ClosnessFactor)
 						{
-							if (iSMA200[0] - iSwing14.SwingLow[0] - TicksToBO * TickSize <= CurrentStop || iSMA50[0] - iSwing14.SwingLow[0] - TicksToBO * TickSize <= CurrentStop)
+							if (iSMA1[0] - iSwing14.SwingLow[0] - TicksToBO * TickSize <= current_stop || iSMA2[0] - iSwing14.SwingLow[0] - TicksToBO * TickSize <= current_stop)
 							{
-								if (myEntryOrder != null && myExitOrder != null)
+								if (my_entry_order != null && my_exit_order != null)
 								{
-									if ((myEntryOrder.OrderType == OrderType.StopMarket || myExitOrder.OrderType == OrderType.StopMarket) && (myEntryOrder.OrderState == OrderState.Working || myEntryOrder.OrderState == OrderState.Filled || myExitOrder.OrderState == OrderState.Working) && (myEntryOrder.OrderAction == OrderAction.Buy || myExitOrder.OrderAction == OrderAction.Buy))
+									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 									{
-										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingLow, iSwing4.SwingLow, ReferenceSMA, ExtremeLevelBar, isBODownSwing4, MinLowSwingLow4, "Down");
-										isBODownSwing4 = ReturnedValues1.Item1;
+										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingLow, iSwing4.SwingLow, ReferenceSMA, ExtremeLevelBar, is_BO_down_swing4, min_low_swingLow4, "Down");
+										is_BO_down_swing4 = ReturnedValues1.Item1;
 										isActiveShortPosition = ReturnedValues1.Item2;
 									}
 									else
 									{
-										if (MinLowSwingLow4 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
+										if (min_low_swingLow4 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
 										{
 											Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing14.SwingLow[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 											isActiveShortPosition = Sell("PendingOrder", iSwing14.SwingLow);
 										}
 										else
 										{
-											isBODownSwing4 = true;
+											is_BO_down_swing4 = true;
 										}
 									}
 								}
 								else
 								{
-									if (MinLowSwingLow4 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
+									if (min_low_swingLow4 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
 									{
 										Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing14.SwingLow[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 										isActiveShortPosition = Sell("PendingOrder", iSwing14.SwingLow);
 									}
 									else
 									{
-										isBODownSwing4 = true;
+										is_BO_down_swing4 = true;
 									}
 								}
 							}
 						}
 						else
 						{
-							if (myEntryOrder != null && myExitOrder != null)
+							if (my_entry_order != null && my_exit_order != null)
 							{
-								if ((myEntryOrder.OrderType == OrderType.StopMarket || myExitOrder.OrderType == OrderType.StopMarket) && (myEntryOrder.OrderState == OrderState.Working || myEntryOrder.OrderState == OrderState.Filled || myExitOrder.OrderState == OrderState.Working) && (myEntryOrder.OrderAction == OrderAction.Buy || myExitOrder.OrderAction == OrderAction.Buy))
+								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 								{
-									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing4.SwingLow, iSwing4.SwingLow, ReferenceSMA, ExtremeLevelBar, isBODownSwing4, MinLowSwingLow4, "Down");
-									isBODownSwing4 = ReturnedValues1.Item1;
+									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing4.SwingLow, iSwing4.SwingLow, ReferenceSMA, ExtremeLevelBar, is_BO_down_swing4, min_low_swingLow4, "Down");
+									is_BO_down_swing4 = ReturnedValues1.Item1;
 									isActiveShortPosition = ReturnedValues1.Item2;
 								}
 								else
 								{
-									if (MinLowSwingLow4 > iSwing4.SwingLow[0] - TicksToBO * TickSize)
+									if (min_low_swingLow4 > iSwing4.SwingLow[0] - TicksToBO * TickSize)
 									{
 										Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing4.SwingLow[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 										isActiveShortPosition = Sell("PendingOrder", iSwing4.SwingLow);
 									}
 									else
 									{
-										isBODownSwing4 = true;
+										is_BO_down_swing4 = true;
 									}
 								}
 							}
 							else
 							{
-								if (MinLowSwingLow4 > iSwing4.SwingLow[0] - TicksToBO * TickSize)
+								if (min_low_swingLow4 > iSwing4.SwingLow[0] - TicksToBO * TickSize)
 								{
 									Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing4.SwingLow[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 									isActiveShortPosition = Sell("PendingOrder", iSwing4.SwingLow);
 								}
 								else
 								{
-									isBODownSwing4 = true;
+									is_BO_down_swing4 = true;
 								}
 							}
 						}
@@ -1509,15 +1509,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (iSwing14.SwingLow[0] < iSwing4.SwingLow[0] && iSwing14.SwingLow[0] >= iSwing4.SwingLow[0] - iATR[0] * ClosnessFactor)
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingLow, ReferenceSMA, MinLowSwingLow4, ExtremeLevelBar, 0, "Down", "Swing4", isBODownSwing4);
-							isBODownSwing4 = ReturnedValues1.Item1;
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingLow, ReferenceSMA, min_low_swingLow4, ExtremeLevelBar, 0, "Down", "Swing4", is_BO_down_swing4);
+							is_BO_down_swing4 = ReturnedValues1.Item1;
 							isActiveShortPosition = ReturnedValues1.Item2;
 						}
 						else
 						{
-							//							Print (String.Format("{0} // {1} // {2} // {3}", isBODownSwing4, iSwing14.SwingLow[0], iSwing4.SwingLow[0], Time[0]));
+							//							Print (String.Format("{0} // {1} // {2} // {3}", is_BO_down_swing4, iSwing14.SwingLow[0], iSwing4.SwingLow[0], Time[0]));
 							Tuple<bool, bool> ReturnedValues1 = BOProofSwing4(iSwing4.SwingLow, ReferenceSMA, ExtremeLevelBar, 0, "Down");
-							isBODownSwing4 = ReturnedValues1.Item1;
+							is_BO_down_swing4 = ReturnedValues1.Item1;
 							isActiveShortPosition = ReturnedValues1.Item2;
 						}
 					}
@@ -1527,30 +1527,30 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (iSwing14.SwingLow[0] > ReferenceSMA[0])
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, MinLowSwingLow4, ExtremeLevelBar, ExtremeLevelBar, "Down", "Swing4", isBODownSwing4);
-								isBODownSwing4 = ReturnedValues1.Item1;
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, min_low_swingLow4, ExtremeLevelBar, ExtremeLevelBar, "Down", "Swing4", is_BO_down_swing4);
+								is_BO_down_swing4 = ReturnedValues1.Item1;
 								isActiveShortPosition = ReturnedValues1.Item2;
 							}
 							else
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingLow, ReferenceSMA, MinLowSwingLow4, ExtremeLevelBar, 0, "Down", "Swing4", isBODownSwing4);
-								isBODownSwing4 = ReturnedValues1.Item1;
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingLow, ReferenceSMA, min_low_swingLow4, ExtremeLevelBar, 0, "Down", "Swing4", is_BO_down_swing4);
+								is_BO_down_swing4 = ReturnedValues1.Item1;
 								isActiveShortPosition = ReturnedValues1.Item2;
 							}
 						}
 						else
 						{
 							Tuple<bool, bool> ReturnedValues1 = BOProofSwing4(ReferenceSMA, ReferenceSMA, ExtremeLevelBar, ExtremeLevelBar, "Down");
-							isBODownSwing4 = ReturnedValues1.Item1;
+							is_BO_down_swing4 = ReturnedValues1.Item1;
 							isActiveShortPosition = ReturnedValues1.Item2;
 						}
 					}
 				}
-				if (isBODownSwing4)
+				if (is_BO_down_swing4)
 				{
 					isSwingLow4 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingLow4, isActiveShortPosition, isBODownSwing4);
+				return new Tuple<bool, bool, bool>(isSwingLow4, isActiveShortPosition, is_BO_down_swing4);
 			}
 			return new Tuple<bool, bool, bool>(false, false, false);
 		}
@@ -1566,64 +1566,64 @@ namespace NinjaTrader.NinjaScript.Strategies
 				if (isSwingHigh14)
 				{
 					Tuple<double, double, int> ReturnedValues = SwingLocation(High, iSwing14.SwingHigh, iSwing14.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
-					MaxHighSwingHigh14 = ReturnedValues.Item1;
+					max_high_swingHigh14 = ReturnedValues.Item1;
 					double SwingHigh14MidLevel = ReturnedValues.Item2;
 					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingHigh14MidLevel >= ReferenceSMA[0]  /*&& MaxHighSwingHigh14 < iSwing14.SwingHigh[0] + TicksToBO * TickSize*/)
+					if (SwingHigh14MidLevel >= ReferenceSMA[0]  /*&& max_high_swingHigh14 < iSwing14.SwingHigh[0] + TicksToBO * TickSize*/)
 					{
-						if (myEntryOrder != null && myExitOrder != null)
+						if (my_entry_order != null && my_exit_order != null)
 						{
-							if ((myEntryOrder.OrderType == OrderType.StopMarket || myExitOrder.OrderType == OrderType.StopMarket) && (myEntryOrder.OrderState == OrderState.Working || myEntryOrder.OrderState == OrderState.Filled || myExitOrder.OrderState == OrderState.Working) && (myEntryOrder.OrderAction == OrderAction.SellShort || myExitOrder.OrderAction == OrderAction.SellShort))
+							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 							{
-								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingHigh, iSwing14.SwingHigh, ReferenceSMA, ExtremeLevelBar, isBOUpSwing14, MaxHighSwingHigh14, "Up");
-								isBOUpSwing14 = ReturnedValues1.Item1;
+								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingHigh, iSwing14.SwingHigh, ReferenceSMA, ExtremeLevelBar, is_BO_up_swing14, max_high_swingHigh14, "Up");
+								is_BO_up_swing14 = ReturnedValues1.Item1;
 								isActiveLongPosition = ReturnedValues1.Item2;
 							}
 							else
 							{
 
-								if (MaxHighSwingHigh14 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
+								if (max_high_swingHigh14 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
 								{
 									Draw.Dot(this, @"GreenDot" + CurrentBar, true, 0, iSwing14.SwingHigh[0] + 3 * TicksToBO * TickSize, Brushes.Green);
 									isActiveLongPosition = Buy("PendingOrder", iSwing14.SwingHigh);
 								}
 								else
 								{
-									isBOUpSwing14 = true;
+									is_BO_up_swing14 = true;
 								}
 							}
 						}
 						else
 						{
-							if (MaxHighSwingHigh14 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
+							if (max_high_swingHigh14 < iSwing14.SwingHigh[0] + TicksToBO * TickSize)
 							{
 								Draw.Dot(this, @"GreenDot" + CurrentBar, true, 0, iSwing14.SwingHigh[0] + 3 * TicksToBO * TickSize, Brushes.Green);
 								isActiveLongPosition = Buy("PendingOrder", iSwing14.SwingHigh);
 							}
 							else
 							{
-								isBOUpSwing14 = true;
+								is_BO_up_swing14 = true;
 							}
 						}
 					}
 					else if (iSwing14.SwingHigh[0] >= ReferenceSMA[0])
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingHigh, ReferenceSMA, MaxHighSwingHigh14, ExtremeLevelBar, 0, "Up", "Swing14", isBOUpSwing14);
-						isBOUpSwing14 = ReturnedValues1.Item1;
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingHigh, ReferenceSMA, max_high_swingHigh14, ExtremeLevelBar, 0, "Up", "Swing14", is_BO_up_swing14);
+						is_BO_up_swing14 = ReturnedValues1.Item1;
 						isActiveLongPosition = ReturnedValues1.Item2;
 					}
 					else
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, MaxHighSwingHigh14, ExtremeLevelBar, ExtremeLevelBar, "Up", "Swing14", isBOUpSwing14);
-						isBOUpSwing14 = ReturnedValues1.Item1;
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, max_high_swingHigh14, ExtremeLevelBar, ExtremeLevelBar, "Up", "Swing14", is_BO_up_swing14);
+						is_BO_up_swing14 = ReturnedValues1.Item1;
 						isActiveLongPosition = ReturnedValues1.Item2;
 					}
 				}
-				if (isBOUpSwing14)
+				if (is_BO_up_swing14)
 				{
 					isSwingHigh14 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingHigh14, isActiveLongPosition, isBOUpSwing14);
+				return new Tuple<bool, bool, bool>(isSwingHigh14, isActiveLongPosition, is_BO_up_swing14);
 			}
 
 			////		SWING 14 LOW
@@ -1634,63 +1634,63 @@ namespace NinjaTrader.NinjaScript.Strategies
 				if (isSwingLow14)
 				{
 					Tuple<double, double, int> ReturnedValues = SwingLocation(Low, iSwing14.SwingLow, iSwing14.SwingLowBar(0, 1, CurrentBar), "SwingLow");
-					MinLowSwingLow14 = ReturnedValues.Item1;
+					min_low_swingLow14 = ReturnedValues.Item1;
 					double SwingLow14MidLevel = ReturnedValues.Item2;
 					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingLow14MidLevel <= ReferenceSMA[0] /*&& MinLowSwingLow14 > iSwing14.SwingLow[0] - TicksToBO * TickSize*/)
+					if (SwingLow14MidLevel <= ReferenceSMA[0] /*&& min_low_swingLow14 > iSwing14.SwingLow[0] - TicksToBO * TickSize*/)
 					{
-						if (myEntryOrder != null && myExitOrder != null)
+						if (my_entry_order != null && my_exit_order != null)
 						{
-							if ((myEntryOrder.OrderType == OrderType.StopMarket || myExitOrder.OrderType == OrderType.StopMarket) && (myEntryOrder.OrderState == OrderState.Working || myEntryOrder.OrderState == OrderState.Filled || myExitOrder.OrderState == OrderState.Working) && (myEntryOrder.OrderAction == OrderAction.Buy || myExitOrder.OrderAction == OrderAction.Buy))
+							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 							{
-								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingLow, iSwing14.SwingLow, ReferenceSMA, ExtremeLevelBar, isBODownSwing14, MinLowSwingLow14, "Down");
-								isBODownSwing14 = ReturnedValues1.Item1;
+								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing14.SwingLow, iSwing14.SwingLow, ReferenceSMA, ExtremeLevelBar, is_BO_down_swing14, min_low_swingLow14, "Down");
+								is_BO_down_swing14 = ReturnedValues1.Item1;
 								isActiveShortPosition = ReturnedValues1.Item2;
 							}
 							else
 							{
-								if (MinLowSwingLow14 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
+								if (min_low_swingLow14 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
 								{
 									Draw.Dot(this, @"MaroonDot" + CurrentBar, true, 0, iSwing14.SwingLow[0] - 3 * TicksToBO * TickSize, Brushes.Maroon);
 									isActiveShortPosition = Sell("PendingOrder", iSwing14.SwingLow);
 								}
 								else
 								{
-									isBODownSwing14 = true;
+									is_BO_down_swing14 = true;
 								}
 							}
 						}
 						else
 						{
-							if (MinLowSwingLow14 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
+							if (min_low_swingLow14 > iSwing14.SwingLow[0] - TicksToBO * TickSize)
 							{
 								Draw.Dot(this, @"MaroonDot" + CurrentBar, true, 0, iSwing14.SwingLow[0] - 3 * TicksToBO * TickSize, Brushes.Maroon);
 								isActiveShortPosition = Sell("PendingOrder", iSwing14.SwingLow);
 							}
 							else
 							{
-								isBODownSwing14 = true;
+								is_BO_down_swing14 = true;
 							}
 						}
 					}
 					else if (iSwing14.SwingLow[0] <= ReferenceSMA[0])
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingLow, ReferenceSMA, MinLowSwingLow14, ExtremeLevelBar, 0, "Down", "Swing14", isBODownSwing14);
-						isBODownSwing14 = ReturnedValues1.Item1;
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(iSwing14.SwingLow, ReferenceSMA, min_low_swingLow14, ExtremeLevelBar, 0, "Down", "Swing14", is_BO_down_swing14);
+						is_BO_down_swing14 = ReturnedValues1.Item1;
 						isActiveShortPosition = ReturnedValues1.Item2;
 					}
 					else
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, MinLowSwingLow14, ExtremeLevelBar, ExtremeLevelBar, "Down", "Swing14", isBODownSwing14);
-						isBODownSwing14 = ReturnedValues1.Item1;
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing14(ReferenceSMA, ReferenceSMA, min_low_swingLow14, ExtremeLevelBar, ExtremeLevelBar, "Down", "Swing14", is_BO_down_swing14);
+						is_BO_down_swing14 = ReturnedValues1.Item1;
 						isActiveShortPosition = ReturnedValues1.Item2;
 					}
 				}
-				if (isBODownSwing14)
+				if (is_BO_down_swing14)
 				{
 					isSwingLow14 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingLow14, isActiveShortPosition, isBODownSwing14);
+				return new Tuple<bool, bool, bool>(isSwingLow14, isActiveShortPosition, is_BO_down_swing14);
 			}
 			return new Tuple<bool, bool, bool>(false, false, false);
 		}
@@ -1713,7 +1713,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							isBO = true;
 							if (Close[0] >= ReferenceBOLevel[0] + TicksToBO * TickSize)
 							{
-								if (Close[0] - ReferenceSMA[0] <= CurrentStop)
+								if (Close[0] - ReferenceSMA[0] <= current_stop)
 								{
 									isActiveLongPosition = Buy("MarketOrder", Close);
 								}
@@ -1756,10 +1756,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (Swing == "Swing4")
 						{
-							if (Close[0] >= LastMaxHighSwingHigh4 + TicksToBO * TickSize)
+							if (Close[0] >= last_max_high_swingHigh4 + TicksToBO * TickSize)
 							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, LastMaxHighSwingHigh4 + 3 * TicksToBO * TickSize, Brushes.Cyan);
-								if (Close[0] - ReferenceSMA[0] <= CurrentStop)
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh4 + 3 * TicksToBO * TickSize, Brushes.Cyan);
+								if (Close[0] - ReferenceSMA[0] <= current_stop)
 								{
 									isActiveLongPosition = Buy("MarketOrder", Close);
 								}
@@ -1767,10 +1767,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else if (Swing == "Swing14")
 						{
-							if (Close[0] >= LastMaxHighSwingHigh14 + TicksToBO * TickSize && ReferenceBar == 0)
+							if (Close[0] >= last_max_high_swingHigh14 + TicksToBO * TickSize && ReferenceBar == 0)
 							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, LastMaxHighSwingHigh14 + 3 * TicksToBO * TickSize, Brushes.Cyan);
-								if (Close[0] - ReferenceSMA[0] <= CurrentStop)
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh14 + 3 * TicksToBO * TickSize, Brushes.Cyan);
+								if (Close[0] - ReferenceSMA[0] <= current_stop)
 								{
 									isActiveLongPosition = Buy("MarketOrder", Close);
 								}
@@ -1794,7 +1794,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							isBO = true;
 							if (Close[0] <= ReferenceBOLevel[0] - TicksToBO * TickSize)
 							{
-								if (ReferenceSMA[0] - Close[0] <= CurrentStop)
+								if (ReferenceSMA[0] - Close[0] <= current_stop)
 								{
 									isActiveShortPosition = Sell("MarketOrder", Close);
 								}
@@ -1837,10 +1837,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (Swing == "Swing4")
 						{
-							if (Close[0] <= LastMinLowSwingLow4 - TicksToBO * TickSize)
+							if (Close[0] <= last_min_low_swingLow4 - TicksToBO * TickSize)
 							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, LastMinLowSwingLow4 - 3 * TicksToBO * TickSize, Brushes.Cyan);
-								if (ReferenceSMA[0] - Close[0] <= CurrentStop)
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow4 - 3 * TicksToBO * TickSize, Brushes.Cyan);
+								if (ReferenceSMA[0] - Close[0] <= current_stop)
 								{
 									isActiveShortPosition = Sell("MarketOrder", Close);
 								}
@@ -1848,10 +1848,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else if (Swing == "Swing14")
 						{
-							if (Close[0] <= LastMinLowSwingLow14 - TicksToBO * TickSize && ReferenceBar == 0)
+							if (Close[0] <= last_min_low_swingLow14 - TicksToBO * TickSize && ReferenceBar == 0)
 							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, LastMinLowSwingLow14 - 3 * TicksToBO * TickSize, Brushes.Cyan);
-								if (ReferenceSMA[0] - Close[0] <= CurrentStop)
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow14 - 3 * TicksToBO * TickSize, Brushes.Cyan);
+								if (ReferenceSMA[0] - Close[0] <= current_stop)
 								{
 									isActiveShortPosition = Sell("MarketOrder", Close);
 								}
@@ -1872,26 +1872,26 @@ namespace NinjaTrader.NinjaScript.Strategies
 			bool isActiveShortPosition = false;
 			if (Type == "Up")
 			{
-				if (!isBOUpSwing4)
+				if (!is_BO_up_swing4)
 				{
 					if (High[0] >= ReferenceBOLevel[0] + TicksToBO * TickSize)
 					{
 						if (ReferenceBar == 0)
 						{
 							Draw.Square(this, @"LimeSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
-							isBOUpSwing4 = true;
+							is_BO_up_swing4 = true;
 							if (Close[0] >= ReferenceBOLevel[0] + TicksToBO * TickSize)
 							{
 								if (iSwing14.SwingHigh[0] + TicksToBO * TickSize < Close[0])
 								{
-									if (Close[0] - ReferenceSMA[0] <= CurrentStop)
+									if (Close[0] - ReferenceSMA[0] <= current_stop)
 									{
 										isActiveLongPosition = Buy("MarketOrder", Close);
 									}
 								}
 								else
 								{
-									if (Close[0] - ReferenceSMA[0] <= CurrentStop && iSwing14.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
+									if (Close[0] - ReferenceSMA[0] <= current_stop && iSwing14.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
 									{
 										isActiveLongPosition = Buy("MarketOrder", Close);
 									}
@@ -1900,82 +1900,82 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							isBOUpSwing4 = true;
+							is_BO_up_swing4 = true;
 						}
 					}
 					else
 					{
-						if (MaxHighSwingHigh4 <= ReferenceBOLevel[ReferenceSMABOBar])
+						if (max_high_swingHigh4 <= ReferenceBOLevel[ReferenceSMABOBar])
 						{
-							if (MaxHighSwingHigh4 >= ReferenceBOLevel[ReferenceSMABOBar] + TicksToBO * TickSize)
+							if (max_high_swingHigh4 >= ReferenceBOLevel[ReferenceSMABOBar] + TicksToBO * TickSize)
 							{
-								isBOUpSwing4 = true;
+								is_BO_up_swing4 = true;
 							}
 						}
 						else
 						{
-							if (MaxHighSwingHigh4 >= ReferenceBOLevel[0] + TicksToBO * TickSize)
+							if (max_high_swingHigh4 >= ReferenceBOLevel[0] + TicksToBO * TickSize)
 							{
-								isBOUpSwing4 = true;
+								is_BO_up_swing4 = true;
 							}
 						}
 					}
-					if (!isBOUpSwing4)
+					if (!is_BO_up_swing4)
 					{
 						Draw.Square(this, @"LimeSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
 					}
 				}
 				else
 				{
-					if (MaxHighSwingHigh4 <= iSwing4.SwingHigh[0])
+					if (max_high_swingHigh4 <= iSwing4.SwingHigh[0])
 					{
-						isBOUpSwing4 = false;
+						is_BO_up_swing4 = false;
 					}
-					else if (Close[0] >= LastMaxHighSwingHigh4 + TicksToBO * TickSize && ReferenceBar == 0)
+					else if (Close[0] >= last_max_high_swingHigh4 + TicksToBO * TickSize && ReferenceBar == 0)
 					{
-						Draw.Dot(this, @"CyanSquare" + CurrentBar, true, 0, LastMaxHighSwingHigh4 + 3 * TicksToBO * TickSize, Brushes.Cyan);
+						Draw.Dot(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh4 + 3 * TicksToBO * TickSize, Brushes.Cyan);
 						if (iSwing14.SwingHigh[0] + TicksToBO * TickSize < Close[0])
 						{
-							if (Close[0] - ReferenceSMA[0] <= CurrentStop)
+							if (Close[0] - ReferenceSMA[0] <= current_stop)
 							{
 								isActiveLongPosition = Buy("MarketOrder", Close);
 							}
 						}
 						else
 						{
-							if (Close[0] - ReferenceSMA[0] <= CurrentStop && iSwing14.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
+							if (Close[0] - ReferenceSMA[0] <= current_stop && iSwing14.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
 							{
 								isActiveLongPosition = Buy("MarketOrder", Close);
 							}
 						}
 					}
 				}
-				return new Tuple<bool, bool>(isBOUpSwing4, isActiveLongPosition);
+				return new Tuple<bool, bool>(is_BO_up_swing4, isActiveLongPosition);
 			}
 
 			////		DOWN
 			else if (Type == "Down")
 			{
-				if (!isBODownSwing4)
+				if (!is_BO_down_swing4)
 				{
 					if (Low[0] <= ReferenceBOLevel[0] - TicksToBO * TickSize)
 					{
 						if (ReferenceBar == 0)
 						{
 							Draw.Square(this, @"RedSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] - 3 * TicksToBO * TickSize, Brushes.Red);
-							isBODownSwing4 = true;
+							is_BO_down_swing4 = true;
 							if (Close[0] <= ReferenceBOLevel[0] - TicksToBO * TickSize)
 							{
 								if (iSwing14.SwingLow[0] > Close[0])
 								{
-									if (ReferenceSMA[0] - Close[0] <= CurrentStop)
+									if (ReferenceSMA[0] - Close[0] <= current_stop)
 									{
 										isActiveShortPosition = Sell("MarketOrder", Close);
 									}
 								}
 								else
 								{
-									if (ReferenceSMA[0] - Close[0] <= CurrentStop && Close[0] - iSwing14.SwingLow[0] > iATR[0] * ClosnessFactor)
+									if (ReferenceSMA[0] - Close[0] <= current_stop && Close[0] - iSwing14.SwingLow[0] > iATR[0] * ClosnessFactor)
 									{
 										isActiveShortPosition = Sell("MarketOrder", Close);
 									}
@@ -1984,59 +1984,59 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							isBODownSwing4 = true;
+							is_BO_down_swing4 = true;
 						}
 					}
 					else
 					{
-						if (MinLowSwingLow4 >= ReferenceBOLevel[ReferenceSMABOBar])
+						if (min_low_swingLow4 >= ReferenceBOLevel[ReferenceSMABOBar])
 						{
-							if (MinLowSwingLow4 <= ReferenceBOLevel[ReferenceSMABOBar] - TicksToBO * TickSize)
+							if (min_low_swingLow4 <= ReferenceBOLevel[ReferenceSMABOBar] - TicksToBO * TickSize)
 							{
-								isBODownSwing4 = true;
+								is_BO_down_swing4 = true;
 							}
 						}
 						else
 						{
-							if (MinLowSwingLow4 <= ReferenceBOLevel[0] - TicksToBO * TickSize)
+							if (min_low_swingLow4 <= ReferenceBOLevel[0] - TicksToBO * TickSize)
 							{
-								isBODownSwing4 = true;
+								is_BO_down_swing4 = true;
 							}
 						}
 					}
-					if (!isBODownSwing4)
+					if (!is_BO_down_swing4)
 					{
 						Draw.Square(this, @"RedSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] - 3 * TicksToBO * TickSize, Brushes.Red);
 					}
 				}
 				else
 				{
-					if (MinLowSwingLow4 >= iSwing4.SwingLow[0])
+					if (min_low_swingLow4 >= iSwing4.SwingLow[0])
 					{
-						isBODownSwing4 = false;
+						is_BO_down_swing4 = false;
 					}
-					else if (Close[0] <= LastMinLowSwingLow4 - TicksToBO * TickSize && ReferenceBar == 0)
+					else if (Close[0] <= last_min_low_swingLow4 - TicksToBO * TickSize && ReferenceBar == 0)
 					{
-						Draw.Dot(this, @"CyanSquare" + CurrentBar, true, 0, LastMinLowSwingLow4 - 3 * TicksToBO * TickSize, Brushes.Indigo);
+						Draw.Dot(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow4 - 3 * TicksToBO * TickSize, Brushes.Indigo);
 						if (iSwing14.SwingLow[0] > Close[0])
 						{
-							if (ReferenceSMA[0] - Close[0] <= CurrentStop)
+							if (ReferenceSMA[0] - Close[0] <= current_stop)
 							{
 								isActiveShortPosition = Sell("MarketOrder", Close);
 							}
 						}
 						else
 						{
-							if (ReferenceSMA[0] - Close[0] <= CurrentStop && Close[0] - iSwing14.SwingLow[0] > iATR[0] * ClosnessFactor)
+							if (ReferenceSMA[0] - Close[0] <= current_stop && Close[0] - iSwing14.SwingLow[0] > iATR[0] * ClosnessFactor)
 							{
 								isActiveShortPosition = Sell("MarketOrder", Close);
 							}
 						}
 					}
 				}
-				return new Tuple<bool, bool>(isBODownSwing4, isActiveShortPosition);
+				return new Tuple<bool, bool>(is_BO_down_swing4, isActiveShortPosition);
 			}
-			return new Tuple<bool, bool>(isBOUpSwing4, isActiveLongPosition);
+			return new Tuple<bool, bool>(is_BO_up_swing4, isActiveLongPosition);
 		}
 
 
@@ -2056,7 +2056,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							Draw.Square(this, @"WhiteSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] + 3 * TicksToBO * TickSize, Brushes.White);
 							isBO = true;
-							if (Close[0] - ReferenceSMA[0] <= CurrentStop)
+							if (Close[0] - ReferenceSMA[0] <= current_stop)
 							{
 								isActiveLongPosition = Buy("MarketOrder", Close);
 							}
@@ -2099,7 +2099,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							Draw.Square(this, @"BlackSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] - 3 * TicksToBO * TickSize, Brushes.Black);
 							isBO = true;
-							if (ReferenceSMA[0] - Close[0] <= CurrentStop)
+							if (ReferenceSMA[0] - Close[0] <= current_stop)
 							{
 								isActiveShortPosition = Sell("MarketOrder", Close);
 							}
