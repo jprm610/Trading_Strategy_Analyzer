@@ -75,7 +75,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Swing1 = 4;
 				Swing2 = 14;
 				UnitsTriggerForTrailing = 1;
-				TrailerUnitsStop = 2;
+				TrailingUnitsStop = 2;
 				RiskUnit = 420;
 				IncipientTrandFactor = 2;
 				ATRStopFactor = 3;
@@ -91,12 +91,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (State == State.DataLoaded)
 			{
+
+				// iSMA1 > iSMA2 > iSMA3
 				iSMA1 = SMA(Close, SMA1);
 				iSMA2 = SMA(Close, SMA2);
 				iSMA3 = SMA(Close, SMA3);
+
 				iATR = ATR(Close, ATR1);
+
 				iSwing4 = Swing(Close, Swing1);
 				iSwing14 = Swing(Close, Swing2);
+
 				iSMA1.Plots[0].Brush = Brushes.Red;
 				iSMA2.Plots[0].Brush = Brushes.Gold;
 				iSMA3.Plots[0].Brush = Brushes.Lime;
@@ -176,43 +181,24 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	OnBarUpdate Method
 		protected override void OnBarUpdate()
 		{
-			//			if (my_entry_order != null)
-			//			{
-			//				Print (String.Format("{0} // {1} // {2}", my_entry_order, my_entry_order.Quantity, Time[0]));
-			//			}
-			//			if (my_entry_market != null)
-			//			{
-			//				Print (String.Format("{0} // {1} // {2}", my_entry_market, my_entry_market.Quantity, Time[0]));
-			//			}
-			//			if (my_exit_order != null)
-			//			{
-			//				Print (String.Format("{0} // {1} // {2}", my_exit_order, my_exit_order.Quantity, Time[0]));
-			//			}
-
-			////		Properly stop setting confirmation			
-			if (TrailerUnitsStop - UnitsTriggerForTrailing > 1)
-			{
-				Print("You should correct the stop input data");
-				return;
-			}
-
-			////		Bars in the Chart confirmation		
+			#region Chart_Initialization
 			if (BarsInProgress != 0)
-			{
 				return;
-			}
-			if (CurrentBars[0] < 1)
-			{
+
+			if (CurrentBars[0] < 0)
 				return;
-			}
 
-			last_max_high_swingHigh4 = max_high_swingHigh4;
-			last_max_high_swingHigh14 = max_high_swingHigh14;
-			last_min_low_swingLow4 = min_low_swingLow4;
-			last_min_low_swingLow14 = min_low_swingLow14;
+			if (CurrentBar < BarsRequiredToTrade)
+				return;
 
-			////		Reset isBO variable once a new swing comes up	
-			if (current_swingHigh4 != iSwing4.SwingHigh[0])
+			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
+			if (iSwing14.SwingHigh[0] == 0 || iSwing14.SwingLow[0] == 0 || iSwing4.SwingHigh[0] == 0 || iSwing4.SwingLow[0] == 0 || iATR[0] == 0)
+				return;
+            #endregion
+
+            #region Variable_Reset
+            ////		Reset isBO variable once a new swing comes up	
+            if (current_swingHigh4 != iSwing4.SwingHigh[0])
 			{
 				is_BO_up_swing4 = false;
 			}
@@ -229,8 +215,24 @@ namespace NinjaTrader.NinjaScript.Strategies
 				is_BO_down_swing14 = false;
 			}
 
-			////		Variable setting for recurrent data sources				
-			current_swingHigh4 = iSwing4.SwingHigh[0];
+			last_max_high_swingHigh4 = max_high_swingHigh4;
+			last_max_high_swingHigh14 = max_high_swingHigh14;
+			last_min_low_swingLow4 = min_low_swingLow4;
+			last_min_low_swingLow14 = min_low_swingLow14;
+
+			is_reentry_long = false;
+			is_reentry_short = false;
+
+			////		is_long, is_short reseting 		
+			if (Position.MarketPosition == MarketPosition.Flat) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			{
+				is_long = false;
+				is_short = false;
+			}
+            #endregion
+
+            #region Variable_Initialization       
+            current_swingHigh4 = iSwing4.SwingHigh[0];
 			current_swingLow4 = iSwing4.SwingLow[0];
 			current_swingHigh14 = iSwing14.SwingHigh[0];
 			current_swingLow14 = iSwing14.SwingLow[0];
@@ -240,13 +242,86 @@ namespace NinjaTrader.NinjaScript.Strategies
 			CurrentClose = Close[0];
 			CurrentHigh = High[0];
 			CurrentLow = Low[0];
+            #endregion
 
-			////		is_long, is_short reseting 		
-			if (Position.MarketPosition == MarketPosition.Flat) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
-			{
-				is_long = false;
-				is_short = false;
+            #region Parameters_Check
+            //This block of code checks if the indicator values that will be used in later calculations are correct.
+            //When a SMA of period 200 prints a value in the bar 100 is an example of a wrong indicator value.
+            {
+                //Create an array so that we can iterate through the values.
+                int[] indicators = new int[4];
+				indicators[0] = SMA1;
+				indicators[1] = SMA2;
+				indicators[2] = SMA3;
+				indicators[3] = ATR1;
+
+				//Find the max indicator calculation value.
+				int max_indicator_bar_calculation = 0;
+				for (int i = 0; i < 4; i++)
+				{
+					if (indicators[i] > max_indicator_bar_calculation)
+					{
+						max_indicator_bar_calculation = indicators[i];
+					}
+				}
+
+				//Stop calculations if the chart is not printing correct indicator values.
+				if (CurrentBar < max_indicator_bar_calculation)
+				{
+					return;
+				}
 			}
+
+			//Make sure that the Trailing_Stop won't be set below/above the maximum/minimum stop point. 
+			//This by setting the UnitsTriggerForTrailing by 1 below the TrailingUnitsStop if necessary.
+			if (TrailingUnitsStop - UnitsTriggerForTrailing > 1)
+			{
+				UnitsTriggerForTrailing = TrailingUnitsStop - 1;
+				Print(string.Format("UnitsTriggerForTrailing has been set to {0} to avoid stop conflicts.", UnitsTriggerForTrailing));
+			}
+
+			//This condition evaluates if the SMAs parameters are set incorrectly or unsorted.
+			//The SMAs values have to be set like the following: SMA1 > SMA2 > SMA3.
+			//This block of code sorts (with Bubble Sort) and sets sorted values to the SMAs. 
+			if (SMA1 < SMA2 || SMA1 < SMA3 || SMA2 < SMA3)
+			{
+				//Create an array so that we can iterate through the values.
+				int[] SMAv = new int[3];
+				SMAv[0] = SMA1;
+				SMAv[1] = SMA2;
+				SMAv[2] = SMA3;
+
+				//Sort using the Bubble Sort algorithm.
+				bool isSorted = false;
+				while (!isSorted)
+				{
+					isSorted = true;
+					for (int i = 0; i < 2; i++)
+					{
+						if (SMAv[i] < SMAv[i + 1])
+						{
+							int tmp = SMAv[i];
+							SMAv[i] = SMAv[i + 1];
+							SMAv[i + 1] = tmp;
+							isSorted = false;
+						}
+					}
+				}
+
+				//Asign sorted values to the SMAs indicators.
+				iSMA1 = SMA(Close, SMAv[0]);
+				iSMA2 = SMA(Close, SMAv[1]);
+				iSMA3 = SMA(Close, SMAv[2]);
+
+				//This reassignment is done to avoid this conditional to be executed again.
+				SMA1 = SMAv[0];
+				SMA2 = SMAv[1];
+				SMA3 = SMAv[2];
+
+				Print(string.Format("The SMAs have been sorted as follow: iSMA1: {0} // iSMA2: {1} // iSMA3: {2}", SMAv[0], SMAv[1], SMAv[2]));
+			}
+
+			#endregion
 
 			////		SMA 50-200 Distance Method Calling 	
 			SMA_dis = SMADifferenceABS(iSMA1[0], iSMA2[0]); //Calculates the Distance Between the SMA 50-200			
@@ -296,10 +371,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			if (is_incipient_up_trend && cross_below_20_to_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
 			{
-				if (is_reentry_long)
-				{
-					is_reentry_long = false;
-				}
 				gray_ellipse_long = true; //gray_ellipse_long Flag turning on
 				int ArrayListSize = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize >= 240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
@@ -334,10 +405,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			if (is_incipient_down_trend && cross_above_20_to_50/* && !gray_ellipse_short*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
 			{
-				if (is_reentry_short)
-				{
-					is_reentry_short = false;
-				}
 				gray_ellipse_short = true; //gray_ellipse_long Flag turning on
 				int ArrayListSize = CurrentBar - cross_below_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize >= 240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
@@ -633,7 +700,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (High[0] >= fix_trigger_price_long)
 						{
-							fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+							fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
 							fix_trigger_price_long = High[0];
 							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
@@ -682,7 +749,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (High[0] >= fix_trigger_price_long)
 						{
-							fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+							fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
 							fix_trigger_price_long = High[0];
 							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
@@ -740,7 +807,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					if (High[0] >= fix_trigger_price_long)
 					{
-						fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
 						fix_trigger_price_long = High[0];
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
@@ -797,7 +864,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					if (High[0] >= fix_trigger_price_long)
 					{
-						fix_stop_price_long = High[0] - current_stop * TrailerUnitsStop;
+						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
 						fix_trigger_price_long = High[0];
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * TicksToBO * TickSize, Brushes.Lime);
@@ -862,7 +929,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (Low[0] <= fix_trigger_price_short)
 						{
-							fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+							fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
 							fix_trigger_price_short = Low[0];
 							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
@@ -911,7 +978,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						if (Low[0] <= fix_trigger_price_short)
 						{
-							fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+							fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
 							fix_trigger_price_short = Low[0];
 							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
@@ -969,7 +1036,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					if (Low[0] <= fix_trigger_price_short)
 					{
-						fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
 						fix_trigger_price_short = Low[0];
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
@@ -1026,7 +1093,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					if (Low[0] <= fix_trigger_price_short)
 					{
-						fix_stop_price_short = Low[0] + current_stop * TrailerUnitsStop;
+						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
 						fix_trigger_price_short = Low[0];
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * TicksToBO * TickSize, Brushes.Red);
@@ -1062,8 +1129,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "TrailerUnitsStop", Order = 5, GroupName = "Parameters")]
-		public double TrailerUnitsStop
+		[Display(Name = "TrailingUnitsStop", Order = 5, GroupName = "Parameters")]
+		public double TrailingUnitsStop
 		{ get; set; }
 
 		[NinjaScriptProperty]
