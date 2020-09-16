@@ -1,0 +1,15 @@
+Para enviar a GIT
+git add <File name with extension>
+git commit -m <Version name> -m "Description"
+git push origin <object branch>
+
+Para traer de GIT
+git pull <URL of the remote repository>
+
+git reset --hard <codigo del commit> (devolverse a una versión anterior)
+
+Branches
+git branch (ver ramas)
+git checkout -b <nombre de la rama> (crear rama)
+before switching between brnaches perform a commit of the current work to save it
+git switch <wanted branch> (to change the branch)
