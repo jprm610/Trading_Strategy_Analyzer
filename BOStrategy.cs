@@ -61,7 +61,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Slippage = 0;
 				StartBehavior = StartBehavior.WaitUntilFlat;
 				TimeInForce = TimeInForce.Gtc;
-				TraceOrders = true;
+				TraceOrders = false;
 				RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
 				StopTargetHandling = StopTargetHandling.PerEntryExecution;
 				BarsRequiredToTrade = 20;
@@ -353,21 +353,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Incipient_Trend_Identification
-			////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
-			///UpWard			
-			if (is_upward && SMA_dis >= IncipientTrandFactor * ATR_crossing_value && ATR_crossing_value != 0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
+			//IncipientTrend: There has been a crossing event with the 2 biggest SMAs and
+			//the distance between them is greater or equal to the ATR value at the SMAs crossing event multiplied by the IncipientTrendFactor parameter.
+
+			//If the overall market movement is going upwards and the Incipient Trend is confirmed, the is_incipient_up_trend flag is set to true
+			//while its opposite (is_incipient_down_trend) is set to false and the gray_ellipse_short flag is set to false.
+			if (is_upward && (SMA_dis >= IncipientTrandFactor * ATR_crossing_value))
 			{
-				is_incipient_up_trend = true; //is_incipient_up_trend turning on
-				is_incipient_down_trend = false; //is_incipient_down_trend turning off
-				gray_ellipse_short = false; // gray_ellipse_short Flag Lowering
+				is_incipient_up_trend = true;
+				is_incipient_down_trend = false;
+				gray_ellipse_short = false;
 			}
 
-			///DownWard		
-			else if (is_downward && SMA_dis >= IncipientTrandFactor * ATR_crossing_value && ATR_crossing_value != 0) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
+			//If the overall market movement is going downwards and the Incipient Trend is confirmed, the is_incipient_down_trend flag is set to true
+			//while its opposite (is_incipient_up_trend) is set to false and the gray_ellipse_long flag is set to false.		
+			else if (is_downward && (SMA_dis >= IncipientTrandFactor * ATR_crossing_value))
 			{
-				is_incipient_down_trend = true; //is_incipient_down_trend turning on
-				is_incipient_up_trend = false; //is_incipient_up_trend turning off
-				gray_ellipse_long = false; //gray_ellipse_long Flag Lowering
+				is_incipient_down_trend = true;
+				is_incipient_up_trend = false;
+				gray_ellipse_long = false;
 			}
 			#endregion
 
@@ -1390,7 +1394,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				EnterShortStopMarket(amount_short, BOLevel[0] - distance_to_BO, @"entryOrder");
 				stop_price_short = (BOLevel[0] - distance_to_BO) + current_stop; //calculates the stop price level
 				trigger_price_short = (BOLevel[0] - distance_to_BO) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
-				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, Time[0]));
+//				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, Time[0]));
 				return false;
 			}
 			else
