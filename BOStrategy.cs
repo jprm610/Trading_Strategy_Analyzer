@@ -416,7 +416,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				if (SMAs_cross_and_gray_ellipse_dis >= 240)
 					SMAs_cross_and_gray_ellipse_dis = 240;
 				
-				//Iterate to find the highest swingHigh14
+				//Iterate to find the highest swingHigh2
 				swingHigh2_max = iSwing2.SwingHigh[0];
 				for (int i = 0; i <= SMAs_cross_and_gray_ellipse_dis; i++)
 				{
@@ -426,15 +426,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
-			else if (iSwing2.SwingHigh[0] > swingHigh2_max && gray_ellipse_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
+			//If the swingHigh of the current bar surpass the Max Level of the swingHigh (bigggest swing) where the gray_ellipse_long was originated,
+			//and the current swing is right next to the gray_ellipse swing it means that a Reentry trade can be executed.
+			//That is why the is_reentry_long flag is set to true and the current swingHigh (biggest swing) is saved to keep track of the last swing where a Reentry
+			//trade can be executed.
+			else if (iSwing2.SwingHigh[0] > swingHigh2_max && gray_ellipse_long)
 			{
-				swingHigh2_max_reentry = iSwing2.SwingHigh[0]; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_long = true;
+				swingHigh2_max_reentry = iSwing2.SwingHigh[0];
 			}
 
-			if (High[0] > swingHigh2_max_reentry && is_reentry_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
+			//If the current high surpass the swingHigh where a Reentry trade can be executed, it means that this trade type can't be done again
+			//before another gray_ellipse.
+			//That is why the gray_ellipse_long flag and the is_reentry_long flag are set to false.
+			if (High[0] > swingHigh2_max_reentry && is_reentry_long) 
 			{
-				gray_ellipse_long = false; //Then lower the flag of the GrayEllipse in that direction
+				gray_ellipse_long = false;
 				is_reentry_long = false;
 			}
 			#endregion
@@ -472,15 +479,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}				
 			}
-			else if (iSwing2.SwingLow[0] < swingLow2_min && gray_ellipse_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
+			//If the swingLow of the current bar surpass the Min Level of the swingLow (bigggest swing) where the gray_ellipse_short was originated,
+			//and the current swing is right next to the gray_ellipse swing it means that a Reentry trade can be executed.
+			//That is why the is_reentry_short flag is set to true and the current swingLow (biggest swing) is saved to keep track of the last swing where a Reentry
+			//trade can be executed.
+			else if (iSwing2.SwingLow[0] < swingLow2_min && gray_ellipse_short)
 			{
-				swingLow2_min_reentry = iSwing2.SwingLow[0]; //Then lower the flag of the GrayEllipse in that direction
 				is_reentry_short = true;
+				swingLow2_min_reentry = iSwing2.SwingLow[0];
 			}
 
-			if (Low[0] < swingLow2_min_reentry && is_reentry_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
+			//If the current low surpass the swingLow where a Reentry trade can be executed, it means that this trade type can't be done again
+			//before another gray_ellipse.
+			//That is why the gray_ellipse_short flag and the is_reentry_short flag are set to false.
+			if (Low[0] < swingLow2_min_reentry && is_reentry_short)
 			{
-				gray_ellipse_short = false; //Then lower the flag of the GrayEllipse in that direction
+				gray_ellipse_short = false;
 				is_reentry_short = false;
 			}
             #endregion
