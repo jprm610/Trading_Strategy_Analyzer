@@ -33,7 +33,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private ATR iATR;
 		private Swing iSwing4, iSwing14;
 		private ArrayList LastSwingHigh14Cache, LastSwingLow14Cache;
-		private int cross_above_bar, cross_below_bar, amount_long, fix_amount_long, amount_short, fix_amount_short;
+		private int cross_above_bar, cross_below_bar, amount_long, fix_amount_long, amount_short, fix_amount_short, max_indicator_bar_calculation;
 		private double ATR_crossing_value, SMA_dis, stop_price_long, trigger_price_long, stop_price_short, trigger_price_short, swingHigh14_max, swingLow14_min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
 		private double last_max_high_swingHigh4, last_max_high_swingHigh14, last_min_low_swingLow4, last_min_low_swingLow14, distance_to_BO;
 		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, swingHigh14_max_reentry, swingLow14_min_reentry, max_high_swingHigh4, max_high_swingHigh14, min_low_swingLow4, min_low_swingLow14;
@@ -187,7 +187,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			if (CurrentBars[0] < 0)
 				return;
 
-			if (CurrentBar < BarsRequiredToTrade)
+			if (CurrentBar < BarsRequiredToTrade || CurrentBar < max_indicator_bar_calculation)
 				return;
 
 			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
@@ -250,6 +250,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#region Parameters_Check
 			//This block of code checks if the indicator values that will be used in later calculations are correct.
 			//When a SMA of period 200 prints a value in the bar 100 is an example of a wrong indicator value.
+			//This conditional only executes once, that is why its argument.
+			if (max_indicator_bar_calculation == 0)
 			{
 				//Create an array so that we can iterate through the values.
 				int[] indicators = new int[4];
@@ -259,7 +261,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				indicators[3] = ATR1;
 
 				//Find the max indicator calculation value.
-				int max_indicator_bar_calculation = 0;
 				for (int i = 0; i < 4; i++)
 				{
 					if (indicators[i] > max_indicator_bar_calculation)
@@ -271,6 +272,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				//Stop calculations if the chart is not printing correct indicator values.
 				if (CurrentBar < max_indicator_bar_calculation)
 				{
+					Print(string.Format("BarsRequiredToTrade has been updated to {0} to avoid wrong indicator values.", max_indicator_bar_calculation));
 					return;
 				}
 			}
