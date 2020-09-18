@@ -25,7 +25,7 @@ using NinjaTrader.NinjaScript.DrawingTools;
 
 namespace NinjaTrader.NinjaScript.Strategies
 {
-	public class BOStrategy : Strategy
+	public class BOStrategyC : Strategy
 	{
 		#region Variables
 		private SMA iSMA1, iSMA2, iSMA3;
@@ -48,7 +48,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			if (State == State.SetDefaults)
 			{
 				Description = @"Strategy that Operates Breakouts";
-				Name = "BOStrategy";
+				Name = "BOStrategyC";
 				Calculate = Calculate.OnBarClose;
 				EntriesPerDirection = 1;
 				EntryHandling = EntryHandling.AllEntries;
@@ -508,27 +508,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             ///Long			 
             if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
-				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
-				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
-				bool isActiveLongPosition = false;
-				if (iSwing1.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
-					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 4 is above the SMA 50 then...
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "High");
-						isSwingHigh4 = ReturnedValues.Item1;
-						isActiveLongPosition = ReturnedValues.Item2;
-						is_BO_up_swing1 = ReturnedValues.Item3;
-					}
-
-				///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14				
-				if (iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition)
-					if(iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
-					{
-					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
-					bool isSwingHigh14 = ReturnedValues.Item1;
-					isActiveLongPosition = ReturnedValues.Item2;
-					is_BO_up_swing2 = ReturnedValues.Item3;
-				}
+				TradeId(true);
 			}
 			#endregion
 
@@ -536,27 +516,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			///Short		 
 			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
-				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
-				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
-				bool isActiveShortPosition = false;
-				if (iSwing1.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
-					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "Low");
-						isSwingLow4 = ReturnedValues.Item1;
-						isActiveShortPosition = ReturnedValues.Item2;
-						is_BO_down_swing1 = ReturnedValues.Item3;
-					}
-
-				///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14			
-				if (iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition)
-					if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "Low");
-						bool isSwingLow14 = ReturnedValues.Item1;
-						isActiveShortPosition = ReturnedValues.Item2;
-						is_BO_down_swing2 = ReturnedValues.Item3;
-					}
+				TradeId(false);
 			}
 			#endregion
 			#endregion
@@ -626,25 +586,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				///Normal traditional
 				if (is_upward)
 				{
-					///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
-					bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
-					bool isActiveLongPosition = false;
-					if (iSwing1.SwingHigh[0] >= iSMA2[0] - iATR[0] * ClosnessToTrade && (iSwing1.SwingHigh[0] + distance_to_BO) - iSMA2[0] <= current_stop) // If the reference Swing High 4 is above the SMA 50 then...
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA2, "High");
-						isSwingHigh4 = ReturnedValues.Item1;
-						isActiveLongPosition = ReturnedValues.Item2;
-						is_BO_up_swing1 = ReturnedValues.Item3;
-					}
-
-					///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14					
-					if (iSwing2.SwingHigh[0] >= iSMA2[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition && (iSwing2.SwingHigh[0] + distance_to_BO) - iSMA2[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA2, "High");
-						bool isSwingHigh14 = ReturnedValues.Item1;
-						isActiveLongPosition = ReturnedValues.Item2;
-						is_BO_up_swing2 = ReturnedValues.Item3;
-					}
+					TradeId(true);
 				}
 				#endregion
 
@@ -685,24 +627,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				///Normal traditional
 				if (is_downward)
 				{
-					///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4		
-					bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
-					bool isActiveShortPosition = false;
-					if (iSwing1.SwingLow[0] <= iSMA2[0] + iATR[0] * ClosnessToTrade && iSMA2[0] - (iSwing1.SwingLow[0] - distance_to_BO) <= current_stop)
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA2, "Low");
-						isSwingLow4 = ReturnedValues.Item1;
-						isActiveShortPosition = ReturnedValues.Item2;
-						is_BO_down_swing1 = ReturnedValues.Item3;
-					}
-					///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14				
-					if (iSwing2.SwingLow[0] <= iSMA2[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition && iSMA2[0] - (iSwing2.SwingLow[0] - distance_to_BO) <= current_stop)
-					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA2, "Low");
-						bool isSwingLow14 = ReturnedValues.Item1;
-						isActiveShortPosition = ReturnedValues.Item2;
-						is_BO_down_swing2 = ReturnedValues.Item3;
-					}
+					TradeId(false);
 				}
 				#endregion
 
@@ -1310,7 +1235,65 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		#region Functions
 		////	METHODS			
+		public void TradeId(bool isUpward)
+        {
+			if (isUpward)
+			{
+				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
+				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
+				bool isActiveLongPosition = false;
+				if (iSwing1.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
+				{
+					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 4 is above the SMA 50 then...
+					{
+						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "High");
+						isSwingHigh4 = ReturnedValues.Item1;
+						isActiveLongPosition = ReturnedValues.Item2;
+						is_BO_up_swing1 = ReturnedValues.Item3;
+					}
+				}
 
+				///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14				
+				if (iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition)
+				{
+					if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+					{
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
+						bool isSwingHigh14 = ReturnedValues.Item1;
+						isActiveLongPosition = ReturnedValues.Item2;
+						is_BO_up_swing2 = ReturnedValues.Item3;
+					}
+				}
+			}
+			else
+            {
+				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
+				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
+				bool isActiveShortPosition = false;
+				if (iSwing1.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
+				{
+					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
+					{
+						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "Low");
+						isSwingLow4 = ReturnedValues.Item1;
+						isActiveShortPosition = ReturnedValues.Item2;
+						is_BO_down_swing1 = ReturnedValues.Item3;
+					}
+				}
+
+				///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14			
+				if (iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition)
+				{
+					if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
+					{
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "Low");
+						bool isSwingLow14 = ReturnedValues.Item1;
+						isActiveShortPosition = ReturnedValues.Item2;
+						is_BO_down_swing2 = ReturnedValues.Item3;
+					}
+				}
+			}
+		}
 		////	Swing Identification Method				
 		public bool SwingIdentifiacation(ISeries<double> BarClose, ISeries<double> OppositeSwing, int ReferenceSwingBar, bool isPotentialSwing, string SwingType)
 		{
