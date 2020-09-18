@@ -497,66 +497,93 @@ namespace NinjaTrader.NinjaScript.Strategies
 				gray_ellipse_short = false;
 				is_reentry_short = false;
 			}
-            #endregion
-            #endregion
+			#endregion
+			#endregion
 
-            #region Trade_Identification
-            #region Red_Trade
-            ////		TRADE IDENTIFICATION			
-            ////		Red Trade Type Process
-            #region Long
-            ///Long			 
-            if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
-			{
-				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
-				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
+			#region Trade_Identification
+			#region Red_Trade
+			//Red Trades are executed every time the price crosses (above/below) the SMA1.
+			#region Long
+			//If the overall market movement is downwards and the current position is short or there is not a current position yet,
+			//evaluate if there is a swing near the SMA1 that represents a posible crossing movement.
+			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short))
+			{								
+				bool isSwingHigh1 = false;
+				bool isSwingHigh2 = false;
 				bool isActiveLongPosition = false;
+
+				//Validate whether there is a valid swingHigh (swing1) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
+				//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
 				if (iSwing1.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
-					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 4 is above the SMA 50 then...
+				{
+					//If the Stop range contains at least one of the 2 biggest SMAs
+					//call the Swing1 function and store the flags in the three variables below for its later use.
+					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "High");
-						isSwingHigh4 = ReturnedValues.Item1;
+						isSwingHigh1 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
 						is_BO_up_swing1 = ReturnedValues.Item3;
 					}
+				}
 
-				///Validate whether there is a valid higher low strength 14 (HL14) in case there is no valid HL4 and if so then send a long stop order above the reference swing high 14				
-				if (iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh4 && !isActiveLongPosition)
-					if(iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+				//Validate whether there is a valid swingHigh (swing2) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
+				//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
+				//This conditional will only be executed if there is not an active long position and if there is not a swingHigh1 recognized.
+				if (iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade && !isSwingHigh1 && !isActiveLongPosition)
+				{
+					//If the Stop range contains at least one of the 2 biggest SMAs
+					//call the Swing2 function and store the flags in the three variables below for its later use.
+					if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 					{
-					Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
-					bool isSwingHigh14 = ReturnedValues.Item1;
-					isActiveLongPosition = ReturnedValues.Item2;
-					is_BO_up_swing2 = ReturnedValues.Item3;
+						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "High");
+						isSwingHigh2 = ReturnedValues.Item1;
+						isActiveLongPosition = ReturnedValues.Item2;
+						is_BO_up_swing2 = ReturnedValues.Item3;
+					}
 				}
 			}
 			#endregion
 
 			#region Short
-			///Short		 
-			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+			//If the overall market movement is upwards and the current position is long or there is not a current position yet,
+			//evaluate if there is a swing near the SMA1 that represents a posible crossing movement.
+			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long))
 			{
-				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
-				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
+				bool isSwingLow1 = false;
+				bool isSwingLow2 = false;
 				bool isActiveShortPosition = false;
+
+				//Validate whether there is a valid swingLow (swing1) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
+				//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.		
 				if (iSwing1.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
+				{
+					//If the Stop range contains at least one of the 2 biggest SMAs
+					//call the Swing1 function and store the flags in the three variables below for its later use.
 					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing4(iSMA1, "Low");
-						isSwingLow4 = ReturnedValues.Item1;
+						isSwingLow1 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
 						is_BO_down_swing1 = ReturnedValues.Item3;
 					}
+				}
 
-				///Validate whether there is a valid lower high strength 14 (LH14) in case there is no valid LH4 and if so then send a short stop order below the reference swing low 14			
-				if (iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow4 && !isActiveShortPosition)
+				//Validate whether there is a valid swingLow (swing2) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
+				//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
+				//This conditional will only be executed if there is not an active short position and if there is not a swingLow1 recognized.			
+				if (iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade && !isSwingLow1 && !isActiveShortPosition)
+				{
+					//If the Stop range contains at least one of the 2 biggest SMAs
+					//call the Swing2 function and store the flags in the three variables below for its later use.
 					if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing14(iSMA1, "Low");
-						bool isSwingLow14 = ReturnedValues.Item1;
+						isSwingLow2 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
 						is_BO_down_swing2 = ReturnedValues.Item3;
 					}
+				}
 			}
 			#endregion
 			#endregion
