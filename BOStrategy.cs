@@ -25,7 +25,7 @@ using NinjaTrader.NinjaScript.DrawingTools;
 
 namespace NinjaTrader.NinjaScript.Strategies
 {
-	public class BOStrategyC : Strategy
+	public class BOStrategy : Strategy
 	{
 		#region Variables
 		private SMA iSMA1, iSMA2, iSMA3;
@@ -48,7 +48,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			if (State == State.SetDefaults)
 			{
 				Description = @"Strategy that Operates Breakouts";
-				Name = "BOStrategyC";
+				Name = "BOStrategy";
 				Calculate = Calculate.OnBarClose;
 				EntriesPerDirection = 1;
 				EntryHandling = EntryHandling.AllEntries;
