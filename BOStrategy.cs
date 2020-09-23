@@ -1461,41 +1461,45 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	METHODS			
 
 		////	Swing Identification Method				
-		public bool SwingIdentifiacation(ISeries<double> BarClose, ISeries<double> OppositeSwing, int ReferenceSwingBar, bool isPotentialSwing, string SwingType)
+		public bool SwingIdentifiacation(ISeries<double> opposite_swing, int reference_swing_bar, bool is_swingHigh)
 		{
-			if (SwingType == "SwingHigh")
+			bool is_potential_swing = true;
+
+			if (is_swingHigh)
 			{
-				for (int i = 0; i <= ReferenceSwingBar; i++) // Walks every bar of the potential HL4
+				for (int i = 0; i <= reference_swing_bar; i++) // Walks every bar of the potential HL4
 				{
-					if (BarClose[i] < OppositeSwing[i + 1] - distance_to_BO) //if there is any violation (close below a former swinglow) within the swing then...
+					if (Close[i] < opposite_swing[i + 1] - distance_to_BO) //if there is any violation (close below a former swinglow) within the swing then...
 					{
-						isPotentialSwing = false; //invalidates the swing high 4 (HL4)
+						is_potential_swing = false; //invalidates the swing high 4 (HL4)
 						break;
 					}
-					if (BarClose[i] < OppositeSwing[ReferenceSwingBar + 1] - distance_to_BO) // if there is any close below the Last OppositeSwing before the current swinghigh4 reference for the entrance (the one that originated the inicial movement) then...
+
+					if (Close[i] < opposite_swing[reference_swing_bar + 1] - distance_to_BO) // if there is any close below the Last opposite_swing before the current swinghigh4 reference for the entrance (the one that originated the inicial movement) then...
 					{
-						isPotentialSwing = false; // invalidates the swing high 4 (HL4)
+						is_potential_swing = false; // invalidates the swing high 4 (HL4)
 						break;
 					}
 				}
 			}
-			else if (SwingType == "SwingLow")
+			else
 			{
-				for (int i = 0; i <= ReferenceSwingBar; i++) // Walks every bar of the potential HL4
+				for (int i = 0; i <= reference_swing_bar; i++) // Walks every bar of the potential HL4
 				{
-					if (BarClose[i] > OppositeSwing[i + 1] + distance_to_BO) //if there is any violation (close below a former swinglow) within the swing then...
+					if (Close[i] > opposite_swing[i + 1] + distance_to_BO) //if there is any violation (close below a former swinglow) within the swing then...
 					{
-						isPotentialSwing = false; //invalidates the swing high 4 (HL4)
+						is_potential_swing = false; //invalidates the swing high 4 (HL4)
 						break;
 					}
-					if (BarClose[i] > OppositeSwing[ReferenceSwingBar + 1] + distance_to_BO) // if there is any close below the Last OppositeSwing before the current swinghigh4 reference for the entrance (the one that originated the inicial movement) then...
+
+					if (Close[i] > opposite_swing[reference_swing_bar + 1] + distance_to_BO) // if there is any close below the Last opposite_swing before the current swinghigh4 reference for the entrance (the one that originated the inicial movement) then...
 					{
-						isPotentialSwing = false; // invalidates the swing high 4 (HL4)
+						is_potential_swing = false; // invalidates the swing high 4 (HL4)
 						break;
 					}
 				}
 			}
-			return isPotentialSwing;
+			return is_potential_swing;
 		}
 
 		////	Swing Location and Characterization Method				
@@ -1599,7 +1603,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 4 HIGH			
 			if (is_high)
 			{
-				bool is_swingHigh1 = SwingIdentifiacation(Close, iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true, "SwingHigh");
+				bool is_swingHigh1 = SwingIdentifiacation(iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true);
 				bool is_active_long_position = false;
 				double swingHigh1_mid_level;
 				int extreme_level_bar;
@@ -1742,7 +1746,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 4 LOW
 			else
 			{
-				bool is_swingLow1 = SwingIdentifiacation(Close, iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), true, "SwingLow");
+				bool is_swingLow1 = SwingIdentifiacation(iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), false);
 				bool is_active_short_position = false;
 				double swingLow1_mid_level;
 				int extreme_level_bar;
@@ -1886,7 +1890,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 14 HIGH
 			if (is_high)
 			{
-				bool is_swingHigh2 = SwingIdentifiacation(Close, iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true, "SwingHigh");
+				bool is_swingHigh2 = SwingIdentifiacation(iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true);
 				bool is_active_long_position = false;
 				double swingHigh2_mid_level;
 				int extreme_level_bar;
@@ -1957,7 +1961,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 14 LOW
 			else
 			{
-				bool is_swingLow2 = SwingIdentifiacation(Close, iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), true, "SwingLow");
+				bool is_swingLow2 = SwingIdentifiacation(iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), false);
 				bool is_active_short_position = false;
 				double swingLow2_mid_level;
 				int extreme_level_bar;
