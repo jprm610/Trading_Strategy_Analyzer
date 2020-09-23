@@ -521,7 +521,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//call the Swing1 function and store the flags in the three variables below for its later use.
 					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, "High");
+						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
 						isSwingHigh1 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
 						is_BO_up_swing1 = ReturnedValues.Item3;
@@ -540,7 +540,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//call the Swing2 function and store the flags in the three variables below for its later use.
 						if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 						{
-							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, "High");
+							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
 							isSwingHigh2 = ReturnedValues.Item1;
 							isActiveLongPosition = ReturnedValues.Item2;
 							is_BO_up_swing2 = ReturnedValues.Item3;
@@ -567,7 +567,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//call the Swing1 function and store the flags in the three variables below for its later use.
 					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, "Low");
+						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
 						isSwingLow1 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
 						is_BO_down_swing1 = ReturnedValues.Item3;
@@ -586,7 +586,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//call the Swing2 function and store the flags in the three variables below for its later use.
 						if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
 						{
-							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, "Low");
+							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
 							isSwingLow2 = ReturnedValues.Item1;
 							isActiveShortPosition = ReturnedValues.Item2;
 							is_BO_down_swing2 = ReturnedValues.Item3;
@@ -615,7 +615,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//call the Swing1 function and store the flags in the three variables below for its later use.
 					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, "High");
+						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
 						isSwingHigh1 = ReturnedValues.Item1;
 						isActiveLongPosition = ReturnedValues.Item2;
 						is_BO_up_swing1 = ReturnedValues.Item3;
@@ -633,7 +633,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//call the Swing2 function and store the flags in the three variables below for its later use.
 						if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 						{
-							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, "High");
+							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
 							isSwingHigh2 = ReturnedValues.Item1;
 							isActiveLongPosition = ReturnedValues.Item2;
 							is_BO_up_swing2 = ReturnedValues.Item3;
@@ -659,7 +659,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//call the Swing1 function and store the flags in the three variables below for its later use.
 					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
 					{
-						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, "Low");
+						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
 						isSwingLow1 = ReturnedValues.Item1;
 						isActiveShortPosition = ReturnedValues.Item2;
 						is_BO_down_swing1 = ReturnedValues.Item3;
@@ -677,7 +677,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//call the Swing2 function and store the flags in the three variables below for its later use.
 						if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
 						{
-							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, "Low");
+							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
 							isSwingLow2 = ReturnedValues.Item1;
 							isActiveShortPosition = ReturnedValues.Item2;
 							is_BO_down_swing2 = ReturnedValues.Item3;
@@ -712,7 +712,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							//call the Swing1 function and store the flags in the three variables below for its later use.
 							if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 							{
-								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA2, "High");
+								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA2, true);
 								isSwingHigh1 = ReturnedValues.Item1;
 								isActiveLongPosition = ReturnedValues.Item2;
 								is_BO_up_swing1 = ReturnedValues.Item3;
@@ -728,9 +728,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								//If the Stop range contains the SMA2,
 								//call the Swing2 function and store the flags in the three variables below for its later use.
-								if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop) // If the reference Swing High 14 is above the SMA 50 and there is no HL4 then...
+								if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 								{
-									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA2, "High");
+									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA2, true);
 									isSwingHigh2 = ReturnedValues.Item1;
 									isActiveLongPosition = ReturnedValues.Item2;
 									is_BO_up_swing2 = ReturnedValues.Item3;
@@ -755,7 +755,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							//call the Swing1 function and store the flags in the three variables below for its later use.
 							if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 							{
-								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, "High");
+								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
 								isSwingHigh1 = ReturnedValues.Item1;
 								isActiveLongPosition = ReturnedValues.Item2;
 								is_BO_up_swing1 = ReturnedValues.Item3;
@@ -773,7 +773,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								//call the Swing2 function and store the flags in the three variables below for its later use.
 								if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 								{
-									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, "High");
+									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
 									isSwingHigh2 = ReturnedValues.Item1;
 									isActiveLongPosition = ReturnedValues.Item2;
 									is_BO_up_swing2 = ReturnedValues.Item3;
@@ -808,7 +808,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							//call the Swing1 function and store the flags in the three variables below for its later use.
 							if (iSMA2[0] - (iSwing1.SwingLow[0] - distance_to_BO) <= current_stop)
 							{
-								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA2, "Low");
+								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA2, false);
 								isSwingLow1 = ReturnedValues.Item1;
 								isActiveShortPosition = ReturnedValues.Item2;
 								is_BO_down_swing1 = ReturnedValues.Item3;
@@ -826,7 +826,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								//call the Swing2 function and store the flags in the three variables below for its later use.
 								if (iSMA2[0] - (iSwing2.SwingLow[0] - distance_to_BO) <= current_stop)
 								{
-									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA2, "Low");
+									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA2, false);
 									isSwingLow2 = ReturnedValues.Item1;
 									isActiveShortPosition = ReturnedValues.Item2;
 									is_BO_down_swing2 = ReturnedValues.Item3;
@@ -851,7 +851,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							//call the Swing1 function and store the flags in the three variables below for its later use.
 							if (iSMA1[0] - (iSwing1.SwingLow[0] - distance_to_BO) <= current_stop)
 							{
-								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, "Low");
+								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
 								isSwingLow1 = ReturnedValues.Item1;
 								isActiveShortPosition = ReturnedValues.Item2;
 								is_BO_down_swing1 = ReturnedValues.Item3;
@@ -869,7 +869,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								//call the Swing1 function and store the flags in the three variables below for its later use.
 								if (iSMA1[0] - (iSwing2.SwingLow[0] - distance_to_BO) <= current_stop)
 								{
-									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, "Low");
+									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
 									isSwingLow2 = ReturnedValues.Item1;
 									isActiveShortPosition = ReturnedValues.Item2;
 									is_BO_down_swing2 = ReturnedValues.Item3;
@@ -1499,7 +1499,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	Swing Location and Characterization Method				
-		public Tuple<double, double, int> SwingLocation(ISeries<double> BarExtreme, ISeries<double> ReferenceSwing, int ReferenceSwingBar, string SwingType)
+		public Tuple<double, double, int> Swing_Characterization(ISeries<double> BarExtreme, ISeries<double> ReferenceSwing, int ReferenceSwingBar, string SwingType)
 		{
 			double SwingMidLevel = ReferenceSwing[0];
 			double ExtremeLevel = BarExtreme[0]; //initializing the variable that is going to keep the max high value of the swing, with the array firts value for comparison purposes
@@ -1594,20 +1594,23 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		////	Swing4 operation Method			
 		///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4	
-		public Tuple<bool, bool, bool> Swing_1(ISeries<double> ReferenceSMA, string Type)
+		public Tuple<bool, bool, bool> Swing_1(ISeries<double> reference_SMA, bool is_high)
 		{
 			////		SWING 4 HIGH			
-			if (Type == "High")
+			if (is_high)
 			{
-				bool isSwingHigh4 = SwingIdentifiacation(Close, iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true, "SwingHigh");
-				bool isActiveLongPosition = false;
-				if (isSwingHigh4) //if the HL4 is confirmated after the Last two validations then...
+				bool is_swingHigh1 = SwingIdentifiacation(Close, iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true, "SwingHigh");
+				bool is_active_long_position = false;
+				double swingHigh1_mid_level;
+				int extreme_level_bar;
+
+				if (is_swingHigh1) //if the HL4 is confirmated after the Last two validations then...
 				{
-					Tuple<double, double, int> ReturnedValues = SwingLocation(High, iSwing1.SwingHigh, iSwing1.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
+					Tuple<double, double, int> ReturnedValues = Swing_Characterization(High, iSwing1.SwingHigh, iSwing1.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
 					max_high_swingHigh1 = ReturnedValues.Item1;
-					double SwingHigh4MidLevel = ReturnedValues.Item2;
-					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingHigh4MidLevel >= ReferenceSMA[0] /*&& max_high_swingHigh1 < iSwing1.SwingHigh[0] + distance_to_BO*/)
+					swingHigh1_mid_level = ReturnedValues.Item2;
+					extreme_level_bar = ReturnedValues.Item3;
+					if (swingHigh1_mid_level >= reference_SMA[0] /*&& max_high_swingHigh1 < iSwing1.SwingHigh[0] + distance_to_BO*/)
 					{
 						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
@@ -1617,16 +1620,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 								{
 									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 									{
-										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingHigh, iSwing1.SwingHigh, ReferenceSMA, ExtremeLevelBar, is_BO_up_swing1, max_high_swingHigh1, "Up");
+										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingHigh, iSwing1.SwingHigh, reference_SMA, extreme_level_bar, is_BO_up_swing1, max_high_swingHigh1, "Up");
 										is_BO_up_swing1 = ReturnedValues1.Item1;
-										isActiveLongPosition = ReturnedValues1.Item2;
+										is_active_long_position = ReturnedValues1.Item2;
 									}
 									else
 									{
 										if (max_high_swingHigh1 < iSwing2.SwingHigh[0] + distance_to_BO)
 										{
 											Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing2.SwingHigh[0] + 3 * distance_to_BO, Brushes.Lime); //Draw a mark to know where all conditions have been met
-											isActiveLongPosition = Buy("PendingOrder", iSwing2.SwingHigh);
+											is_active_long_position = Buy("PendingOrder", iSwing2.SwingHigh);
 
 										}
 										else
@@ -1640,7 +1643,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 									if (max_high_swingHigh1 < iSwing2.SwingHigh[0] + distance_to_BO)
 									{
 										Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing2.SwingHigh[0] + 3 * distance_to_BO, Brushes.Lime); //Draw a mark to know where all conditions have been met
-										isActiveLongPosition = Buy("PendingOrder", iSwing2.SwingHigh);
+										is_active_long_position = Buy("PendingOrder", iSwing2.SwingHigh);
 
 									}
 									else
@@ -1656,16 +1659,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 								{
-									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing1.SwingHigh, iSwing1.SwingHigh, ReferenceSMA, ExtremeLevelBar, is_BO_up_swing1, max_high_swingHigh1, "Up");
+									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing1.SwingHigh, iSwing1.SwingHigh, reference_SMA, extreme_level_bar, is_BO_up_swing1, max_high_swingHigh1, "Up");
 									is_BO_up_swing1 = ReturnedValues1.Item1;
-									isActiveLongPosition = ReturnedValues1.Item2;
+									is_active_long_position = ReturnedValues1.Item2;
 								}
 								else
 								{
 									if (max_high_swingHigh1 < iSwing1.SwingHigh[0] + distance_to_BO)
 									{
 										Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing1.SwingHigh[0] + 3 * distance_to_BO, Brushes.Lime); //Draw a mark to know where all conditions have been met
-										isActiveLongPosition = Buy("PendingOrder", iSwing1.SwingHigh);
+										is_active_long_position = Buy("PendingOrder", iSwing1.SwingHigh);
 
 									}
 									else
@@ -1679,7 +1682,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (max_high_swingHigh1 < iSwing1.SwingHigh[0] + distance_to_BO)
 								{
 									Draw.Dot(this, @"LimeDot" + CurrentBar, true, 0, iSwing1.SwingHigh[0] + 3 * distance_to_BO, Brushes.Lime); //Draw a mark to know where all conditions have been met
-									isActiveLongPosition = Buy("PendingOrder", iSwing1.SwingHigh);
+									is_active_long_position = Buy("PendingOrder", iSwing1.SwingHigh);
 
 								}
 								else
@@ -1689,65 +1692,68 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
-					else if (iSwing1.SwingHigh[0] >= ReferenceSMA[0])
+					else if (iSwing1.SwingHigh[0] >= reference_SMA[0])
 					{
 						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, ReferenceSMA, max_high_swingHigh1, ExtremeLevelBar, 0, "Up", "Swing4", is_BO_up_swing1);
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, "Up", "Swing4", is_BO_up_swing1);
 							is_BO_up_swing1 = ReturnedValues1.Item1;
-							isActiveLongPosition = ReturnedValues1.Item2;
+							is_active_long_position = ReturnedValues1.Item2;
 						}
 						else
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(iSwing1.SwingHigh, ReferenceSMA, ExtremeLevelBar, 0, "Up");
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(iSwing1.SwingHigh, reference_SMA, extreme_level_bar, 0, "Up");
 							is_BO_up_swing1 = ReturnedValues1.Item1;
-							isActiveLongPosition = ReturnedValues1.Item2;
+							is_active_long_position = ReturnedValues1.Item2;
 						}
 					}
 					else
 					{
 						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
-							if (iSwing2.SwingHigh[0] < ReferenceSMA[0])
+							if (iSwing2.SwingHigh[0] < reference_SMA[0])
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(ReferenceSMA, ReferenceSMA, max_high_swingHigh1, ExtremeLevelBar, ExtremeLevelBar, "Up", "Swing4", is_BO_up_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, max_high_swingHigh1, extreme_level_bar, extreme_level_bar, "Up", "Swing4", is_BO_up_swing1);
 								is_BO_up_swing1 = ReturnedValues1.Item1;
-								isActiveLongPosition = ReturnedValues1.Item2;
+								is_active_long_position = ReturnedValues1.Item2;
 							}
 							else
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, ReferenceSMA, max_high_swingHigh1, ExtremeLevelBar, 0, "Up", "Swing4", is_BO_up_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, "Up", "Swing4", is_BO_up_swing1);
 								is_BO_up_swing1 = ReturnedValues1.Item1;
-								isActiveLongPosition = ReturnedValues1.Item2;
+								is_active_long_position = ReturnedValues1.Item2;
 							}
 						}
 						else
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(ReferenceSMA, ReferenceSMA, ExtremeLevelBar, ExtremeLevelBar, "Up");
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(reference_SMA, reference_SMA, extreme_level_bar, extreme_level_bar, "Up");
 							is_BO_up_swing1 = ReturnedValues1.Item1;
-							isActiveLongPosition = ReturnedValues1.Item2;
+							is_active_long_position = ReturnedValues1.Item2;
 						}
 					}
 				}
 				if (is_BO_up_swing1)
 				{
-					isSwingHigh4 = false;
+					is_swingHigh1 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingHigh4, isActiveLongPosition, is_BO_up_swing1);
+				return new Tuple<bool, bool, bool>(is_swingHigh1, is_active_long_position, is_BO_up_swing1);
 			}
 
 			////		SWING 4 LOW
-			else if (Type == "Low")
+			else
 			{
-				bool isSwingLow4 = SwingIdentifiacation(Close, iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), true, "SwingLow");
-				bool isActiveShortPosition = false;
-				if (isSwingLow4)
+				bool is_swingLow1 = SwingIdentifiacation(Close, iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), true, "SwingLow");
+				bool is_active_short_position = false;
+				double swingLow1_mid_level;
+				int extreme_level_bar;
+
+				if (is_swingLow1)
 				{
-					Tuple<double, double, int> ReturnedValues = SwingLocation(Low, iSwing1.SwingLow, iSwing1.SwingLowBar(0, 1, CurrentBar), "SwingLow");
+					Tuple<double, double, int> ReturnedValues = Swing_Characterization(Low, iSwing1.SwingLow, iSwing1.SwingLowBar(0, 1, CurrentBar), "SwingLow");
 					min_low_swingLow1 = ReturnedValues.Item1;
-					double SwingLow4MidLevel = ReturnedValues.Item2;
-					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingLow4MidLevel <= ReferenceSMA[0] /*&& min_low_swingLow1 > iSwing1.SwingLow[0] - distance_to_BO*/)
+					swingLow1_mid_level = ReturnedValues.Item2;
+					extreme_level_bar = ReturnedValues.Item3;
+					if (swingLow1_mid_level <= reference_SMA[0] /*&& min_low_swingLow1 > iSwing1.SwingLow[0] - distance_to_BO*/)
 					{
 						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
 						{
@@ -1757,16 +1763,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 								{
 									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 									{
-										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingLow, iSwing1.SwingLow, ReferenceSMA, ExtremeLevelBar, is_BO_down_swing1, min_low_swingLow1, "Down");
+										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingLow, iSwing1.SwingLow, reference_SMA, extreme_level_bar, is_BO_down_swing1, min_low_swingLow1, "Down");
 										is_BO_down_swing1 = ReturnedValues1.Item1;
-										isActiveShortPosition = ReturnedValues1.Item2;
+										is_active_short_position = ReturnedValues1.Item2;
 									}
 									else
 									{
 										if (min_low_swingLow1 > iSwing2.SwingLow[0] - distance_to_BO)
 										{
 											Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing2.SwingLow[0] - 3 * distance_to_BO, Brushes.Red);
-											isActiveShortPosition = Sell("PendingOrder", iSwing2.SwingLow);
+											is_active_short_position = Sell("PendingOrder", iSwing2.SwingLow);
 										}
 										else
 										{
@@ -1779,7 +1785,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 									if (min_low_swingLow1 > iSwing2.SwingLow[0] - distance_to_BO)
 									{
 										Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing2.SwingLow[0] - 3 * distance_to_BO, Brushes.Red);
-										isActiveShortPosition = Sell("PendingOrder", iSwing2.SwingLow);
+										is_active_short_position = Sell("PendingOrder", iSwing2.SwingLow);
 									}
 									else
 									{
@@ -1794,16 +1800,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 								{
-									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing1.SwingLow, iSwing1.SwingLow, ReferenceSMA, ExtremeLevelBar, is_BO_down_swing1, min_low_swingLow1, "Down");
+									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing1.SwingLow, iSwing1.SwingLow, reference_SMA, extreme_level_bar, is_BO_down_swing1, min_low_swingLow1, "Down");
 									is_BO_down_swing1 = ReturnedValues1.Item1;
-									isActiveShortPosition = ReturnedValues1.Item2;
+									is_active_short_position = ReturnedValues1.Item2;
 								}
 								else
 								{
 									if (min_low_swingLow1 > iSwing1.SwingLow[0] - distance_to_BO)
 									{
 										Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing1.SwingLow[0] - 3 * distance_to_BO, Brushes.Red);
-										isActiveShortPosition = Sell("PendingOrder", iSwing1.SwingLow);
+										is_active_short_position = Sell("PendingOrder", iSwing1.SwingLow);
 									}
 									else
 									{
@@ -1816,7 +1822,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (min_low_swingLow1 > iSwing1.SwingLow[0] - distance_to_BO)
 								{
 									Draw.Dot(this, @"RedDot" + CurrentBar, true, 0, iSwing1.SwingLow[0] - 3 * distance_to_BO, Brushes.Red);
-									isActiveShortPosition = Sell("PendingOrder", iSwing1.SwingLow);
+									is_active_short_position = Sell("PendingOrder", iSwing1.SwingLow);
 								}
 								else
 								{
@@ -1825,79 +1831,81 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
-					else if (iSwing1.SwingLow[0] <= ReferenceSMA[0])
+					else if (iSwing1.SwingLow[0] <= reference_SMA[0])
 					{
 						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, ReferenceSMA, min_low_swingLow1, ExtremeLevelBar, 0, "Down", "Swing4", is_BO_down_swing1);
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, "Down", "Swing4", is_BO_down_swing1);
 							is_BO_down_swing1 = ReturnedValues1.Item1;
-							isActiveShortPosition = ReturnedValues1.Item2;
+							is_active_short_position = ReturnedValues1.Item2;
 						}
 						else
 						{
 							//							Print (String.Format("{0} // {1} // {2} // {3}", is_BO_down_swing1, iSwing2.SwingLow[0], iSwing1.SwingLow[0], Time[0]));
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(iSwing1.SwingLow, ReferenceSMA, ExtremeLevelBar, 0, "Down");
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(iSwing1.SwingLow, reference_SMA, extreme_level_bar, 0, "Down");
 							is_BO_down_swing1 = ReturnedValues1.Item1;
-							isActiveShortPosition = ReturnedValues1.Item2;
+							is_active_short_position = ReturnedValues1.Item2;
 						}
 					}
 					else
 					{
 						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
 						{
-							if (iSwing2.SwingLow[0] > ReferenceSMA[0])
+							if (iSwing2.SwingLow[0] > reference_SMA[0])
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(ReferenceSMA, ReferenceSMA, min_low_swingLow1, ExtremeLevelBar, ExtremeLevelBar, "Down", "Swing4", is_BO_down_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, min_low_swingLow1, extreme_level_bar, extreme_level_bar, "Down", "Swing4", is_BO_down_swing1);
 								is_BO_down_swing1 = ReturnedValues1.Item1;
-								isActiveShortPosition = ReturnedValues1.Item2;
+								is_active_short_position = ReturnedValues1.Item2;
 							}
 							else
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, ReferenceSMA, min_low_swingLow1, ExtremeLevelBar, 0, "Down", "Swing4", is_BO_down_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, "Down", "Swing4", is_BO_down_swing1);
 								is_BO_down_swing1 = ReturnedValues1.Item1;
-								isActiveShortPosition = ReturnedValues1.Item2;
+								is_active_short_position = ReturnedValues1.Item2;
 							}
 						}
 						else
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(ReferenceSMA, ReferenceSMA, ExtremeLevelBar, ExtremeLevelBar, "Down");
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_1(reference_SMA, reference_SMA, extreme_level_bar, extreme_level_bar, "Down");
 							is_BO_down_swing1 = ReturnedValues1.Item1;
-							isActiveShortPosition = ReturnedValues1.Item2;
+							is_active_short_position = ReturnedValues1.Item2;
 						}
 					}
 				}
 				if (is_BO_down_swing1)
 				{
-					isSwingLow4 = false;
+					is_swingLow1 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingLow4, isActiveShortPosition, is_BO_down_swing1);
+				return new Tuple<bool, bool, bool>(is_swingLow1, is_active_short_position, is_BO_down_swing1);
 			}
-			return new Tuple<bool, bool, bool>(false, false, false);
 		}
 
 		////	Swing14 operation Method				
-		public Tuple<bool, bool, bool> Swing_2(ISeries<double> ReferenceSMA, string Type)
+		public Tuple<bool, bool, bool> Swing_2(ISeries<double> reference_SMA, bool is_high)
 		{
 			////		SWING 14 HIGH
-			if (Type == "High")
+			if (is_high)
 			{
-				bool isSwingHigh14 = SwingIdentifiacation(Close, iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true, "SwingHigh");
-				bool isActiveLongPosition = false;
-				if (isSwingHigh14)
+				bool is_swingHigh2 = SwingIdentifiacation(Close, iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true, "SwingHigh");
+				bool is_active_long_position = false;
+				double swingHigh2_mid_level;
+				int extreme_level_bar;
+
+				if (is_swingHigh2)
 				{
-					Tuple<double, double, int> ReturnedValues = SwingLocation(High, iSwing2.SwingHigh, iSwing2.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
+					Tuple<double, double, int> ReturnedValues = Swing_Characterization(High, iSwing2.SwingHigh, iSwing2.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
 					max_high_swingHigh2 = ReturnedValues.Item1;
-					double SwingHigh14MidLevel = ReturnedValues.Item2;
-					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingHigh14MidLevel >= ReferenceSMA[0]  /*&& max_high_swingHigh2 < iSwing2.SwingHigh[0] + distance_to_BO*/)
+					swingHigh2_mid_level = ReturnedValues.Item2;
+					extreme_level_bar = ReturnedValues.Item3;
+					if (swingHigh2_mid_level >= reference_SMA[0]  /*&& max_high_swingHigh2 < iSwing2.SwingHigh[0] + distance_to_BO*/)
 					{
 						if (my_entry_order != null && my_exit_order != null)
 						{
 							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 							{
-								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingHigh, iSwing2.SwingHigh, ReferenceSMA, ExtremeLevelBar, is_BO_up_swing2, max_high_swingHigh2, "Up");
+								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingHigh, iSwing2.SwingHigh, reference_SMA, extreme_level_bar, is_BO_up_swing2, max_high_swingHigh2, "Up");
 								is_BO_up_swing2 = ReturnedValues1.Item1;
-								isActiveLongPosition = ReturnedValues1.Item2;
+								is_active_long_position = ReturnedValues1.Item2;
 							}
 							else
 							{
@@ -1905,7 +1913,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (max_high_swingHigh2 < iSwing2.SwingHigh[0] + distance_to_BO)
 								{
 									Draw.Dot(this, @"GreenDot" + CurrentBar, true, 0, iSwing2.SwingHigh[0] + 3 * distance_to_BO, Brushes.Green);
-									isActiveLongPosition = Buy("PendingOrder", iSwing2.SwingHigh);
+									is_active_long_position = Buy("PendingOrder", iSwing2.SwingHigh);
 								}
 								else
 								{
@@ -1918,7 +1926,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (max_high_swingHigh2 < iSwing2.SwingHigh[0] + distance_to_BO)
 							{
 								Draw.Dot(this, @"GreenDot" + CurrentBar, true, 0, iSwing2.SwingHigh[0] + 3 * distance_to_BO, Brushes.Green);
-								isActiveLongPosition = Buy("PendingOrder", iSwing2.SwingHigh);
+								is_active_long_position = Buy("PendingOrder", iSwing2.SwingHigh);
 							}
 							else
 							{
@@ -1926,53 +1934,56 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
-					else if (iSwing2.SwingHigh[0] >= ReferenceSMA[0])
+					else if (iSwing2.SwingHigh[0] >= reference_SMA[0])
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, ReferenceSMA, max_high_swingHigh2, ExtremeLevelBar, 0, "Up", "Swing14", is_BO_up_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh2, extreme_level_bar, 0, "Up", "Swing14", is_BO_up_swing2);
 						is_BO_up_swing2 = ReturnedValues1.Item1;
-						isActiveLongPosition = ReturnedValues1.Item2;
+						is_active_long_position = ReturnedValues1.Item2;
 					}
 					else
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(ReferenceSMA, ReferenceSMA, max_high_swingHigh2, ExtremeLevelBar, ExtremeLevelBar, "Up", "Swing14", is_BO_up_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, max_high_swingHigh2, extreme_level_bar, extreme_level_bar, "Up", "Swing14", is_BO_up_swing2);
 						is_BO_up_swing2 = ReturnedValues1.Item1;
-						isActiveLongPosition = ReturnedValues1.Item2;
+						is_active_long_position = ReturnedValues1.Item2;
 					}
 				}
 				if (is_BO_up_swing2)
 				{
-					isSwingHigh14 = false;
+					is_swingHigh2 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingHigh14, isActiveLongPosition, is_BO_up_swing2);
+				return new Tuple<bool, bool, bool>(is_swingHigh2, is_active_long_position, is_BO_up_swing2);
 			}
 
 			////		SWING 14 LOW
-			else if (Type == "Low")
+			else
 			{
-				bool isSwingLow14 = SwingIdentifiacation(Close, iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), true, "SwingLow");
-				bool isActiveShortPosition = false;
-				if (isSwingLow14)
+				bool is_swingLow2 = SwingIdentifiacation(Close, iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), true, "SwingLow");
+				bool is_active_short_position = false;
+				double swingLow2_mid_level;
+				int extreme_level_bar;
+
+				if (is_swingLow2)
 				{
-					Tuple<double, double, int> ReturnedValues = SwingLocation(Low, iSwing2.SwingLow, iSwing2.SwingLowBar(0, 1, CurrentBar), "SwingLow");
+					Tuple<double, double, int> ReturnedValues = Swing_Characterization(Low, iSwing2.SwingLow, iSwing2.SwingLowBar(0, 1, CurrentBar), "SwingLow");
 					min_low_swingLow2 = ReturnedValues.Item1;
-					double SwingLow14MidLevel = ReturnedValues.Item2;
-					int ExtremeLevelBar = ReturnedValues.Item3;
-					if (SwingLow14MidLevel <= ReferenceSMA[0] /*&& min_low_swingLow2 > iSwing2.SwingLow[0] - distance_to_BO*/)
+					swingLow2_mid_level = ReturnedValues.Item2;
+					extreme_level_bar = ReturnedValues.Item3;
+					if (swingLow2_mid_level <= reference_SMA[0] /*&& min_low_swingLow2 > iSwing2.SwingLow[0] - distance_to_BO*/)
 					{
 						if (my_entry_order != null && my_exit_order != null)
 						{
 							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 							{
-								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingLow, iSwing2.SwingLow, ReferenceSMA, ExtremeLevelBar, is_BO_down_swing2, min_low_swingLow2, "Down");
+								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingLow, iSwing2.SwingLow, reference_SMA, extreme_level_bar, is_BO_down_swing2, min_low_swingLow2, "Down");
 								is_BO_down_swing2 = ReturnedValues1.Item1;
-								isActiveShortPosition = ReturnedValues1.Item2;
+								is_active_short_position = ReturnedValues1.Item2;
 							}
 							else
 							{
 								if (min_low_swingLow2 > iSwing2.SwingLow[0] - distance_to_BO)
 								{
 									Draw.Dot(this, @"MaroonDot" + CurrentBar, true, 0, iSwing2.SwingLow[0] - 3 * distance_to_BO, Brushes.Maroon);
-									isActiveShortPosition = Sell("PendingOrder", iSwing2.SwingLow);
+									is_active_short_position = Sell("PendingOrder", iSwing2.SwingLow);
 								}
 								else
 								{
@@ -1985,7 +1996,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (min_low_swingLow2 > iSwing2.SwingLow[0] - distance_to_BO)
 							{
 								Draw.Dot(this, @"MaroonDot" + CurrentBar, true, 0, iSwing2.SwingLow[0] - 3 * distance_to_BO, Brushes.Maroon);
-								isActiveShortPosition = Sell("PendingOrder", iSwing2.SwingLow);
+								is_active_short_position = Sell("PendingOrder", iSwing2.SwingLow);
 							}
 							else
 							{
@@ -1993,26 +2004,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
-					else if (iSwing2.SwingLow[0] <= ReferenceSMA[0])
+					else if (iSwing2.SwingLow[0] <= reference_SMA[0])
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, ReferenceSMA, min_low_swingLow2, ExtremeLevelBar, 0, "Down", "Swing14", is_BO_down_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow2, extreme_level_bar, 0, "Down", "Swing14", is_BO_down_swing2);
 						is_BO_down_swing2 = ReturnedValues1.Item1;
-						isActiveShortPosition = ReturnedValues1.Item2;
+						is_active_short_position = ReturnedValues1.Item2;
 					}
 					else
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(ReferenceSMA, ReferenceSMA, min_low_swingLow2, ExtremeLevelBar, ExtremeLevelBar, "Down", "Swing14", is_BO_down_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, min_low_swingLow2, extreme_level_bar, extreme_level_bar, "Down", "Swing14", is_BO_down_swing2);
 						is_BO_down_swing2 = ReturnedValues1.Item1;
-						isActiveShortPosition = ReturnedValues1.Item2;
+						is_active_short_position = ReturnedValues1.Item2;
 					}
 				}
 				if (is_BO_down_swing2)
 				{
-					isSwingLow14 = false;
+					is_swingLow2 = false;
 				}
-				return new Tuple<bool, bool, bool>(isSwingLow14, isActiveShortPosition, is_BO_down_swing2);
+				return new Tuple<bool, bool, bool>(is_swingLow2, is_active_short_position, is_BO_down_swing2);
 			}
-			return new Tuple<bool, bool, bool>(false, false, false);
 		}
 
 		////	BOSwing14 proof when market order oportunity				
