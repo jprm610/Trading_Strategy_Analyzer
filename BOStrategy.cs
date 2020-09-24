@@ -1702,7 +1702,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, "Up", "Swing4", is_BO_up_swing1);
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, 1, true, is_BO_up_swing1);
 							is_BO_up_swing1 = ReturnedValues1.Item1;
 							is_active_long_position = ReturnedValues1.Item2;
 						}
@@ -1719,13 +1719,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (iSwing2.SwingHigh[0] < reference_SMA[0])
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, max_high_swingHigh1, extreme_level_bar, extreme_level_bar, "Up", "Swing4", is_BO_up_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, max_high_swingHigh1, extreme_level_bar, extreme_level_bar, 1, true, is_BO_up_swing1);
 								is_BO_up_swing1 = ReturnedValues1.Item1;
 								is_active_long_position = ReturnedValues1.Item2;
 							}
 							else
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, "Up", "Swing4", is_BO_up_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, 1, true, is_BO_up_swing1);
 								is_BO_up_swing1 = ReturnedValues1.Item1;
 								is_active_long_position = ReturnedValues1.Item2;
 							}
@@ -1841,7 +1841,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
 						{
-							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, "Down", "Swing4", is_BO_down_swing1);
+							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, 1, false, is_BO_down_swing1);
 							is_BO_down_swing1 = ReturnedValues1.Item1;
 							is_active_short_position = ReturnedValues1.Item2;
 						}
@@ -1859,13 +1859,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (iSwing2.SwingLow[0] > reference_SMA[0])
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, min_low_swingLow1, extreme_level_bar, extreme_level_bar, "Down", "Swing4", is_BO_down_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, min_low_swingLow1, extreme_level_bar, extreme_level_bar, 1, false, is_BO_down_swing1);
 								is_BO_down_swing1 = ReturnedValues1.Item1;
 								is_active_short_position = ReturnedValues1.Item2;
 							}
 							else
 							{
-								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, "Down", "Swing4", is_BO_down_swing1);
+								Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, 1, false, is_BO_down_swing1);
 								is_BO_down_swing1 = ReturnedValues1.Item1;
 								is_active_short_position = ReturnedValues1.Item2;
 							}
@@ -1942,13 +1942,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else if (iSwing2.SwingHigh[0] >= reference_SMA[0])
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh2, extreme_level_bar, 0, "Up", "Swing14", is_BO_up_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh2, extreme_level_bar, 0, 2, true, is_BO_up_swing2);
 						is_BO_up_swing2 = ReturnedValues1.Item1;
 						is_active_long_position = ReturnedValues1.Item2;
 					}
 					else
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, max_high_swingHigh2, extreme_level_bar, extreme_level_bar, "Up", "Swing14", is_BO_up_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, max_high_swingHigh2, extreme_level_bar, extreme_level_bar, 2, true, is_BO_up_swing2);
 						is_BO_up_swing2 = ReturnedValues1.Item1;
 						is_active_long_position = ReturnedValues1.Item2;
 					}
@@ -2012,13 +2012,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else if (iSwing2.SwingLow[0] <= reference_SMA[0])
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow2, extreme_level_bar, 0, "Down", "Swing14", is_BO_down_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow2, extreme_level_bar, 0, 2, false, is_BO_down_swing2);
 						is_BO_down_swing2 = ReturnedValues1.Item1;
 						is_active_short_position = ReturnedValues1.Item2;
 					}
 					else
 					{
-						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, min_low_swingLow2, extreme_level_bar, extreme_level_bar, "Down", "Swing14", is_BO_down_swing2);
+						Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(reference_SMA, reference_SMA, min_low_swingLow2, extreme_level_bar, extreme_level_bar, 2, false, is_BO_down_swing2);
 						is_BO_down_swing2 = ReturnedValues1.Item1;
 						is_active_short_position = ReturnedValues1.Item2;
 					}
@@ -2029,175 +2029,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				return new Tuple<bool, bool, bool>(is_swingLow2, is_active_short_position, is_BO_down_swing2);
 			}
-		}
-
-		////	BOSwing14 proof when market order oportunity				
-		public Tuple<bool, bool> BOProofSwing_2(ISeries<double> ReferenceBOLevel, ISeries<double> ReferenceSMA, double ExtremeLevel, int ReferenceBar, int ReferenceSMABOBar, string Type, string Swing, bool isBO)
-		{
-			////		UP
-			bool isActiveLongPosition = false;
-			bool isActiveShortPosition = false;
-			if (Type == "Up")
-			{
-				if (!isBO)
-				{
-					if (High[0] >= ReferenceBOLevel[0] + distance_to_BO)
-					{
-						if (ReferenceBar == 0)
-						{
-							Draw.Square(this, @"GreenSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] + 3 * distance_to_BO, Brushes.Green);
-							isBO = true;
-							if (Close[0] >= ReferenceBOLevel[0] + distance_to_BO)
-							{
-								if (Close[0] - ReferenceSMA[0] <= current_stop)
-								{
-									isActiveLongPosition = Buy("MarketOrder", Close);
-								}
-							}
-						}
-						else
-						{
-							isBO = true;
-						}
-					}
-					else
-					{
-						if (ExtremeLevel <= ReferenceBOLevel[ReferenceSMABOBar])
-						{
-							if (ExtremeLevel >= ReferenceBOLevel[ReferenceSMABOBar] + distance_to_BO)
-							{
-								isBO = true;
-							}
-						}
-						else
-						{
-							if (ExtremeLevel >= ReferenceBOLevel[0] + distance_to_BO)
-							{
-								isBO = true;
-							}
-						}
-					}
-					if (!isBO)
-					{
-						Draw.Square(this, @"GreenSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] + 3 * distance_to_BO, Brushes.Green);
-					}
-				}
-				else
-				{
-					if (ExtremeLevel <= iSwing2.SwingHigh[0])
-					{
-						isBO = false;
-					}
-					else
-					{
-						if (Swing == "Swing4")
-						{
-							if (Close[0] >= last_max_high_swingHigh1 + distance_to_BO)
-							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh1 + 3 * distance_to_BO, Brushes.Cyan);
-								if (Close[0] - ReferenceSMA[0] <= current_stop)
-								{
-									isActiveLongPosition = Buy("MarketOrder", Close);
-								}
-							}
-						}
-						else if (Swing == "Swing14")
-						{
-							if (Close[0] >= last_max_high_swingHigh2 + distance_to_BO && ReferenceBar == 0)
-							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh2 + 3 * distance_to_BO, Brushes.Cyan);
-								if (Close[0] - ReferenceSMA[0] <= current_stop)
-								{
-									isActiveLongPosition = Buy("MarketOrder", Close);
-								}
-							}
-						}
-					}
-				}
-				return new Tuple<bool, bool>(isBO, isActiveLongPosition);
-			}
-
-			////		DOWN
-			else if (Type == "Down")
-			{
-				if (!isBO)
-				{
-					if (Low[0] <= ReferenceBOLevel[0] - distance_to_BO)
-					{
-						if (ReferenceBar == 0)
-						{
-							Draw.Square(this, @"MaroonSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] - 3 * distance_to_BO, Brushes.Maroon);
-							isBO = true;
-							if (Close[0] <= ReferenceBOLevel[0] - distance_to_BO)
-							{
-								if (ReferenceSMA[0] - Close[0] <= current_stop)
-								{
-									isActiveShortPosition = Sell("MarketOrder", Close);
-								}
-							}
-						}
-						else
-						{
-							isBO = true;
-						}
-					}
-					else
-					{
-						if (ExtremeLevel >= ReferenceBOLevel[ReferenceSMABOBar])
-						{
-							if (ExtremeLevel <= ReferenceBOLevel[ReferenceSMABOBar] - distance_to_BO)
-							{
-								isBO = true;
-							}
-						}
-						else
-						{
-							if (ExtremeLevel <= ReferenceBOLevel[0] - distance_to_BO)
-							{
-								isBO = true;
-							}
-						}
-					}
-					if (!isBO)
-					{
-						Draw.Square(this, @"MaroonSquare" + CurrentBar, true, 0, ReferenceBOLevel[0] - 3 * distance_to_BO, Brushes.Maroon);
-					}
-				}
-				else
-				{
-					if (ExtremeLevel >= iSwing2.SwingLow[0])
-					{
-						isBO = false;
-					}
-					else
-					{
-						if (Swing == "Swing4")
-						{
-							if (Close[0] <= last_min_low_swingLow1 - distance_to_BO)
-							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow1 - 3 * distance_to_BO, Brushes.Cyan);
-								if (ReferenceSMA[0] - Close[0] <= current_stop)
-								{
-									isActiveShortPosition = Sell("MarketOrder", Close);
-								}
-							}
-						}
-						else if (Swing == "Swing14")
-						{
-							if (Close[0] <= last_min_low_swingLow2 - distance_to_BO && ReferenceBar == 0)
-							{
-								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow2 - 3 * distance_to_BO, Brushes.Cyan);
-								if (ReferenceSMA[0] - Close[0] <= current_stop)
-								{
-									isActiveShortPosition = Sell("MarketOrder", Close);
-								}
-							}
-						}
-					}
-				}
-				return new Tuple<bool, bool>(isBO, isActiveShortPosition);
-			}
-			return new Tuple<bool, bool>(isBO, isActiveLongPosition);
 		}
 
 		////	BO Swing4 proof when market order oportunity				
@@ -2375,6 +2206,173 @@ namespace NinjaTrader.NinjaScript.Strategies
 			return new Tuple<bool, bool>(is_BO_up_swing1, isActiveLongPosition);
 		}
 
+		////	BOSwing14 proof when market order oportunity				
+		public Tuple<bool, bool> BOProofSwing_2(ISeries<double> reference_BO_level, ISeries<double> reference_SMA, double extreme_level, int reference_bar, int reference_SMA_BO_bar, int swing, bool is_up, bool is_BO)
+		{
+			////		UP
+			bool is_active_long_position = false;
+			bool is_active_short_position = false;
+			if (is_up)
+			{
+				if (!is_BO)
+				{
+					if (High[0] >= reference_BO_level[0] + distance_to_BO)
+					{
+						if (reference_bar == 0)
+						{
+							Draw.Square(this, @"GreenSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.Green);
+							is_BO = true;
+							if (Close[0] >= reference_BO_level[0] + distance_to_BO)
+							{
+								if (Close[0] - reference_SMA[0] <= current_stop)
+								{
+									is_active_long_position = Buy("MarketOrder", Close);
+								}
+							}
+						}
+						else
+						{
+							is_BO = true;
+						}
+					}
+					else
+					{
+						if (extreme_level <= reference_BO_level[reference_SMA_BO_bar])
+						{
+							if (extreme_level >= reference_BO_level[reference_SMA_BO_bar] + distance_to_BO)
+							{
+								is_BO = true;
+							}
+						}
+						else
+						{
+							if (extreme_level >= reference_BO_level[0] + distance_to_BO)
+							{
+								is_BO = true;
+							}
+						}
+					}
+					if (!is_BO)
+					{
+						Draw.Square(this, @"GreenSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.Green);
+					}
+				}
+				else
+				{
+					if (extreme_level <= iSwing2.SwingHigh[0])
+					{
+						is_BO = false;
+					}
+					else
+					{
+						if (swing == 1)
+						{
+							if (Close[0] >= last_max_high_swingHigh1 + distance_to_BO)
+							{
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh1 + 3 * distance_to_BO, Brushes.Cyan);
+								if (Close[0] - reference_SMA[0] <= current_stop)
+								{
+									is_active_long_position = Buy("MarketOrder", Close);
+								}
+							}
+						}
+						else if (swing == 2)
+						{
+							if (Close[0] >= last_max_high_swingHigh2 + distance_to_BO && reference_bar == 0)
+							{
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh2 + 3 * distance_to_BO, Brushes.Cyan);
+								if (Close[0] - reference_SMA[0] <= current_stop)
+								{
+									is_active_long_position = Buy("MarketOrder", Close);
+								}
+							}
+						}
+					}
+				}
+				return new Tuple<bool, bool>(is_BO, is_active_long_position);
+			}
+
+			////		DOWN
+			else
+			{
+				if (!is_BO)
+				{
+					if (Low[0] <= reference_BO_level[0] - distance_to_BO)
+					{
+						if (reference_bar == 0)
+						{
+							Draw.Square(this, @"MaroonSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Maroon);
+							is_BO = true;
+							if (Close[0] <= reference_BO_level[0] - distance_to_BO)
+							{
+								if (reference_SMA[0] - Close[0] <= current_stop)
+								{
+									is_active_short_position = Sell("MarketOrder", Close);
+								}
+							}
+						}
+						else
+						{
+							is_BO = true;
+						}
+					}
+					else
+					{
+						if (extreme_level >= reference_BO_level[reference_SMA_BO_bar])
+						{
+							if (extreme_level <= reference_BO_level[reference_SMA_BO_bar] - distance_to_BO)
+							{
+								is_BO = true;
+							}
+						}
+						else
+						{
+							if (extreme_level <= reference_BO_level[0] - distance_to_BO)
+							{
+								is_BO = true;
+							}
+						}
+					}
+					if (!is_BO)
+					{
+						Draw.Square(this, @"MaroonSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Maroon);
+					}
+				}
+				else
+				{
+					if (extreme_level >= iSwing2.SwingLow[0])
+					{
+						is_BO = false;
+					}
+					else
+					{
+						if (swing == 1)
+						{
+							if (Close[0] <= last_min_low_swingLow1 - distance_to_BO)
+							{
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow1 - 3 * distance_to_BO, Brushes.Cyan);
+								if (reference_SMA[0] - Close[0] <= current_stop)
+								{
+									is_active_short_position = Sell("MarketOrder", Close);
+								}
+							}
+						}
+						else if (swing == 2)
+						{
+							if (Close[0] <= last_min_low_swingLow2 - distance_to_BO && reference_bar == 0)
+							{
+								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow2 - 3 * distance_to_BO, Brushes.Cyan);
+								if (reference_SMA[0] - Close[0] <= current_stop)
+								{
+									is_active_short_position = Sell("MarketOrder", Close);
+								}
+							}
+						}
+					}
+				}
+				return new Tuple<bool, bool>(is_BO, is_active_short_position);
+			}
+		}
 
 		////	Market order submission when there is an opposing peinding order				
 		public Tuple<bool, bool> MarketVSPending(ISeries<double> ReferenceBOLevel, ISeries<double> ReferenceSwing, ISeries<double> ReferenceSMA, int ReferenceBar, bool isBO, double ExtremeLevel, string Type)
