@@ -1549,22 +1549,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	Buy Process	Method		
-		public bool Buy(string OrderType, ISeries<double> BOLevel)
+		public bool Buy(string order_type, ISeries<double> BO_level)
 		{
-			if (OrderType == "MarketOrder")
+			if (order_type == "MarketOrder")
 			{
-				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount
-				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation							
+				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount							
 				stop_price_long = Close[0] - current_stop; //calculates the stop price level
 				trigger_price_long = Close[0] + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
+				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
 				return true;
 			}
-			else if (OrderType == "PendingOrder")
+			else if (order_type == "PendingOrder")
 			{
 				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				EnterLongStopMarket(amount_long, BOLevel[0] + distance_to_BO, @"entryOrder");
-				stop_price_long = (BOLevel[0] + distance_to_BO) - current_stop; //calculates the stop price level
-				trigger_price_long = (BOLevel[0] + distance_to_BO) + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger							
+				stop_price_long = (BO_level[0] + distance_to_BO) - current_stop; //calculates the stop price level
+				trigger_price_long = (BO_level[0] + distance_to_BO) + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger
+				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
 				return false;
 			}
 			else
@@ -1574,23 +1574,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	Sell Process Method	 			
-		public bool Sell(string OrderType, ISeries<double> BOLevel)
+		public bool Sell(string order_type, ISeries<double> BO_level)
 		{
-			if (OrderType == "MarketOrder")
+			if (order_type == "MarketOrder")
 			{
-				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount
-				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation							
+				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount							
 				stop_price_short = Close[0] + current_stop; //calculates the stop price level
-				trigger_price_short = Close[0] - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
+				trigger_price_short = Close[0] - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger
+				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
 				return true;
 			}
-			else if (OrderType == "PendingOrder")
+			else if (order_type == "PendingOrder")
 			{
 				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				EnterShortStopMarket(amount_short, BOLevel[0] - distance_to_BO, @"entryOrder");
-				stop_price_short = (BOLevel[0] - distance_to_BO) + current_stop; //calculates the stop price level
-				trigger_price_short = (BOLevel[0] - distance_to_BO) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
-																											  //				Print(String.Format("{0} // {1} // {2} // {3}", amount_short, BOLevel[0], stop_price_short, Time[0]));
+				stop_price_short = (BO_level[0] - distance_to_BO) + current_stop; //calculates the stop price level
+				trigger_price_short = (BO_level[0] - distance_to_BO) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
+				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
 				return false;
 			}
 			else
