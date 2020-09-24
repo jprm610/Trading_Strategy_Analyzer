@@ -75,8 +75,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Swing1 = 4;
 				Swing2 = 14;
 				UnitsTriggerForTrailing = 1;
-				TrailingUnitsStop = 2;
-				RiskUnit = 420;
+				TrailingUnitsStop = 5;
+				RiskUnit = 1;
 				IncipientTrandFactor = 2;
 				ATRStopFactor = 3;
 				TicksToBO = 10;
@@ -509,9 +509,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//evaluate if there is a swing near the SMA1 that represents a posible crossing movement.
 			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short))
 			{
-				bool isSwingHigh1 = false;
-				bool isSwingHigh2 = false;
-				bool isActiveLongPosition = false;
+				bool is_swingHigh1 = false;
+				bool is_swingHigh2 = false;
+				bool is_active_long_position = false;
 
 				//Validate whether there is a valid swingHigh (swing1) near the SMA1, that is to say that the swing is located in a distance less or 
 				//equal than the current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
@@ -522,15 +522,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
-						isSwingHigh1 = ReturnedValues.Item1;
-						isActiveLongPosition = ReturnedValues.Item2;
+						is_swingHigh1 = ReturnedValues.Item1;
+						is_active_long_position = ReturnedValues.Item2;
 						is_BO_up_swing1 = ReturnedValues.Item3;
 					}
 				}
 
 				//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 				//don't evaluate this conditional statement.
-				if (!isSwingHigh1 && !isActiveLongPosition)
+				if (!is_swingHigh1 && !is_active_long_position)
 				{
 					//Validate whether there is a valid swingHigh (swing2) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
 					//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
@@ -541,8 +541,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 						{
 							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
-							isSwingHigh2 = ReturnedValues.Item1;
-							isActiveLongPosition = ReturnedValues.Item2;
+							is_swingHigh2 = ReturnedValues.Item1;
+							is_active_long_position = ReturnedValues.Item2;
 							is_BO_up_swing2 = ReturnedValues.Item3;
 						}
 					}
@@ -555,9 +555,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//evaluate if there is a swing near the SMA1 that represents a posible crossing movement.
 			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long))
 			{
-				bool isSwingLow1 = false;
-				bool isSwingLow2 = false;
-				bool isActiveShortPosition = false;
+				bool is_swingLow1 = false;
+				bool is_swingLow2 = false;
+				bool is_active_short_position = false;
 
 				//Validate whether there is a valid swingLow (swing1) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
 				//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.		
@@ -568,15 +568,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
-						isSwingLow1 = ReturnedValues.Item1;
-						isActiveShortPosition = ReturnedValues.Item2;
+						is_swingLow1 = ReturnedValues.Item1;
+						is_active_short_position = ReturnedValues.Item2;
 						is_BO_down_swing1 = ReturnedValues.Item3;
 					}
 				}
 
 				//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 				//don't evaluate this conditional statement.
-				if (!isSwingLow1 && !isActiveShortPosition)
+				if (!is_swingLow1 && !is_active_short_position)
 				{
 					//Validate whether there is a valid swingLow (swing2) near the SMA1, that is to say that the swing is located in a distance less or equal than the
 					//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
@@ -587,8 +587,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
 						{
 							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
-							isSwingLow2 = ReturnedValues.Item1;
-							isActiveShortPosition = ReturnedValues.Item2;
+							is_swingLow2 = ReturnedValues.Item1;
+							is_active_short_position = ReturnedValues.Item2;
 							is_BO_down_swing2 = ReturnedValues.Item3;
 						}
 					}
@@ -604,9 +604,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//active position yet.
 			if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short))
 			{
-				bool isSwingHigh1 = false;
-				bool isSwingHigh2 = false;
-				bool isActiveLongPosition = false;
+				bool is_swingHigh1 = false;
+				bool is_swingHigh2 = false;
+				bool is_active_long_position = false;
 
 				//Validate whether there is a valid swingHigh1 near the SMA1 and evaluate if the swingHigh1 is above the SMA2.
 				if ((iSwing1.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade) && (iSMA2[0] - iSwing1.SwingHigh[0] > iATR[0] * ClosnessFactor))
@@ -616,15 +616,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
-						isSwingHigh1 = ReturnedValues.Item1;
-						isActiveLongPosition = ReturnedValues.Item2;
+						is_swingHigh1 = ReturnedValues.Item1;
+						is_active_long_position = ReturnedValues.Item2;
 						is_BO_up_swing1 = ReturnedValues.Item3;
 					}
 				}
 
 				//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 				//don't evaluate this conditional statement.
-				if (!isSwingHigh1 && !isActiveLongPosition)
+				if (!is_swingHigh1 && !is_active_long_position)
 				{
 					//Validate whether there is a valid swingHigh2 near the SMA1 and evaluate if the swingHigh2 is above the SMA2.
 					if ((iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade) && (iSMA2[0] - iSwing2.SwingHigh[0] > iATR[0] * ClosnessFactor))
@@ -634,8 +634,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 						{
 							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
-							isSwingHigh2 = ReturnedValues.Item1;
-							isActiveLongPosition = ReturnedValues.Item2;
+							is_swingHigh2 = ReturnedValues.Item1;
+							is_active_long_position = ReturnedValues.Item2;
 							is_BO_up_swing2 = ReturnedValues.Item3;
 						}
 					}
@@ -648,9 +648,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//active position yet.
 			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long))
 			{
-				bool isSwingLow1 = false;
-				bool isSwingLow2 = false;
-				bool isActiveShortPosition = false;
+				bool is_swingLow1 = false;
+				bool is_swingLow2 = false;
+				bool is_active_short_position = false;
 
 				//Validate whether there is a valid swingLow1 near the SMA1 and evaluate if the swingLow1 is below the SMA2.
 				if ((iSwing1.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade) && (iSwing1.SwingLow[0] - iSMA2[0] > iATR[0] * ClosnessFactor))
@@ -660,15 +660,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
-						isSwingLow1 = ReturnedValues.Item1;
-						isActiveShortPosition = ReturnedValues.Item2;
+						is_swingLow1 = ReturnedValues.Item1;
+						is_active_short_position = ReturnedValues.Item2;
 						is_BO_down_swing1 = ReturnedValues.Item3;
 					}
 				}
 
 				//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 				//don't evaluate this conditional statement.
-				if (!isSwingLow1 && !isActiveShortPosition)
+				if (!is_swingLow1 && !is_active_short_position)
 				{
 					//Validate whether there is a valid swingLow2 near the SMA1 and evaluate if the swingLow2 is below the SMA2.
 					if ((iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade) && (iSwing2.SwingLow[0] - iSMA2[0] > iATR[0] * ClosnessFactor))
@@ -678,8 +678,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
 						{
 							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
-							isSwingLow2 = ReturnedValues.Item1;
-							isActiveShortPosition = ReturnedValues.Item2;
+							is_swingLow2 = ReturnedValues.Item1;
+							is_active_short_position = ReturnedValues.Item2;
 							is_BO_down_swing2 = ReturnedValues.Item3;
 						}
 					}
@@ -701,9 +701,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//If the SMA2 crossed above the SMA1.
 					if (is_upward)
 					{
-						bool isSwingHigh1 = false;
-						bool isSwingHigh2 = false;
-						bool isActiveLongPosition = false;
+						bool is_swingHigh1 = false;
+						bool is_swingHigh2 = false;
+						bool is_active_long_position = false;
 
 						//Validate whether there is a valid swingHigh1 near the SMA2.
 						if (iSwing1.SwingHigh[0] >= iSMA2[0] - iATR[0] * ClosnessToTrade)
@@ -713,15 +713,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 							{
 								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA2, true);
-								isSwingHigh1 = ReturnedValues.Item1;
-								isActiveLongPosition = ReturnedValues.Item2;
+								is_swingHigh1 = ReturnedValues.Item1;
+								is_active_long_position = ReturnedValues.Item2;
 								is_BO_up_swing1 = ReturnedValues.Item3;
 							}
 						}
 
 						//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 						//don't evaluate this conditional statement.
-						if (!isSwingHigh1 && !isActiveLongPosition)
+						if (!is_swingHigh1 && !is_active_long_position)
 						{
 							//Validate whether there is a valid swingHigh2 near the SMA2.
 							if (iSwing2.SwingHigh[0] >= iSMA2[0] - iATR[0] * ClosnessToTrade)
@@ -731,8 +731,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
 								{
 									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA2, true);
-									isSwingHigh2 = ReturnedValues.Item1;
-									isActiveLongPosition = ReturnedValues.Item2;
+									is_swingHigh2 = ReturnedValues.Item1;
+									is_active_long_position = ReturnedValues.Item2;
 									is_BO_up_swing2 = ReturnedValues.Item3;
 								}
 							}
@@ -744,9 +744,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//If the SMA2 crossed below the SMA1.
 					else
 					{
-						bool isSwingHigh1 = false;
-						bool isSwingHigh2 = false;
-						bool isActiveLongPosition = false;
+						bool is_swingHigh1 = false;
+						bool is_swingHigh2 = false;
+						bool is_active_long_position = false;
 
 						//Validate whether there is a valid swingHigh1 near the SMA1.
 						if (iSwing1.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
@@ -756,15 +756,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 							{
 								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
-								isSwingHigh1 = ReturnedValues.Item1;
-								isActiveLongPosition = ReturnedValues.Item2;
+								is_swingHigh1 = ReturnedValues.Item1;
+								is_active_long_position = ReturnedValues.Item2;
 								is_BO_up_swing1 = ReturnedValues.Item3;
 							}
 						}
 
 						//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 						//don't evaluate this conditional statement.
-						if (!isSwingHigh1 && !isActiveLongPosition)
+						if (!is_swingHigh1 && !is_active_long_position)
 						{
 							//Validate whether there is a valid swingHigh2 near the SMA1.
 							if (iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
@@ -774,8 +774,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop)
 								{
 									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
-									isSwingHigh2 = ReturnedValues.Item1;
-									isActiveLongPosition = ReturnedValues.Item2;
+									is_swingHigh2 = ReturnedValues.Item1;
+									is_active_long_position = ReturnedValues.Item2;
 									is_BO_up_swing2 = ReturnedValues.Item3;
 								}
 							}
@@ -797,9 +797,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//If the SMA2 crossed below the SMA1.
 					if (is_downward)
 					{
-						bool isSwingLow1 = false;
-						bool isSwingLow2 = false;
-						bool isActiveShortPosition = false;
+						bool is_swingLow1 = false;
+						bool is_swingLow2 = false;
+						bool is_active_short_position = false;
 
 						//Validate whether there is a valid swingLow1 near the SMA2.
 						if (iSwing1.SwingLow[0] <= iSMA2[0] + iATR[0] * ClosnessToTrade)
@@ -809,15 +809,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (iSMA2[0] - (iSwing1.SwingLow[0] - distance_to_BO) <= current_stop)
 							{
 								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA2, false);
-								isSwingLow1 = ReturnedValues.Item1;
-								isActiveShortPosition = ReturnedValues.Item2;
+								is_swingLow1 = ReturnedValues.Item1;
+								is_active_short_position = ReturnedValues.Item2;
 								is_BO_down_swing1 = ReturnedValues.Item3;
 							}
 						}
 
 						//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 						//don't evaluate this conditional statement.
-						if (!isSwingLow1 && !isActiveShortPosition)
+						if (!is_swingLow1 && !is_active_short_position)
 						{
 							//Validate whether there is a valid swingLow2 near the SMA2.
 							if (iSwing2.SwingLow[0] <= iSMA2[0] + iATR[0] * ClosnessToTrade)
@@ -827,8 +827,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (iSMA2[0] - (iSwing2.SwingLow[0] - distance_to_BO) <= current_stop)
 								{
 									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA2, false);
-									isSwingLow2 = ReturnedValues.Item1;
-									isActiveShortPosition = ReturnedValues.Item2;
+									is_swingLow2 = ReturnedValues.Item1;
+									is_active_short_position = ReturnedValues.Item2;
 									is_BO_down_swing2 = ReturnedValues.Item3;
 								}
 							}
@@ -840,9 +840,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//If the SMA2 crossed above the SMA1.
 					else
 					{
-						bool isSwingLow1 = false;
-						bool isSwingLow2 = false;
-						bool isActiveShortPosition = false;
+						bool is_swingLow1 = false;
+						bool is_swingLow2 = false;
+						bool is_active_short_position = false;
 
 						//Validate whether there is a valid swingLow1 near the SMA1.
 						if (iSwing1.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
@@ -852,15 +852,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (iSMA1[0] - (iSwing1.SwingLow[0] - distance_to_BO) <= current_stop)
 							{
 								Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
-								isSwingLow1 = ReturnedValues.Item1;
-								isActiveShortPosition = ReturnedValues.Item2;
+								is_swingLow1 = ReturnedValues.Item1;
+								is_active_short_position = ReturnedValues.Item2;
 								is_BO_down_swing1 = ReturnedValues.Item3;
 							}
 						}
 
 						//This condition basically means that if the program entered the last conditional statement and a Swing was recognized,
 						//don't evaluate this conditional statement.
-						if (!isSwingLow1 && !isActiveShortPosition)
+						if (!is_swingLow1 && !is_active_short_position)
 						{
 							//Validate whether there is a valid swingLow2 near the SMA1.
 							if (iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
@@ -870,8 +870,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (iSMA1[0] - (iSwing2.SwingLow[0] - distance_to_BO) <= current_stop)
 								{
 									Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
-									isSwingLow2 = ReturnedValues.Item1;
-									isActiveShortPosition = ReturnedValues.Item2;
+									is_swingLow2 = ReturnedValues.Item1;
+									is_active_short_position = ReturnedValues.Item2;
 									is_BO_down_swing2 = ReturnedValues.Item3;
 								}
 							}
