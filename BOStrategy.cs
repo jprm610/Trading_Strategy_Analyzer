@@ -1461,7 +1461,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	METHODS			
 
 		////	Swing Identification Method				
-		public bool SwingIdentifiacation(ISeries<double> opposite_swing, int reference_swing_bar, bool is_swingHigh)
+		public bool SwingIdentification(ISeries<double> opposite_swing, int reference_swing_bar, bool is_swingHigh)
 		{
 			bool is_potential_swing = true;
 
@@ -1503,46 +1503,49 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	Swing Location and Characterization Method				
-		public Tuple<double, double, int> Swing_Characterization(ISeries<double> BarExtreme, ISeries<double> ReferenceSwing, int ReferenceSwingBar, string SwingType)
+		public Tuple<double, double, int> SwingCharacterization(ISeries<double> bar_extreme, ISeries<double> reference_swing, int reference_swing_bar, bool is_swingHigh)
 		{
-			double SwingMidLevel = ReferenceSwing[0];
-			double ExtremeLevel = BarExtreme[0]; //initializing the variable that is going to keep the max high value of the swing, with the array firts value for comparison purposes
-			int ExtremeLevelBar = 0;
-			if (SwingType == "SwingHigh")
+			double swing_mid_level = reference_swing[0];
+			double extreme_level = bar_extreme[0]; //initializing the variable that is going to keep the max high value of the swing, with the array firts value for comparison purposes
+			int extreme_level_bar = 0;
+
+			if (is_swingHigh)
 			{
-				double MinClose = Close[0]; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
-				for (int i = 0; i <= ReferenceSwingBar; i++) // Walks every bar of the potential HL4
+				double min_close = Close[0]; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
+				for (int i = 0; i <= reference_swing_bar; i++) // Walks every bar of the potential HL4
 				{
-					if (Close[i] < MinClose) //To determine the highest value (max close value of the swinglow4)
+					if (Close[i] < min_close) //To determine the highest value (max close value of the swinglow4)
 					{
-						MinClose = Close[i]; //And saves that value in this variable
+						min_close = Close[i]; //And saves that value in this variable
 					}
-					if (BarExtreme[i] > ExtremeLevel) //To determine the highest value (max close value of the swinglow4)
+
+					if (bar_extreme[i] > extreme_level) //To determine the highest value (max close value of the swinglow4)
 					{
-						ExtremeLevel = BarExtreme[i]; //And saves that value in this variable
-						ExtremeLevelBar = i;
+						extreme_level = bar_extreme[i]; //And saves that value in this variable
+						extreme_level_bar = i;
 					}
 				}
-				SwingMidLevel = ReferenceSwing[0] - ((ReferenceSwing[0] - MinClose) * (SwingPenetration / 100));
+				swing_mid_level = reference_swing[0] - ((reference_swing[0] - min_close) * (SwingPenetration / 100));
 			}
-			else if (SwingType == "SwingLow")
+			else
 			{
-				double MaxClose = Close[0]; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
-				for (int i = 0; i <= ReferenceSwingBar; i++) // Walks every bar of the potential HL4
+				double max_close = Close[0]; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
+				for (int i = 0; i <= reference_swing_bar; i++) // Walks every bar of the potential HL4
 				{
-					if (Close[i] > MaxClose) //To determine the highest value (max close value of the swinglow4)
+					if (Close[i] > max_close) //To determine the highest value (max close value of the swinglow4)
 					{
-						MaxClose = Close[i]; //And saves that value in this variable
+						max_close = Close[i]; //And saves that value in this variable
 					}
-					if (BarExtreme[i] < ExtremeLevel) //To determine the highest value (max close value of the swinglow4)
+
+					if (bar_extreme[i] < extreme_level) //To determine the highest value (max close value of the swinglow4)
 					{
-						ExtremeLevel = BarExtreme[i]; //And saves that value in this variable
-						ExtremeLevelBar = i;
+						extreme_level = bar_extreme[i]; //And saves that value in this variable
+						extreme_level_bar = i;
 					}
 				}
-				SwingMidLevel = ReferenceSwing[0] + ((MaxClose - ReferenceSwing[0]) * (SwingPenetration / 100));
+				swing_mid_level = reference_swing[0] + ((max_close - reference_swing[0]) * (SwingPenetration / 100));
 			}
-			return new Tuple<double, double, int>(ExtremeLevel, SwingMidLevel, ExtremeLevelBar);
+			return new Tuple<double, double, int>(extreme_level, swing_mid_level, extreme_level_bar);
 		}
 
 		////	Buy Process	Method		
@@ -1603,14 +1606,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 4 HIGH			
 			if (is_high)
 			{
-				bool is_swingHigh1 = SwingIdentifiacation(iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true);
+				bool is_swingHigh1 = SwingIdentification(iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true);
 				bool is_active_long_position = false;
 				double swingHigh1_mid_level;
 				int extreme_level_bar;
 
 				if (is_swingHigh1) //if the HL4 is confirmated after the Last two validations then...
 				{
-					Tuple<double, double, int> ReturnedValues = Swing_Characterization(High, iSwing1.SwingHigh, iSwing1.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
+					Tuple<double, double, int> ReturnedValues = SwingCharacterization(High, iSwing1.SwingHigh, iSwing1.SwingHighBar(0, 1, CurrentBar), true);
 					max_high_swingHigh1 = ReturnedValues.Item1;
 					swingHigh1_mid_level = ReturnedValues.Item2;
 					extreme_level_bar = ReturnedValues.Item3;
@@ -1746,14 +1749,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 4 LOW
 			else
 			{
-				bool is_swingLow1 = SwingIdentifiacation(iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), false);
+				bool is_swingLow1 = SwingIdentification(iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), false);
 				bool is_active_short_position = false;
 				double swingLow1_mid_level;
 				int extreme_level_bar;
 
 				if (is_swingLow1)
 				{
-					Tuple<double, double, int> ReturnedValues = Swing_Characterization(Low, iSwing1.SwingLow, iSwing1.SwingLowBar(0, 1, CurrentBar), "SwingLow");
+					Tuple<double, double, int> ReturnedValues = SwingCharacterization(Low, iSwing1.SwingLow, iSwing1.SwingLowBar(0, 1, CurrentBar), false);
 					min_low_swingLow1 = ReturnedValues.Item1;
 					swingLow1_mid_level = ReturnedValues.Item2;
 					extreme_level_bar = ReturnedValues.Item3;
@@ -1890,14 +1893,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 14 HIGH
 			if (is_high)
 			{
-				bool is_swingHigh2 = SwingIdentifiacation(iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true);
+				bool is_swingHigh2 = SwingIdentification(iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true);
 				bool is_active_long_position = false;
 				double swingHigh2_mid_level;
 				int extreme_level_bar;
 
 				if (is_swingHigh2)
 				{
-					Tuple<double, double, int> ReturnedValues = Swing_Characterization(High, iSwing2.SwingHigh, iSwing2.SwingHighBar(0, 1, CurrentBar), "SwingHigh");
+					Tuple<double, double, int> ReturnedValues = SwingCharacterization(High, iSwing2.SwingHigh, iSwing2.SwingHighBar(0, 1, CurrentBar), true);
 					max_high_swingHigh2 = ReturnedValues.Item1;
 					swingHigh2_mid_level = ReturnedValues.Item2;
 					extreme_level_bar = ReturnedValues.Item3;
@@ -1961,14 +1964,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		SWING 14 LOW
 			else
 			{
-				bool is_swingLow2 = SwingIdentifiacation(iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), false);
+				bool is_swingLow2 = SwingIdentification(iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), false);
 				bool is_active_short_position = false;
 				double swingLow2_mid_level;
 				int extreme_level_bar;
 
 				if (is_swingLow2)
 				{
-					Tuple<double, double, int> ReturnedValues = Swing_Characterization(Low, iSwing2.SwingLow, iSwing2.SwingLowBar(0, 1, CurrentBar), "SwingLow");
+					Tuple<double, double, int> ReturnedValues = SwingCharacterization(Low, iSwing2.SwingLow, iSwing2.SwingLowBar(0, 1, CurrentBar), false);
 					min_low_swingLow2 = ReturnedValues.Item1;
 					swingLow2_mid_level = ReturnedValues.Item2;
 					extreme_level_bar = ReturnedValues.Item3;
