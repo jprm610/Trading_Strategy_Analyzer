@@ -1958,7 +1958,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	Swing14 operation Method				
 		public Tuple<bool, bool, bool> Swing_2(ISeries<double> reference_SMA, bool is_high)
 		{
-			////		SWING 14 HIGH
+			////		SWING 2 HIGH
 			if (is_high)
 			{
 				bool is_swingHigh2 = SwingIdentification(iSwing2.SwingLow, iSwing2.SwingHighBar(0, 1, CurrentBar), true);
@@ -1976,7 +1976,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (my_entry_order != null && my_exit_order != null)
 						{
-							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
+							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && 
+								(my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && 
+								(my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 							{
 								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingHigh, iSwing2.SwingHigh, reference_SMA, extreme_level_bar, is_BO_up_swing2, true, max_high_swingHigh2);
 								is_BO_up_swing2 = ReturnedValues1.Item1;
@@ -2047,7 +2049,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						if (my_entry_order != null && my_exit_order != null)
 						{
-							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
+							if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && 
+								(my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && 
+								(my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 							{
 								Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingLow, iSwing2.SwingLow, reference_SMA, extreme_level_bar, is_BO_down_swing2, false, min_low_swingLow2);
 								is_BO_down_swing2 = ReturnedValues1.Item1;
