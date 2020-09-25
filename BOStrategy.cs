@@ -1655,7 +1655,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4	
 		public Tuple<bool, bool, bool> Swing_1(ISeries<double> reference_SMA, bool is_high)
 		{
-			////		SWING 4 HIGH			
+			////		SWING 1 HIGH			
 			if (is_high)
 			{
 				bool is_swingHigh1 = SwingIdentification(iSwing1.SwingLow, iSwing1.SwingHighBar(0, 1, CurrentBar), true);
@@ -1671,13 +1671,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 					extreme_level_bar = ReturnedValues.Item3;
 					if (swingHigh1_mid_level >= reference_SMA[0])
 					{
-						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
+						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && 
+							iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + (iATR[0] * ClosnessFactor))
 						{
-							if ((iSwing2.SwingHigh[0] + distance_to_BO) - iSMA1[0] <= current_stop || (iSwing2.SwingHigh[0] + distance_to_BO) - iSMA2[0] <= current_stop)
+							if (current_stop >= iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] ||
+								current_stop >= iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0])
 							{
 								if (my_entry_order != null && my_exit_order != null)
 								{
-									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
+									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && 
+										(my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && 
+										(my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 									{
 										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingHigh, iSwing1.SwingHigh, reference_SMA, extreme_level_bar, is_BO_up_swing1, true, max_high_swingHigh1);
 										is_BO_up_swing1 = ReturnedValues1.Item1;
@@ -1716,7 +1720,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (my_entry_order != null && my_exit_order != null)
 							{
-								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
+								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && 
+									(my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && 
+									(my_entry_order.OrderAction == OrderAction.SellShort || my_exit_order.OrderAction == OrderAction.SellShort))
 								{
 									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing1.SwingHigh, iSwing1.SwingHigh, reference_SMA, extreme_level_bar, is_BO_up_swing1, true, max_high_swingHigh1);
 									is_BO_up_swing1 = ReturnedValues1.Item1;
@@ -1753,7 +1759,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else if (iSwing1.SwingHigh[0] >= reference_SMA[0])
 					{
-						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
+						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && 
+							iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + (iATR[0] * ClosnessFactor))
 						{
 							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingHigh, reference_SMA, max_high_swingHigh1, extreme_level_bar, 0, 1, true, is_BO_up_swing1);
 							is_BO_up_swing1 = ReturnedValues1.Item1;
@@ -1768,7 +1775,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else
 					{
-						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
+						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && 
+							iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + (iATR[0] * ClosnessFactor))
 						{
 							if (iSwing2.SwingHigh[0] < reference_SMA[0])
 							{
@@ -1798,7 +1806,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return new Tuple<bool, bool, bool>(is_swingHigh1, is_active_long_position, is_BO_up_swing1);
 			}
 
-			////		SWING 4 LOW
+			////		SWING 1 LOW
 			else
 			{
 				bool is_swingLow1 = SwingIdentification(iSwing1.SwingHigh, iSwing1.SwingLowBar(0, 1, CurrentBar), false);
@@ -1814,13 +1822,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 					extreme_level_bar = ReturnedValues.Item3;
 					if (swingLow1_mid_level <= reference_SMA[0] /*&& min_low_swingLow1 > iSwing1.SwingLow[0] - distance_to_BO*/)
 					{
-						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
+						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && 
+							iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - (iATR[0] * ClosnessFactor))
 						{
-							if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
+							if (current_stop >= iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO ||
+								current_stop >= iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO)
 							{
 								if (my_entry_order != null && my_exit_order != null)
 								{
-									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
+									if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && 
+										(my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && 
+										(my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 									{
 										Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing2.SwingLow, iSwing1.SwingLow, reference_SMA, extreme_level_bar, is_BO_down_swing1, false, min_low_swingLow1);
 										is_BO_down_swing1 = ReturnedValues1.Item1;
@@ -1857,7 +1869,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (my_entry_order != null && my_exit_order != null)
 							{
-								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && (my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && (my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
+								if ((my_entry_order.OrderType == OrderType.StopMarket || my_exit_order.OrderType == OrderType.StopMarket) && 
+									(my_entry_order.OrderState == OrderState.Working || my_entry_order.OrderState == OrderState.Filled || my_exit_order.OrderState == OrderState.Working) && 
+									(my_entry_order.OrderAction == OrderAction.Buy || my_exit_order.OrderAction == OrderAction.Buy))
 								{
 									Tuple<bool, bool> ReturnedValues1 = MarketVSPending(iSwing1.SwingLow, iSwing1.SwingLow, reference_SMA, extreme_level_bar, is_BO_down_swing1, false, min_low_swingLow1);
 									is_BO_down_swing1 = ReturnedValues1.Item1;
@@ -1892,7 +1906,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else if (iSwing1.SwingLow[0] <= reference_SMA[0])
 					{
-						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
+						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && 
+							iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - (iATR[0] * ClosnessFactor))
 						{
 							Tuple<bool, bool> ReturnedValues1 = BOProofSwing_2(iSwing2.SwingLow, reference_SMA, min_low_swingLow1, extreme_level_bar, 0, 1, false, is_BO_down_swing1);
 							is_BO_down_swing1 = ReturnedValues1.Item1;
@@ -1908,7 +1923,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else
 					{
-						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - iATR[0] * ClosnessFactor)
+						if (iSwing2.SwingLow[0] < iSwing1.SwingLow[0] && 
+							iSwing2.SwingLow[0] >= iSwing1.SwingLow[0] - (iATR[0] * ClosnessFactor))
 						{
 							if (iSwing2.SwingLow[0] > reference_SMA[0])
 							{
