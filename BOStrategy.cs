@@ -375,7 +375,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			//If the overall market movement is going upwards and the Incipient Trend is confirmed, the is_incipient_up_trend flag is set to true
 			//while its opposite (is_incipient_down_trend) is set to false and the gray_ellipse_short flag is set to false.
-			if (is_upward && (SMA_dis >= IncipientTrandFactor * ATR_crossing_value))
+			if (is_upward && 
+				(SMA_dis >= IncipientTrandFactor * ATR_crossing_value))
 			{
 				is_incipient_up_trend = true;
 				is_incipient_down_trend = false;
@@ -384,7 +385,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			//If the overall market movement is going downwards and the Incipient Trend is confirmed, the is_incipient_down_trend flag is set to true
 			//while its opposite (is_incipient_up_trend) is set to false and the gray_ellipse_long flag is set to false.		
-			else if (is_downward && (SMA_dis >= IncipientTrandFactor * ATR_crossing_value))
+			else if (is_downward && 
+				(SMA_dis >= IncipientTrandFactor * ATR_crossing_value))
 			{
 				is_incipient_down_trend = true;
 				is_incipient_up_trend = false;
@@ -411,7 +413,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				gray_ellipse_long = true;
 
 				int SMAs_cross_and_gray_ellipse_dis = CurrentBar - cross_above_bar;
-
 				//This if statement is done to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarLookBack period, 
 				//which is not possible.
 				if (SMAs_cross_and_gray_ellipse_dis >= 240)
@@ -431,7 +432,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//and the current swing is right next to the gray_ellipse swing it means that a Reentry trade can be executed.
 			//That is why the is_reentry_long flag is set to true and the current swingHigh (biggest swing) is saved to keep track of the last swing where a Reentry
 			//trade can be executed.
-			else if (iSwing2.SwingHigh[0] > swingHigh2_max && gray_ellipse_long)
+			else if (gray_ellipse_long &&
+				(iSwing2.SwingHigh[0] > swingHigh2_max))
 			{
 				is_reentry_long = true;
 				swingHigh2_max_reentry = iSwing2.SwingHigh[0];
@@ -440,7 +442,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//If the current high surpass the swingHigh where a Reentry trade can be executed, it means that this trade type can't be done again
 			//before another gray_ellipse.
 			//That is why the gray_ellipse_long flag and the is_reentry_long flag are set to false.
-			if (High[0] > swingHigh2_max_reentry && is_reentry_long)
+			if (is_reentry_long &&
+				(High[0] > swingHigh2_max_reentry))
 			{
 				gray_ellipse_long = false;
 				is_reentry_long = false;
@@ -464,7 +467,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				gray_ellipse_short = true;
 
 				int SMAs_cross_and_gray_ellipse_dis = CurrentBar - cross_below_bar;
-
 				//This if statement is done to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarLookBack period, 
 				//which is not possible.
 				if (SMAs_cross_and_gray_ellipse_dis >= 240)
@@ -484,7 +486,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//and the current swing is right next to the gray_ellipse swing it means that a Reentry trade can be executed.
 			//That is why the is_reentry_short flag is set to true and the current swingLow (biggest swing) is saved to keep track of the last swing where a Reentry
 			//trade can be executed.
-			else if (iSwing2.SwingLow[0] < swingLow2_min && gray_ellipse_short)
+			else if (gray_ellipse_short &&
+				(iSwing2.SwingLow[0] < swingLow2_min))
 			{
 				is_reentry_short = true;
 				swingLow2_min_reentry = iSwing2.SwingLow[0];
@@ -493,7 +496,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//If the current low surpass the swingLow where a Reentry trade can be executed, it means that this trade type can't be done again
 			//before another gray_ellipse.
 			//That is why the gray_ellipse_short flag and the is_reentry_short flag are set to false.
-			if (Low[0] < swingLow2_min_reentry && is_reentry_short)
+			if (is_reentry_short &&
+				(Low[0] < swingLow2_min_reentry))
 			{
 				gray_ellipse_short = false;
 				is_reentry_short = false;
@@ -507,7 +511,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#region Long
 			//If the overall market movement is downwards and the current position is short or there is not a current position yet,
 			//evaluate if there is a swing near the SMA1 that represents a posible crossing movement.
-			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short))
+			if (is_incipient_down_trend && 
+				(Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short))
 			{
 				bool is_swingHigh1 = false;
 				bool is_swingHigh2 = false;
@@ -515,11 +520,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				//Validate whether there is a valid swingHigh (swing1) near the SMA1, that is to say that the swing is located in a distance less or 
 				//equal than the current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
-				if (iSwing1.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
+				if (iSwing1.SwingHigh[0] >= iSMA1[0] - (iATR[0] * ClosnessToTrade))
 				{
 					//If the Stop range contains at least one of the 2 biggest SMAs
 					//call the Swing1 function and store the flags in the three variables below for its later use.
-					if (iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
+					if ((current_stop >= iSwing1.SwingHigh[0] + distance_to_BO - iSMA1[0]) || 
+						(current_stop >= iSwing1.SwingHigh[0] + distance_to_BO - iSMA2[0]))
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, true);
 						is_swingHigh1 = ReturnedValues.Item1;
@@ -534,11 +540,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					//Validate whether there is a valid swingHigh (swing2) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
 					//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
-					if (iSwing2.SwingHigh[0] >= iSMA1[0] - iATR[0] * ClosnessToTrade)
+					if (iSwing2.SwingHigh[0] >= iSMA1[0] - (iATR[0] * ClosnessToTrade))
 					{
 						//If the Stop range contains at least one of the 2 biggest SMAs
 						//call the Swing2 function and store the flags in the three variables below for its later use.
-						if (iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0] <= current_stop || iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0] <= current_stop)
+						if ((current_stop >= iSwing2.SwingHigh[0] + distance_to_BO - iSMA1[0]) ||
+							(current_stop >= iSwing2.SwingHigh[0] + distance_to_BO - iSMA2[0]))
 						{
 							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, true);
 							is_swingHigh2 = ReturnedValues.Item1;
@@ -553,7 +560,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#region Short
 			//If the overall market movement is upwards and the current position is long or there is not a current position yet,
 			//evaluate if there is a swing near the SMA1 that represents a posible crossing movement.
-			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long))
+			else if (is_incipient_up_trend && 
+				(Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long))
 			{
 				bool is_swingLow1 = false;
 				bool is_swingLow2 = false;
@@ -561,11 +569,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				//Validate whether there is a valid swingLow (swing1) near the SMA1, that is to say that the swing is located in a distance less or equal than the 
 				//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.		
-				if (iSwing1.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
+				if (iSwing1.SwingLow[0] <= iSMA1[0] + (iATR[0] * ClosnessToTrade))
 				{
 					//If the Stop range contains at least one of the 2 biggest SMAs
 					//call the Swing1 function and store the flags in the three variables below for its later use.
-					if (iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO <= current_stop)
+					if ((current_stop >= iSMA1[0] - iSwing1.SwingLow[0] - distance_to_BO) ||
+						(current_stop >= iSMA2[0] - iSwing1.SwingLow[0] - distance_to_BO))
 					{
 						Tuple<bool, bool, bool> ReturnedValues = Swing_1(iSMA1, false);
 						is_swingLow1 = ReturnedValues.Item1;
@@ -580,11 +589,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					//Validate whether there is a valid swingLow (swing2) near the SMA1, that is to say that the swing is located in a distance less or equal than the
 					//current ATR multiplied by the ClosnessToTrade parameter from the SMA1.
-					if (iSwing2.SwingLow[0] <= iSMA1[0] + iATR[0] * ClosnessToTrade)
+					if (iSwing2.SwingLow[0] <= iSMA1[0] + (iATR[0] * ClosnessToTrade))
 					{
 						//If the Stop range contains at least one of the 2 biggest SMAs
 						//call the Swing2 function and store the flags in the three variables below for its later use.
-						if (iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop || iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO <= current_stop)
+						if ((current_stop >= iSMA1[0] - iSwing2.SwingLow[0] - distance_to_BO) || 
+							(current_stop >= iSMA2[0] - iSwing2.SwingLow[0] - distance_to_BO))
 						{
 							Tuple<bool, bool, bool> ReturnedValues = Swing_2(iSMA1, false);
 							is_swingLow2 = ReturnedValues.Item1;
