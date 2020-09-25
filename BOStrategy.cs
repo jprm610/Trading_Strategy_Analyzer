@@ -2286,9 +2286,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	BOSwing14 proof when market order oportunity				
 		public Tuple<bool, bool> BOProofSwing_2(ISeries<double> reference_BO_level, ISeries<double> reference_SMA, double extreme_level, int reference_bar, int reference_SMA_BO_bar, int swing, bool is_up, bool is_BO)
 		{
-			////		UP
 			bool is_active_long_position = false;
 			bool is_active_short_position = false;
+
 			if (is_up)
 			{
 				if (!is_BO)
@@ -2299,9 +2299,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							Draw.Square(this, @"GreenSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.Green);
 							is_BO = true;
+
 							if (Close[0] >= reference_BO_level[0] + distance_to_BO)
 							{
-								if (Close[0] - reference_SMA[0] <= current_stop)
+								if (current_stop >= Close[0] - reference_SMA[0])
 								{
 									is_active_long_position = Buy("MarketOrder", Close);
 								}
@@ -2329,6 +2330,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+
 					if (!is_BO)
 					{
 						Draw.Square(this, @"GreenSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.Green);
@@ -2347,7 +2349,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[0] >= last_max_high_swingHigh1 + distance_to_BO)
 							{
 								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh1 + 3 * distance_to_BO, Brushes.Cyan);
-								if (Close[0] - reference_SMA[0] <= current_stop)
+
+								if (current_stop >= Close[0] - reference_SMA[0])
 								{
 									is_active_long_position = Buy("MarketOrder", Close);
 								}
@@ -2358,7 +2361,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[0] >= last_max_high_swingHigh2 + distance_to_BO && reference_bar == 0)
 							{
 								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh2 + 3 * distance_to_BO, Brushes.Cyan);
-								if (Close[0] - reference_SMA[0] <= current_stop)
+
+								if (current_stop >= Close[0] - reference_SMA[0])
 								{
 									is_active_long_position = Buy("MarketOrder", Close);
 								}
@@ -2368,8 +2372,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				return new Tuple<bool, bool>(is_BO, is_active_long_position);
 			}
-
-			////		DOWN
 			else
 			{
 				if (!is_BO)
@@ -2380,9 +2382,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							Draw.Square(this, @"MaroonSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Maroon);
 							is_BO = true;
+
 							if (Close[0] <= reference_BO_level[0] - distance_to_BO)
 							{
-								if (reference_SMA[0] - Close[0] <= current_stop)
+								if (current_stop >= reference_SMA[0] - Close[0])
 								{
 									is_active_short_position = Sell("MarketOrder", Close);
 								}
@@ -2410,6 +2413,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+
 					if (!is_BO)
 					{
 						Draw.Square(this, @"MaroonSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Maroon);
@@ -2428,7 +2432,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[0] <= last_min_low_swingLow1 - distance_to_BO)
 							{
 								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow1 - 3 * distance_to_BO, Brushes.Cyan);
-								if (reference_SMA[0] - Close[0] <= current_stop)
+
+								if (current_stop >= reference_SMA[0] - Close[0])
 								{
 									is_active_short_position = Sell("MarketOrder", Close);
 								}
@@ -2439,7 +2444,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[0] <= last_min_low_swingLow2 - distance_to_BO && reference_bar == 0)
 							{
 								Draw.Square(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow2 - 3 * distance_to_BO, Brushes.Cyan);
-								if (reference_SMA[0] - Close[0] <= current_stop)
+
+								if (current_stop >= reference_SMA[0] - Close[0])
 								{
 									is_active_short_position = Sell("MarketOrder", Close);
 								}
