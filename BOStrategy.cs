@@ -905,7 +905,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			///Stop Updating Process (by both trailing and SMA)
 			#region Long
 			///While Long	
-			if (Position.MarketPosition == MarketPosition.Long && !is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			if (!is_long &&
+				Position.MarketPosition == MarketPosition.Long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				is_long = true;
 				is_short = false;
@@ -914,6 +915,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				fix_trigger_price_long = trigger_price_long;
 				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
 			}
+
 			if (Position.MarketPosition == MarketPosition.Long && is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				if (my_entry_order == null || my_entry_market == null)
@@ -944,7 +946,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							if (HighCrossEma50 == false)
 							{
-								if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 									ExitLong(fix_amount_long, @"exit", @"entryOrder");
@@ -952,7 +954,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							else
 							{
-								if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+									Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 									ExitLong(fix_amount_long, @"exit", @"entryOrder");
@@ -961,7 +964,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 								ExitLong(fix_amount_long, @"exit", @"entryOrder");
@@ -993,7 +997,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							if (HighCrossEma50 == false)
 							{
-								if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 									ExitLong(fix_amount_long, @"exit", @"entryMarket");
@@ -1001,7 +1005,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							else
 							{
-								if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+									Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 									ExitLong(fix_amount_long, @"exit", @"entryMarket");
@@ -1010,7 +1015,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 								ExitLong(fix_amount_long, @"exit", @"entryMarket");
@@ -1049,9 +1055,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 								break;
 							}
 						}
+
 						if (HighCrossEma50 == false)
 						{
-							if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 								ExitLong(fix_amount_long, @"exit", @"entryOrder");
@@ -1059,7 +1066,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 								ExitLong(fix_amount_long, @"exit", @"entryOrder");
@@ -1068,12 +1076,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else
 					{
-						if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+						if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+							Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 						{
 							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 							ExitLong(fix_amount_long, @"exit", @"entryOrder");
 						}
 					}
+
 					if (High[0] >= fix_trigger_price_long)
 					{
 						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
@@ -1086,7 +1096,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
 					//					{
-					if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
+					if (my_entry_order.OrderType == OrderType.StopMarket && 
+						my_entry_order.OrderState == OrderState.Working && 
+						my_entry_order.OrderAction == OrderAction.SellShort)
 					{
 						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
 					}
@@ -1094,7 +1106,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 					}
-					//					}				
+					//					}	
+					
 					if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + distance_to_BO)
 					{
 						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1106,9 +1119,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 								break;
 							}
 						}
+
 						if (HighCrossEma50 == false)
 						{
-							if (Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 								ExitLong(fix_amount_long, @"exit", @"entryMarket");
@@ -1116,7 +1130,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 								ExitLong(fix_amount_long, @"exit", @"entryMarket");
@@ -1125,12 +1140,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else
 					{
-						if (Close[0] < iSMA2[0] - iATR[0] * (MagicNumber / 100) || Close[0] < iSMA1[0] - iATR[0] * (MagicNumber / 100))
+						if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) || 
+							Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
 						{
 							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
 							ExitLong(fix_amount_long, @"exit", @"entryMarket");
 						}
 					}
+
 					if (High[0] >= fix_trigger_price_long)
 					{
 						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
@@ -1144,7 +1161,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			#region Short
 			///While Short	
-			if (Position.MarketPosition == MarketPosition.Short && !is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			if (!is_short &&
+				Position.MarketPosition == MarketPosition.Short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				is_long = false;
 				is_short = true;
@@ -1153,7 +1171,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				fix_trigger_price_short = trigger_price_short;
 				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
 			}
-			if (Position.MarketPosition == MarketPosition.Short && is_short)
+
+			if (is_short &&
+				Position.MarketPosition == MarketPosition.Short)
 			{
 				if (my_entry_order == null || my_entry_market == null)
 				{
@@ -1173,9 +1193,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 									break;
 								}
 							}
+
 							if (LowCrossEma50 == false)
 							{
-								if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 									ExitShort(fix_amount_short, @"exit", @"entryOrder");
@@ -1183,7 +1204,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							else
 							{
-								if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+									Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 									ExitShort(fix_amount_short, @"exit", @"entryOrder");
@@ -1192,7 +1214,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 								ExitShort(fix_amount_short, @"exit", @"entryOrder");
@@ -1222,9 +1245,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 									break;
 								}
 							}
+
 							if (LowCrossEma50 == false)
 							{
-								if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 									ExitShort(fix_amount_short, @"exit", @"entryMarket");
@@ -1232,7 +1256,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 							else
 							{
-								if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+								if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+									Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 								{
 									Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 									ExitShort(fix_amount_short, @"exit", @"entryMarket");
@@ -1241,12 +1266,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 								ExitShort(fix_amount_short, @"exit", @"entryMarket");
 							}
 						}
+
 						if (Low[0] <= fix_trigger_price_short)
 						{
 							fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
@@ -1280,9 +1307,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 								break;
 							}
 						}
+
 						if (LowCrossEma50 == false)
 						{
-							if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 								ExitShort(fix_amount_short, @"exit", @"entryOrder");
@@ -1290,7 +1318,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 								ExitShort(fix_amount_short, @"exit", @"entryOrder");
@@ -1299,7 +1328,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else
 					{
-						if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+						if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+							Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 						{
 							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 							ExitShort(fix_amount_short, @"exit", @"entryOrder");
@@ -1317,7 +1347,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
 					//					{
-					if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.Buy)
+					if (my_entry_order.OrderType == OrderType.StopMarket && 
+						my_entry_order.OrderState == OrderState.Working && 
+						my_entry_order.OrderAction == OrderAction.Buy)
 					{
 						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
 					}
@@ -1326,6 +1358,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 					}
 					//					}
+
 					if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - distance_to_BO)
 					{
 						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1337,9 +1370,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 								break;
 							}
 						}
+
 						if (LowCrossEma50 == false)
 						{
-							if (Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 								ExitShort(fix_amount_short, @"exit", @"entryMarket");
@@ -1347,7 +1381,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						else
 						{
-							if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 							{
 								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 								ExitShort(fix_amount_short, @"exit", @"entryMarket");
@@ -1356,12 +1391,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 					else
 					{
-						if (Close[0] > iSMA2[0] + iATR[0] * (MagicNumber / 100) || Close[0] > iSMA1[0] + iATR[0] * (MagicNumber / 100))
+						if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) || 
+							Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
 						{
 							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
 							ExitShort(fix_amount_short, @"exit", @"entryMarket");
 						}
 					}
+
 					if (Low[0] <= fix_trigger_price_short)
 					{
 						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
@@ -1632,7 +1669,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					max_high_swingHigh1 = ReturnedValues.Item1;
 					swingHigh1_mid_level = ReturnedValues.Item2;
 					extreme_level_bar = ReturnedValues.Item3;
-					if (swingHigh1_mid_level >= reference_SMA[0] /*&& max_high_swingHigh1 < iSwing1.SwingHigh[0] + distance_to_BO*/)
+					if (swingHigh1_mid_level >= reference_SMA[0])
 					{
 						if (iSwing2.SwingHigh[0] > iSwing1.SwingHigh[0] && iSwing2.SwingHigh[0] <= iSwing1.SwingHigh[0] + iATR[0] * ClosnessFactor)
 						{
