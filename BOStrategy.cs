@@ -2031,7 +2031,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return new Tuple<bool, bool, bool>(is_swingHigh2, is_active_long_position, is_BO_up_swing2);
 			}
 
-			////		SWING 14 LOW
+			////		SWING 2 LOW
 			else
 			{
 				bool is_swingLow2 = SwingIdentification(iSwing2.SwingHigh, iSwing2.SwingLowBar(0, 1, CurrentBar), false);
@@ -2123,16 +2123,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 							is_BO_up_swing1 = true;
 							if (Close[0] >= reference_BO_level[0] + distance_to_BO)
 							{
-								if (iSwing2.SwingHigh[0] + distance_to_BO < Close[0])
+								if (Close[0] > iSwing2.SwingHigh[0] + distance_to_BO)
 								{
-									if (Close[0] - reference_SMA[0] <= current_stop)
+									if (current_stop >= Close[0] - reference_SMA[0])
 									{
 										is_active_long_position = Buy("MarketOrder", Close);
 									}
 								}
 								else
 								{
-									if (Close[0] - reference_SMA[0] <= current_stop && iSwing2.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
+									if (current_stop >= Close[0] - reference_SMA[0] && 
+										iSwing2.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
 									{
 										is_active_long_position = Buy("MarketOrder", Close);
 									}
@@ -2161,6 +2162,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+
 					if (!is_BO_up_swing1)
 					{
 						Draw.Square(this, @"LimeSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.Lime);
@@ -2175,16 +2177,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 					else if (Close[0] >= last_max_high_swingHigh1 + distance_to_BO && reference_bar == 0)
 					{
 						Draw.Dot(this, @"CyanSquare" + CurrentBar, true, 0, last_max_high_swingHigh1 + 3 * distance_to_BO, Brushes.Cyan);
-						if (iSwing2.SwingHigh[0] + distance_to_BO < Close[0])
+						if (Close[0] > iSwing2.SwingHigh[0] + distance_to_BO)
 						{
-							if (Close[0] - reference_SMA[0] <= current_stop)
+							if (current_stop >= Close[0] - reference_SMA[0])
 							{
 								is_active_long_position = Buy("MarketOrder", Close);
 							}
 						}
 						else
 						{
-							if (Close[0] - reference_SMA[0] <= current_stop && iSwing2.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
+							if (current_stop >= Close[0] - reference_SMA[0] && 
+								iSwing2.SwingHigh[0] - Close[0] > iATR[0] * ClosnessFactor)
 							{
 								is_active_long_position = Buy("MarketOrder", Close);
 							}
@@ -2193,8 +2196,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				return new Tuple<bool, bool>(is_BO_up_swing1, is_active_long_position);
 			}
-
-			////		DOWN
 			else
 			{
 				if (!is_BO_down_swing1)
@@ -2209,14 +2210,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								if (iSwing2.SwingLow[0] > Close[0])
 								{
-									if (reference_SMA[0] - Close[0] <= current_stop)
+									if (current_stop >= reference_SMA[0] - Close[0])
 									{
 										is_active_short_position = Sell("MarketOrder", Close);
 									}
 								}
 								else
 								{
-									if (reference_SMA[0] - Close[0] <= current_stop && Close[0] - iSwing2.SwingLow[0] > iATR[0] * ClosnessFactor)
+									if (current_stop >= reference_SMA[0] - Close[0] && 
+										Close[0] - iSwing2.SwingLow[0] > iATR[0] * ClosnessFactor)
 									{
 										is_active_short_position = Sell("MarketOrder", Close);
 									}
@@ -2245,6 +2247,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+
 					if (!is_BO_down_swing1)
 					{
 						Draw.Square(this, @"RedSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Red);
@@ -2261,14 +2264,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 						Draw.Dot(this, @"CyanSquare" + CurrentBar, true, 0, last_min_low_swingLow1 - 3 * distance_to_BO, Brushes.Indigo);
 						if (iSwing2.SwingLow[0] > Close[0])
 						{
-							if (reference_SMA[0] - Close[0] <= current_stop)
+							if (current_stop >= reference_SMA[0] - Close[0])
 							{
 								is_active_short_position = Sell("MarketOrder", Close);
 							}
 						}
 						else
 						{
-							if (reference_SMA[0] - Close[0] <= current_stop && Close[0] - iSwing2.SwingLow[0] > iATR[0] * ClosnessFactor)
+							if (current_stop >= reference_SMA[0] - Close[0] && 
+								Close[0] - iSwing2.SwingLow[0] > iATR[0] * ClosnessFactor)
 							{
 								is_active_short_position = Sell("MarketOrder", Close);
 							}
