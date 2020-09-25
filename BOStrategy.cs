@@ -2460,9 +2460,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 		////	Market order submission when there is an opposing peinding order				
 		public Tuple<bool, bool> MarketVSPending(ISeries<double> reference_BO_level, ISeries<double> reference_swing, ISeries<double> reference_SMA, int reference_bar, bool is_BO, bool is_up, double extreme_level)
 		{
-			////		UP
 			bool isActiveLongPosition = false;
 			bool isActiveShortPosition = false;
+
 			if (is_up)
 			{
 				if (!is_BO)
@@ -2473,7 +2473,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							Draw.Square(this, @"WhiteSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.White);
 							is_BO = true;
-							if (Close[0] - reference_SMA[0] <= current_stop)
+
+							if (current_stop >= Close[0] - reference_SMA[0])
 							{
 								isActiveLongPosition = Buy("MarketOrder", Close);
 							}
@@ -2490,6 +2491,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							is_BO = true;
 						}
 					}
+
 					if (!is_BO)
 					{
 						Draw.Square(this, @"WhiteSquare" + CurrentBar, true, 0, reference_BO_level[0] + 3 * distance_to_BO, Brushes.White);
@@ -2504,8 +2506,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				return new Tuple<bool, bool>(is_BO, isActiveLongPosition);
 			}
-
-			////		DOWN
 			else
 			{
 				if (!is_BO)
@@ -2516,7 +2516,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							Draw.Square(this, @"BlackSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Black);
 							is_BO = true;
-							if (reference_SMA[0] - Close[0] <= current_stop)
+
+							if (current_stop >= reference_SMA[0] - Close[0])
 							{
 								isActiveShortPosition = Sell("MarketOrder", Close);
 							}
@@ -2533,6 +2534,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							is_BO = true;
 						}
 					}
+
 					if (!is_BO)
 					{
 						Draw.Square(this, @"BlackSquare" + CurrentBar, true, 0, reference_BO_level[0] - 3 * distance_to_BO, Brushes.Black);
@@ -2547,7 +2549,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				return new Tuple<bool, bool>(is_BO, isActiveShortPosition);
 			}
-			return new Tuple<bool, bool>(is_BO, isActiveLongPosition);
 		}
 		#endregion
 	}
