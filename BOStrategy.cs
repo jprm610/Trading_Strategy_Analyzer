@@ -48,42 +48,43 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (State == State.SetDefaults)
 			{
-				Description = @"Strategy that Operates Breakouts";
-				Name = "BOStrategy";
-				Calculate = Calculate.OnBarClose;
-				EntriesPerDirection = 1;
-				EntryHandling = EntryHandling.AllEntries;
-				IsExitOnSessionCloseStrategy = false;
-				ExitOnSessionCloseSeconds = 30;
-				IsFillLimitOnTouch = false;
-				MaximumBarsLookBack = MaximumBarsLookBack.TwoHundredFiftySix;
-				OrderFillResolution = OrderFillResolution.Standard;
-				Slippage = 0;
-				StartBehavior = StartBehavior.WaitUntilFlat;
-				TimeInForce = TimeInForce.Gtc;
-				TraceOrders = false;
-				RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
-				StopTargetHandling = StopTargetHandling.PerEntryExecution;
-				BarsRequiredToTrade = 20;
+				Description						= @"Strategy that Operates Breakouts";
+				Name							= "BOStrategy";
+				Calculate						= Calculate.OnBarClose;
+				EntriesPerDirection				= 1;
+				EntryHandling					= EntryHandling.AllEntries;
+				IsExitOnSessionCloseStrategy	= false;
+				ExitOnSessionCloseSeconds		= 30;
+				IsFillLimitOnTouch				= false;
+				MaximumBarsLookBack				= MaximumBarsLookBack.TwoHundredFiftySix;
+				OrderFillResolution				= OrderFillResolution.Standard;
+				Slippage						= 0;
+				StartBehavior					= StartBehavior.WaitUntilFlat;
+				TimeInForce						= TimeInForce.Gtc;
+				TraceOrders						= false;
+				RealtimeErrorHandling			= RealtimeErrorHandling.StopCancelClose;
+				StopTargetHandling				= StopTargetHandling.PerEntryExecution;
+				BarsRequiredToTrade				= 20;
 				// Disable this property for performance gains in Strategy Analyzer optimizations
 				// See the Help Guide for additional information
 				IsInstantiatedOnEachOptimizationIteration = true;
-				SMA1 = 200;
-				SMA2 = 50;
-				SMA3 = 20;
-				ATR1 = 100;
-				Swing1 = 4;
-				Swing2 = 14;
+
+				SMA1					= 200;
+				SMA2					= 50;
+				SMA3					= 20;
+				ATR1					= 100;
+				Swing1					= 4;
+				Swing2					= 14;
 				UnitsTriggerForTrailing = 1;
-				TrailingUnitsStop = 5;
-				RiskUnit = 1;
-				IncipientTrandFactor = 2;
-				ATRStopFactor = 3;
-				TicksToBO = 10;
-				SwingPenetration = 50;
-				ClosnessFactor = 2;
-				ClosnessToTrade = 1;
-				MagicNumber = 50;
+				TrailingUnitsStop		= 5;
+				RiskUnit				= 1;
+				IncipientTrandFactor	= 2;
+				ATRStopFactor			= 3;
+				TicksToBO				= 10;
+				SwingPenetration		= 50;
+				ClosnessFactor			= 2;
+				ClosnessToTrade			= 1;
+				MagicNumber				= 50;
 			}
 			else if (State == State.Configure)
 			{
@@ -103,22 +104,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 				iSwing1 = Swing(Close, Swing1);
 				iSwing2 = Swing(Close, Swing2);
 
-				iSMA1.Plots[0].Brush = Brushes.Red;
-				iSMA2.Plots[0].Brush = Brushes.Gold;
-				iSMA3.Plots[0].Brush = Brushes.Lime;
-				iATR.Plots[0].Brush = Brushes.White;
-				iSwing1.Plots[0].Brush = Brushes.Fuchsia;
-				iSwing1.Plots[1].Brush = Brushes.Gold;
-				iSwing2.Plots[0].Brush = Brushes.Silver;
-				iSwing2.Plots[1].Brush = Brushes.Silver;
+				iSMA1.Plots[0].Brush	= Brushes.Red;
+				iSMA2.Plots[0].Brush	= Brushes.Gold;
+				iSMA3.Plots[0].Brush	= Brushes.Lime;
+				iATR.Plots[0].Brush		= Brushes.White;
+				iSwing1.Plots[0].Brush	= Brushes.Fuchsia;
+				iSwing1.Plots[1].Brush	= Brushes.Gold;
+				iSwing2.Plots[0].Brush	= Brushes.Silver;
+				iSwing2.Plots[1].Brush	= Brushes.Silver;
 				AddChartIndicator(iSMA1);
 				AddChartIndicator(iSMA2);
 				AddChartIndicator(iSMA3);
 				AddChartIndicator(iATR);
 				AddChartIndicator(iSwing1);
 				AddChartIndicator(iSwing2);
-				LastSwingHigh14Cache = new ArrayList();
-				LastSwingLow14Cache = new ArrayList();
+				LastSwingHigh14Cache	= new ArrayList();
+				LastSwingLow14Cache		= new ArrayList();
 			}
 		}
 
@@ -131,17 +132,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				my_entry_order = order;
 			}
+
 			if (order.Name == "entryMarket")
 			{
 				my_entry_market = order;
 			}
+
 			if (order.Name == "exit")
 			{
 				my_exit_order = order;
 			}
 		}
 
-		protected override void OnExecutionUpdate(Execution execution, string executionId, double price, int quantity, MarketPosition marketPosition, string orderId, DateTime time)
+		protected override void OnExecutionUpdate(Execution execution, string executionId, double price, int quantity, MarketPosition marketPosition, string orderId, 
+			DateTime time)
 		{
 			// Reset our stop order and target orders' Order objects after our position is closed. (1st Entry)
 			if (my_exit_order != null)
@@ -154,6 +158,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							my_entry_order.OrderState = OrderState.Cancelled;
 						}
+
 						if (my_entry_market != null)
 						{
 							my_entry_market.OrderState = OrderState.Cancelled;
@@ -161,6 +166,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
+
 			if (my_entry_market != null)
 			{
 				if (my_entry_market == execution.Order)
@@ -1556,7 +1562,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	Swing Location and Characterization Method				
-		public Tuple<double, double, int> SwingCharacterization(ISeries<double> bar_extreme, ISeries<double> reference_swing, int reference_swing_bar, bool is_swingHigh)
+		public Tuple<double, double, int> SwingCharacterization(ISeries<double> bar_extreme, ISeries<double> reference_swing, int reference_swing_bar, 
+			bool is_swingHigh)
 		{
 			double swing_mid_level = reference_swing[0];
 			double extreme_level = bar_extreme[0]; //initializing the variable that is going to keep the max high value of the swing, with the array firts value for comparison purposes
@@ -2105,7 +2112,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	BO Swing4 proof when market order oportunity				
-		public Tuple<bool, bool> BOProofSwing_1(ISeries<double> reference_BO_level, ISeries<double> reference_SMA, int reference_bar, int reference_SMA_BO_bar, bool is_up)
+		public Tuple<bool, bool> BOProofSwing_1(ISeries<double> reference_BO_level, ISeries<double> reference_SMA, int reference_bar, int reference_SMA_BO_bar, 
+			bool is_up)
 		{
 			////		UP
 			bool is_active_long_position = false;
@@ -2284,7 +2292,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	BOSwing14 proof when market order oportunity				
-		public Tuple<bool, bool> BOProofSwing_2(ISeries<double> reference_BO_level, ISeries<double> reference_SMA, double extreme_level, int reference_bar, int reference_SMA_BO_bar, int swing, bool is_up, bool is_BO)
+		public Tuple<bool, bool> BOProofSwing_2(ISeries<double> reference_BO_level, ISeries<double> reference_SMA, double extreme_level, int reference_bar, 
+			int reference_SMA_BO_bar, int swing, bool is_up, bool is_BO)
 		{
 			bool is_active_long_position = false;
 			bool is_active_short_position = false;
@@ -2458,7 +2467,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		////	Market order submission when there is an opposing peinding order				
-		public Tuple<bool, bool> MarketVSPending(ISeries<double> reference_BO_level, ISeries<double> reference_swing, ISeries<double> reference_SMA, int reference_bar, bool is_BO, bool is_up, double extreme_level)
+		public Tuple<bool, bool> MarketVSPending(ISeries<double> reference_BO_level, ISeries<double> reference_swing, ISeries<double> reference_SMA, int reference_bar, 
+			bool is_BO, bool is_up, double extreme_level)
 		{
 			bool isActiveLongPosition = false;
 			bool isActiveShortPosition = false;
