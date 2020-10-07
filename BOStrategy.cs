@@ -200,25 +200,30 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
 			if (iSwing2.SwingHigh[0] == 0 || iSwing2.SwingLow[0] == 0 || iSwing1.SwingHigh[0] == 0 || iSwing1.SwingLow[0] == 0 || iATR[0] == 0)
 				return;
+            #endregion
+
+            #region Variable_Reset
+
+            //Reset is_BO variable once a new swing comes up.
+            #region BO_reset
+            if (current_swingHigh1 != iSwing1.SwingHigh[0])
+				is_BO_up_swing1 = false;
+
+			if (current_swingHigh2 != iSwing2.SwingHigh[0])
+				is_BO_up_swing2 = false;
+
+			if (current_swingLow1 != iSwing1.SwingLow[0])
+				is_BO_down_swing1 = false;
+
+			if (current_swingLow2 != iSwing2.SwingLow[0])
+				is_BO_down_swing2 = false;
 			#endregion
 
-			#region Variable_Reset
-			////		Reset isBO variable once a new swing comes up	
-			if (current_swingHigh1 != iSwing1.SwingHigh[0])
+			//If there isn't an active position, the trend flags (is_long, is_short) are reset to false for later calculations.
+			if (Position.MarketPosition == MarketPosition.Flat)
 			{
-				is_BO_up_swing1 = false;
-			}
-			if (current_swingHigh2 != iSwing2.SwingHigh[0])
-			{
-				is_BO_up_swing2 = false;
-			}
-			if (current_swingLow1 != iSwing1.SwingLow[0])
-			{
-				is_BO_down_swing1 = false;
-			}
-			if (current_swingLow2 != iSwing2.SwingLow[0])
-			{
-				is_BO_down_swing2 = false;
+				is_long = false;
+				is_short = false;
 			}
 
 			last_max_high_swingHigh1 = max_high_swingHigh1;
@@ -228,13 +233,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			is_reentry_long = false;
 			is_reentry_short = false;
-
-			////		is_long, is_short reseting 		
-			if (Position.MarketPosition == MarketPosition.Flat) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
-			{
-				is_long = false;
-				is_short = false;
-			}
 			#endregion
 
 			#region Variable_Initialization       
