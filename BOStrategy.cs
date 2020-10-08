@@ -400,6 +400,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			#region Gray_Ellipse
 			//Gray Ellipse: Is when the smallest and second biggest SMAs crosses in the opposite direction of the overall market movement.
+
 			#region Long
 			//This if statement recognizes the cross below event between the smallest and second biggest SMAs;
 			//nevertheless, it does not mean that a gray ellipse event has happened.
@@ -419,7 +420,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				int SMAs_cross_and_gray_ellipse_dis = CurrentBar - cross_above_bar;
 				//This if statement is done to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarLookBack period, 
 				//which is not possible.
-				if (SMAs_cross_and_gray_ellipse_dis >= 240)
+				if (SMAs_cross_and_gray_ellipse_dis > 240)
 					SMAs_cross_and_gray_ellipse_dis = 240;
 
 				//Iterate to find the highest swingHigh2
@@ -473,7 +474,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				int SMAs_cross_and_gray_ellipse_dis = CurrentBar - cross_below_bar;
 				//This if statement is done to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarLookBack period, 
 				//which is not possible.
-				if (SMAs_cross_and_gray_ellipse_dis >= 240)
+				if (SMAs_cross_and_gray_ellipse_dis > 240)
 					SMAs_cross_and_gray_ellipse_dis = 240;
 
 				//Iterate to find the lowest swingLow14
