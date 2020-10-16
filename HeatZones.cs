@@ -25,7 +25,7 @@ using NinjaTrader.NinjaScript.DrawingTools;
 //This namespace holds Strategies in this folder and is required. Do not change it. 
 namespace NinjaTrader.NinjaScript.Strategies
 {
-    public class HeatZones : Strategy
+	public class HeatZones : Strategy
 	{
 		#region Variables
 		private SMA iSMA1, iSMA2, iSMA3;
@@ -33,8 +33,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private Swing iSwing1, iSwing2;
 		private int heat_zone_high_counter, heat_zone_low_counter, heat_zone_high_bar, heat_zone_low_bar, a;
 		private double heat_zone_high_value, heat_zone_low_value, max_swing, min_swing;
-		List<double> heat_zones = new List<double>();
-		List<int> heat_zones_bar = new List<int>();
+		List<double> heat_zones_high = new List<double>();
+		List<double> heat_zones_low = new List<double>();
+		List<int> heat_zones_bar_high = new List<int>();
+		List<int> heat_zones_bar_low = new List<int>();
 		#endregion
 		protected override void OnStateChange()
 		{
@@ -127,6 +129,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 			
 			#region Swing_High_Heat
+			
 			heat_zone_high_value = iSwing2.SwingHigh[0];
 			heat_zone_high_bar = iSwing2.SwingHighBar(0, 1, CurrentBar);
 			heat_zone_high_counter = 0;
@@ -148,13 +151,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			if (heat_zone_high_counter > 5)
 			{
-				heat_zones.Add(heat_zone_high_value);
-				heat_zones_bar.Add(CurrentBar - heat_zone_high_bar);
+				heat_zones_high.Add(heat_zone_high_value);
+				heat_zones_bar_high.Add(CurrentBar - heat_zone_high_bar);
 			}
+			
 			#endregion
 
 			#region Swing_Low_Heat
-			/*
+			
 			heat_zone_low_value = iSwing2.SwingLow[0];
 			heat_zone_low_bar = iSwing2.SwingLowBar(0, 1, CurrentBar);
 			heat_zone_low_counter = 0;
@@ -176,10 +180,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			if (heat_zone_low_counter > 5)
 			{
-				heat_zones.Add(heat_zone_low_value);
-				heat_zones_bar.Add(CurrentBar - heat_zone_low_bar);
+				heat_zones_low.Add(heat_zone_low_value);
+				heat_zones_bar_low.Add(CurrentBar - heat_zone_low_bar);
 			}
-			*/
+			
 			#endregion
 			
 			#region Extreme_Swings
@@ -220,41 +224,75 @@ namespace NinjaTrader.NinjaScript.Strategies
 		#region Functions
 		private void Heat_Zones_Check()
 		{
-			for (int i = 0; i < heat_zones.Count; i++)
+            #region High
+            for (int i = 0; i < heat_zones_high.Count; i++)
 			{
-				for (int j = 0; j < heat_zones.Count; j++)
+				for (int j = 0; j < heat_zones_high.Count; j++)
 				{
 					if (i != j)
 					{
-						if (heat_zones[i] == heat_zones[j])
+						if (heat_zones_high[i] == heat_zones_high[j])
 						{
-							heat_zones.Remove(heat_zones[i]);
-							heat_zones_bar.Remove(heat_zones_bar[i]);
+							heat_zones_high.Remove(heat_zones_high[i]);
+							heat_zones_bar_high.Remove(heat_zones_bar_high[i]);
 						}
 					}
 				}
 			}
 
-			if (heat_zones.Count > 10)
+			if (heat_zones_high.Count > 5)
             {
-				heat_zones.RemoveAt(0);
-				heat_zones_bar.RemoveAt(0);
+				heat_zones_high.RemoveAt(0);
+				heat_zones_bar_high.RemoveAt(0);
             }
+			#endregion
+
+			#region Low
+			for (int i = 0; i < heat_zones_low.Count; i++)
+			{
+				for (int j = 0; j < heat_zones_low.Count; j++)
+				{
+					if (i != j)
+					{
+						if (heat_zones_low[i] == heat_zones_low[j])
+						{
+							heat_zones_low.Remove(heat_zones_low[i]);
+							heat_zones_bar_low.Remove(heat_zones_bar_low[i]);
+						}
+					}
+				}
+			}
+
+			if (heat_zones_low.Count > 5)
+			{
+				heat_zones_low.RemoveAt(0);
+				heat_zones_bar_low.RemoveAt(0);
+			}
+			#endregion
 		}
 
 		private void Print_Heat_Zones()
         {
-			for (int i = 0; i < heat_zones.Count; i++)
+			Print("High");
+			for (int i = 0; i < heat_zones_high.Count; i++)
             {
-				Print(string.Format("{0} // {1} // {2}", Time[0], heat_zones[i], heat_zones_bar[i]));
-				//Draw.HorizontalLine(this, "Line" + i, heat_zones[i], Brushes.Red);
-				//Draw.RegionHighlightY(this, "Range" + i, heat_zones[i] - (iATR[0] * 0.5), heat_zones[i] + (iATR[0] * 0.5), Brushes.Red);
-				Draw.Line(this, "Line" + i, CurrentBar - heat_zones_bar[i], heat_zones[i], 0, heat_zones[i], Brushes.Red);
-				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones_bar[i], heat_zones[i] - (iATR[0] * 0.5), 0, heat_zones[i] + (iATR[0] * 0.5), Brushes.Red);
+				Print(string.Format("{0} // {1} // {2}", Time[0], heat_zones_high[i], heat_zones_bar_high[i]));
+				//Draw.HorizontalLine(this, "Line" + i, heat_zones_high[i], Brushes.Red);
+				//Draw.RegionHighlightY(this, "Range" + i, heat_zones_high[i] - (iATR[0] * 0.5), heat_zones_high[i] + (iATR[0] * 0.5), Brushes.Red);
+				Draw.Line(this, "Line(H)" + i, CurrentBar - heat_zones_bar_high[i], heat_zones_high[i], 0, heat_zones_high[i], Brushes.Red);
+				Draw.Rectangle(this, "Rectangle(H)" + i, CurrentBar - heat_zones_bar_high[i], heat_zones_high[i] - (iATR[0] * 0.5), 0, heat_zones_high[i] + (iATR[0] * 0.5), Brushes.Red);
 			}
-
-
-
+			Print("-----");
+			Print("Low");
+			for (int i = 0; i < heat_zones_low.Count; i++)
+			{
+				Print(string.Format("{0} // {1} // {2}", Time[0], heat_zones_low[i], heat_zones_bar_low[i]));
+				//Draw.HorizontalLine(this, "Line" + i, heat_zones_low[i], Brushes.Red);
+				//Draw.RegionHighlightY(this, "Range" + i, heat_zones_low[i] - (iATR[0] * 0.5), heat_zones_low[i] + (iATR[0] * 0.5), Brushes.Red);
+				Draw.Line(this, "Line(L)" + i, CurrentBar - heat_zones_bar_low[i], heat_zones_low[i], 0, heat_zones_low[i], Brushes.Yellow);
+				Draw.Rectangle(this, "Rectangle(L)" + i, CurrentBar - heat_zones_bar_low[i], heat_zones_low[i] - (iATR[0] * 0.5), 0, heat_zones_low[i] + (iATR[0] * 0.5), Brushes.Yellow);
+			}
+			Print("-----");
 		}
 		#endregion
     }
