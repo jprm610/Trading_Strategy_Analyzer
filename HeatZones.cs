@@ -65,6 +65,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				
 				#region Parameters
 				instance = 10;
+				heat_zone_strength = 10;
 				#endregion
 			}
 			else if (State == State.Configure)
@@ -147,9 +148,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					heat_zone_high_counter++;
 				}
+
+				if (iSwing1.SwingLow[iSwing1.SwingLowBar(0, i, CurrentBar)] < heat_zone_high_value + (iATR[0] * 0.5) &&
+					iSwing1.SwingLow[iSwing1.SwingLowBar(0, i, CurrentBar)] > heat_zone_high_value - (iATR[0] * 0.5))
+				{
+					heat_zone_high_counter++;
+				}
+
+				if (iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)] < heat_zone_high_value + (iATR[0] * 0.5) &&
+					iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)] > heat_zone_high_value - (iATR[0] * 0.5))
+				{
+					heat_zone_high_counter++;
+				}
 			}
 
-			if (heat_zone_high_counter > 5)
+			if (heat_zone_high_counter > heat_zone_strength)
 			{
 				heat_zones_high.Add(heat_zone_high_value);
 				heat_zones_bar_high.Add(CurrentBar - heat_zone_high_bar);
@@ -165,6 +178,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			for (int i = 1; i <= instance; i++)
 			{
+				if (iSwing1.SwingHigh[iSwing1.SwingHighBar(0, i, CurrentBar)] < heat_zone_low_value + (iATR[0] * 0.5) &&
+					iSwing1.SwingHigh[iSwing1.SwingHighBar(0, i, CurrentBar)] > heat_zone_low_value - (iATR[0] * 0.5))
+				{
+					heat_zone_low_counter++;
+				}
+
+				if (iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)] < heat_zone_low_value + (iATR[0] * 0.5) &&
+					iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)] > heat_zone_low_value - (iATR[0] * 0.5))
+				{
+					heat_zone_low_counter++;
+				}
+
 				if (iSwing1.SwingLow[iSwing1.SwingLowBar(0, i, CurrentBar)] < heat_zone_low_value + (iATR[0] * 0.5) &&
 					iSwing1.SwingLow[iSwing1.SwingLowBar(0, i, CurrentBar)] > heat_zone_low_value - (iATR[0] * 0.5))
 				{
@@ -178,7 +203,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 			}
 
-			if (heat_zone_low_counter > 5)
+			if (heat_zone_low_counter > heat_zone_strength)
 			{
 				heat_zones_low.Add(heat_zone_low_value);
 				heat_zones_bar_low.Add(CurrentBar - heat_zone_low_bar);
@@ -218,6 +243,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Range(1, int.MaxValue)]
 		[Display(Name = "Instance", Order = 1, GroupName = "Parameters")]
 		public int instance
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(1, int.MaxValue)]
+		[Display(Name = "Heat-Zone Strength", Order = 1, GroupName = "Parameters")]
+		public int heat_zone_strength
 		{ get; set; }
 		#endregion
 
