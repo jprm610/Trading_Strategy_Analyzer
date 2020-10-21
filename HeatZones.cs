@@ -178,7 +178,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				heat_zone_high_value = swings1_high[0].value;
 				heat_zone_high_counter = 0;
-				for (int i = swings1_high.Count - 1; i > 0; i--)
+				for (int i = swings1_high.Count - 1; i >= 0; i--)
 				{
 					swingDis = Math.Abs(heat_zone_high_value - swings1_high[i].value);
 
@@ -192,7 +192,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 
-				for (int i = swings1_low.Count - 1; i > 0; i--)
+				for (int i = swings1_low.Count - 1; i >= 0; i--)
 				{
 					swingDis = Math.Abs(heat_zone_high_value - swings1_low[i].value);
 
@@ -214,7 +214,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				heat_zone_low_value = iSwing1.SwingLow[0];
 				heat_zone_low_counter = 0;
-				for (int i = swings1_high.Count - 1; i > 0; i--)
+				for (int i = swings1_high.Count - 1; i >= 0; i--)
 				{
 					swingDis = Math.Abs(heat_zone_low_value - swings1_high[i].value);
 
@@ -228,7 +228,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 
-				for (int i = swings1_low.Count - 1; i > 0; i--)
+				for (int i = swings1_low.Count - 1; i >= 0; i--)
 				{
 					swingDis = Math.Abs(heat_zone_low_value - swings1_low[i].value);
 
@@ -247,7 +247,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
             #region Heat_Zone_Identification
             #region Heat_Zone_High
-            if (heat_zone_high_swings1.Count > heat_zone_strength)
+            if (heat_zone_high_swings1.Count - 1 > heat_zone_strength)
 			{
 				heat_zones_high.Add(new MyHeatZone()
 				{
@@ -282,7 +282,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             #endregion
 
             #region Heat_Zone_Low
-            if (heat_zone_low_swings1.Count > heat_zone_strength)
+            if (heat_zone_low_swings1.Count - 1 > heat_zone_strength)
 			{
 				heat_zones_low.Add(new MyHeatZone()
 				{
@@ -494,7 +494,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Print(string.Format("{0} // {1}", swings3_low[i], swings3_low_bar[i]));
 			}*/
 
-			Print(string.Format("LowCount: {0} // HighCount: {1}", heat_zone_low_swings1.Count, heat_zone_high_swings1.Count));
+			Print(string.Format("LowCount: {0} // HighCount: {1}", heat_zone_low_swings1.Count - 1, heat_zone_high_swings1.Count - 1));
 			Print("---------------------------------------------------------------------------------------");
 
 			heat_zone_high_swings1.Clear();
