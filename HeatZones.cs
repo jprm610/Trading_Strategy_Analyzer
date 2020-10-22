@@ -32,7 +32,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private ATR iATR;
 		private Swing iSwing1, iSwing2, iSwing3;
 		private int Instance, Heat_zone_strength, Heat_zones_print;
-		private double heat_zone_high_value, heat_zone_low_value, max_swing, min_swing, last_swingHigh1, last_swingLow1, swingDis, current_swingHigh2, current_swingLow2, current_swingHigh3, current_swingLow3;
+		private double Width, heat_zone_high_value, heat_zone_low_value, max_swing, min_swing, last_swingHigh1, last_swingLow1, swingDis, current_swingHigh2, current_swingLow2, current_swingHigh3, current_swingLow3;
 		//List<double> swings1_high = new List<double>();
 		//List<int> swings1_high_bar = new List<int>();
 		List<double> swings2_high = new List<double>();
@@ -118,7 +118,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			#region Parameters
 			Instance = 10;
-			Heat_zone_strength = 3;
+			Heat_zone_strength = 2;
+			Width = 1.5; //ATR units
 			Heat_zones_print = 3;
             #endregion
 
@@ -185,7 +186,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					swingDis = Math.Abs(heat_zone_high_value - swings1_high[i].value);
 
-					if (swingDis <= iATR[0])
+					if (swingDis <= iATR[0] * Width)
 					{
 						heat_zone_high_swings1.Add(new MySwing()
 						{
@@ -199,7 +200,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					swingDis = Math.Abs(heat_zone_high_value - swings1_low[i].value);
 
-					if (swingDis <= iATR[0])
+					if (swingDis <= iATR[0] * Width)
 					{
 						heat_zone_high_swings1.Add(new MySwing()
 						{
@@ -220,7 +221,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					swingDis = Math.Abs(heat_zone_low_value - swings1_high[i].value);
 
-					if (swingDis <= iATR[0])
+					if (swingDis <= iATR[0] * Width)
 					{
 						heat_zone_low_swings1.Add(new MySwing()
 						{
@@ -234,7 +235,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					swingDis = Math.Abs(heat_zone_low_value - swings1_low[i].value);
 
-					if (swingDis <= iATR[0])
+					if (swingDis <= iATR[0] * Width)
 					{
 						heat_zone_low_swings1.Add(new MySwing()
 						{
@@ -458,7 +459,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             {
 				Print(string.Format("RV: {0} // MinY: {1} // MaxY: {2} // StartX: {3} // Strength: {4}", heat_zones_high[i].reference_value, heat_zones_high[i].min_y, heat_zones_high[i].max_y, heat_zones_high[i].start_x, heat_zones_high[i].strength));
 				Draw.Rectangle(this, "Rectangle(H)" + i, CurrentBar - heat_zones_high[i].start_x, heat_zones_high[i].min_y, 0, heat_zones_high[i].max_y, Brushes.Red);
-				Draw.Text(this, "Strength[H]" + i, heat_zones_high[i].strength.ToString(), 0, (heat_zones_high[i].max_y + heat_zones_high[i].min_y) / 2);
+				Draw.Text(this, "Strength[H]" + i, heat_zones_high[i].strength.ToString(), 10, (heat_zones_high[i].max_y + heat_zones_high[i].min_y) / 2);
 			}
 			Print("-----");
 			Print("Low");
@@ -466,7 +467,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Print(string.Format("RV: {0} // MinY: {1} // MaxY: {2} // StartX: {3} // Strength: {4}", heat_zones_low[i].reference_value, heat_zones_low[i].min_y, heat_zones_low[i].max_y, heat_zones_low[i].start_x, heat_zones_low[i].strength));
 				Draw.Rectangle(this, "Rectangle(L)" + i, CurrentBar - heat_zones_low[i].start_x, heat_zones_low[i].min_y, 0, heat_zones_low[i].max_y, Brushes.Yellow);
-				Draw.Text(this, "Strength[L]" + i, heat_zones_low[i].strength.ToString(), 0, (heat_zones_low[i].max_y + heat_zones_low[i].min_y) / 2);
+				Draw.Text(this, "Strength[L]" + i, heat_zones_low[i].strength.ToString(), 10, (heat_zones_low[i].max_y + heat_zones_low[i].min_y) / 2);
 			}
 			Print("-----------------------------------------------------------------");
 			
