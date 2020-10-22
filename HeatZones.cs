@@ -25,26 +25,13 @@ using NinjaTrader.NinjaScript.DrawingTools;
 //This namespace holds Strategies in this folder and is required. Do not change it. 
 namespace NinjaTrader.NinjaScript.Strategies
 {
-	public class HeatZones : Strategy
+	public class Heat_Zones : Strategy
 	{
 		#region Variables
-		private SMA iSMA1, iSMA2, iSMA3;
 		private ATR iATR;
-		private Swing iSwing1, iSwing2, iSwing3;
+		private Swing iSwing1;
 		private int Instance, Heat_zone_strength, Heat_zones_print;
-		private double Width, heat_zone_reference_value, max_swing, min_swing, last_swingHigh1, last_swingLow1, swingDis, current_swingHigh2, current_swingLow2, current_swingHigh3, current_swingLow3;
-		//List<double> swings1_high = new List<double>();
-		//List<int> swings1_high_bar = new List<int>();
-		List<double> swings2_high = new List<double>();
-		List<int> swings2_high_bar = new List<int>();
-		List<double> swings3_high = new List<double>();
-		List<int> swings3_high_bar = new List<int>();
-		//List<double> swings1_low = new List<double>();
-		//List<int> swings1_low_bar = new List<int>();
-		List<double> swings2_low = new List<double>();
-		List<int> swings2_low_bar = new List<int>();
-		List<double> swings3_low = new List<double>();
-		List<int> swings3_low_bar = new List<int>();
+		private double Width, heat_zone_reference_value, swingDis, last_swingHigh1, last_swingLow1, max_swing, min_swing;
 		List<MySwing> swings1_high = new List<MySwing>();
 		List<MySwing> swings1_low = new List<MySwing>();
 		List<MySwing> heat_zone_swings1 = new List<MySwing>();
@@ -55,7 +42,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			if (State == State.SetDefaults)
 			{
 				Description = @"Enter the description for your new custom Strategy here.";
-				Name = "Heat_Zones";
+				Name = "HeatZones";
 				Calculate = Calculate.OnBarClose;
 				EntriesPerDirection = 1;
 				EntryHandling = EntryHandling.AllEntries;
@@ -82,33 +69,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				iATR = ATR(Close, 100);
 
-				//iSwing1 > iSwing2 > iSwing3
 				iSwing1 = Swing(Close, 36);
-				iSwing2 = Swing(Close, 14);
-				iSwing3 = Swing(Close, 4);
 
-				//iSMA1 > iSMA2 > iSMA3
-				iSMA1 = SMA(Close, 200);
-				iSMA2 = SMA(Close, 50);
-				iSMA3 = SMA(Close, 20);
-
-				iSMA1.Plots[0].Brush = Brushes.Red;
-				iSMA2.Plots[0].Brush = Brushes.Gold;
-				iSMA3.Plots[0].Brush = Brushes.Lime;
 				iATR.Plots[0].Brush = Brushes.White;
 				iSwing1.Plots[0].Brush = Brushes.DarkCyan;
 				iSwing1.Plots[1].Brush = Brushes.DarkCyan;
-				iSwing2.Plots[0].Brush = Brushes.Silver;
-				iSwing2.Plots[1].Brush = Brushes.Silver;
-				iSwing3.Plots[0].Brush = Brushes.Magenta;
-				iSwing3.Plots[1].Brush = Brushes.Magenta;
 
-				AddChartIndicator(iSMA1);
-				AddChartIndicator(iSMA2);
-				AddChartIndicator(iSMA3);
-				AddChartIndicator(iSwing3);
-				AddChartIndicator(iSwing2);
 				AddChartIndicator(iSwing1);
+				AddChartIndicator(iATR);
 			}
 		}
 
@@ -132,9 +100,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return;
 
 			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
-			if (iSwing3.SwingHigh[0] == 0 || iSwing3.SwingLow[0] == 0 ||
-				iSwing2.SwingHigh[0] == 0 || iSwing2.SwingLow[0] == 0 ||
-				iSwing1.SwingHigh[0] == 0 || iSwing1.SwingLow[0] == 0 ||
+			if (iSwing1.SwingHigh[0] == 0 || iSwing1.SwingLow[0] == 0 ||
 				iATR[0] == 0)
 				return;
 
@@ -269,22 +235,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Extreme_Swings
-			max_swing = iSwing2.SwingHigh[0];
+			max_swing = iSwing1.SwingHigh[0];
 			for (int i = 1; i < Instance; i++)
 			{
-				if (iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)] > max_swing)
+				if (iSwing1.SwingHigh[iSwing1.SwingHighBar(0, i, CurrentBar)] > max_swing)
 				{
-					max_swing = iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)];
+					max_swing = iSwing1.SwingHigh[iSwing1.SwingHighBar(0, i, CurrentBar)];
 				}
 			}
 			Draw.HorizontalLine(this, "MaxLine", max_swing, Brushes.LimeGreen);
 
-			min_swing = iSwing2.SwingLow[0];
+			min_swing = iSwing1.SwingLow[0];
 			for (int i = 1; i < Instance; i++)
 			{
-				if (iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)] < min_swing)
+				if (iSwing1.SwingLow[iSwing1.SwingLowBar(0, i, CurrentBar)] < min_swing)
 				{
-					min_swing = iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)];
+					min_swing = iSwing1.SwingLow[iSwing1.SwingLowBar(0, i, CurrentBar)];
 				}
 			}
 			Draw.HorizontalLine(this, "MinLine", min_swing, Brushes.LimeGreen);
@@ -315,145 +281,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		private void Lists_Cleaning(List<MySwing> swings)
 		{
-			/*
-            for (int i = 0; i < swings_bar.Count; i++)
-			{
-				for (int j = 0; j < swings_bar.Count; j++)
-				{
-					if (i != j)
-                    {
-						if (swings_bar[i] == swings_bar[j])
-                        {
-							swings.RemoveAt(i);
-							swings_bar.RemoveAt(i);
-                        }
-                    }
-				}
-			}
-			*/
-
 			while (swings.Count > Instance)
 			{
 				swings.RemoveAt(0);
 			}
 		}
 
-		private void Lists_Length(List<double> swings, List<int> swings_bar)
-		{
-			if (swings.Count > 10)
-			{
-				swings.RemoveAt(0);
-				swings_bar.RemoveAt(0);
-			}
-		}
-
 		private void Print_Heat_Zones()
 		{
-			Print(Time[0]);
-
-			/*
-			Print(string.Format("High: {0} // Low: {1}", heat_zones_high.Count, heat_zones_low.Count));
-
-			Print("High");
-			for (int i = 0; i < heat_zones_high.Count; i++)
-			{
-				Print(string.Format("RV: {0}", heat_zones_high[i].reference_value));
-			}
-			Print("-----");
-			Print("Low");
-			for (int i = 0; i < heat_zones_low.Count; i++)
-			{
-				Print(string.Format("RV: {0}", heat_zones_low[i].reference_value));
-			}
-			Print("-----------------------------------------------------------------");
-			*/
-
-			
-			Print("Heat Zones");
 			for (int i = 0; i < heat_zones.Count; i++)
             {
-				Print(string.Format("RV: {0} // MinY: {1} // MaxY: {2} // StartX: {3} // Strength: {4}", heat_zones[i].reference_value, heat_zones[i].min_y, heat_zones[i].max_y, heat_zones[i].start_x, heat_zones[i].strength));
-				Draw.Rectangle(this, "Rectangle(H)" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
-				Draw.Text(this, "Strength[H]" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
+				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 40, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 			}
-			Print("------------------------------------------------------------------");
-
-			/*
-			Print("Low");
-			for (int i = 0; i < heat_zones_low.Count; i++)
-			{
-				Print(string.Format("RV: {0} // MinY: {1} // MaxY: {2} // StartX: {3} // Strength: {4}", heat_zones_low[i].reference_value, heat_zones_low[i].min_y, heat_zones_low[i].max_y, heat_zones_low[i].start_x, heat_zones_low[i].strength));
-				Draw.Rectangle(this, "Rectangle(L)" + i, CurrentBar - heat_zones_low[i].start_x, heat_zones_low[i].min_y, 0, heat_zones_low[i].max_y, Brushes.Yellow);
-				Draw.Text(this, "Strength[L]" + i, heat_zones_low[i].strength.ToString(), 10, (heat_zones_low[i].max_y + heat_zones_low[i].min_y) / 2);
-			}
-			Print("-----------------------------------------------------------------");
-			*/
-			
-
-			/*
-			Print("swingsHigh");
-			for (int i = 0; i < swings1_high.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", swings1_high[i].value, swings1_high[i].bar));
-			}
-			Print("-----");
-
-			Print("heat_zone_high");
-			Print(heat_zone_high_value);
-			for (int i = 0; i < heat_zone_high_swings1.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", heat_zone_high_swings1[i].value, heat_zone_high_swings1[i].bar));
-			}
-			Print("-----");
-
-			
-			Print("swingsHigh2");
-			for (int i = 0; i < swings2_high.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", swings2_high[i], swings2_high_bar[i]));
-			}
-			Print("-----");
-
-			Print("swingsHigh3");
-			for (int i = 0; i < swings3_high.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", swings3_high[i], swings3_high_bar[i]));
-			}
-			Print("-----");
-			
-			Print("swingsLow");
-			for (int i = 0; i < swings1_low.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", swings1_low[i].value, swings1_low[i].bar));
-			}
-			Print("-----");
-
-			Print("heat_zone_low");
-			Print(heat_zone_low_value);
-			for (int i = 0; i < heat_zone_low_swings1.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", heat_zone_low_swings1[i].value, heat_zone_low_swings1[i].bar));
-			}
-			//Print("-----");
-
-			
-			Print("swingsLow2");
-			for (int i = 0; i < swings2_low.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", swings2_low[i], swings2_low_bar[i]));
-			}
-			Print("-----");
-
-			Print("swingsLow3");
-			for (int i = 0; i < swings3_low.Count; i++)
-			{
-				Print(string.Format("{0} // {1}", swings3_low[i], swings3_low_bar[i]));
-			}
-
-			Print(string.Format("LowCount: {0} // HighCount: {1}", heat_zone_low_swings1.Count - 1, heat_zone_high_swings1.Count - 1));
-			
-			Print("---------------------------------------------------------------------------------------");
-			*/
 		}
 		#endregion
     }
