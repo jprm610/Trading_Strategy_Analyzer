@@ -99,9 +99,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return;
 			#endregion
 
-			RemoveDrawObjects();
-
-			for (int i = 0; i < Look_back_candles; i++)
+            #region Save_Volume_and_Range
+            for (int i = 0; i < Look_back_candles; i++)
 			{
 				volumes.Add(new MyValues()
 				{
@@ -119,10 +118,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 					bars_ago = i
 				});
 			}
-			Lists_Cleaning(volumes);
-			Lists_Cleaning(ranges);
+            #endregion
 
-			double[] volumes_values = new double[volumes.Count];
+            #region Copy_Volumes_and_Ranges_Values
+            double[] volumes_values = new double[volumes.Count];
 			for (int i = 0; i < volumes.Count; i++)
             {
 				volumes_values[i] = volumes[i].value;
@@ -133,8 +132,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				ranges_values[i] = ranges[i].value;
 			}
+            #endregion
 
-			volumes_percentile = Percentile(volumes_values, Percentile_v);
+            #region Calculate_and_Evaluate_Percentiles
+            volumes_percentile = Percentile(volumes_values, Percentile_v);
 			ranges_percentile = Percentile(ranges_values, Percentile_v);
 
 			for (int i = 0; i < Look_back_candles; i++)
@@ -161,62 +162,35 @@ namespace NinjaTrader.NinjaScript.Strategies
 					});
 				}
             }
+            #endregion
 
-			/*
-			Print(Time[0]);
-			for (int i = 0; i < Look_back_candles; i++)
+            #region Print_Values_over_Percentile
+            for (int i = 0; i < volumes_over_percentile.Count; i++)
 			{
-				Print(string.Format("{0} // {1}", volumes[i].value, ranges[i].value));
-			}
-			Print(string.Format("Percentile {2} Vol: {0} // Percentile {2} Range: {1}", volumes_percentile, ranges_percentile, Percentile_v));
-
-			Print("Volumes over percentile");
-			for (int i = 0; i < volumes_over_percentile.Count; i++)
-            {
-				Print(volumes_over_percentile[i].value);
-            }
-
-			Print("Ranges over percentile");
-			for (int i = 0; i < ranges_over_percentile.Count; i++)
-			{
-				Print(ranges_over_percentile[i].value);
-			}
-			Print("------------------------------------------------------");
-			*/
-
-			for (int i = 0; i < volumes_over_percentile.Count; i++)
-			{
-				Draw.TriangleUp(this, "Volume" + i, true, volumes_over_percentile[i].bars_ago, volumes_over_percentile[i].low - 0.03, Brushes.Cyan);
+				Draw.TriangleUp(this, "Volume" + CurrentBar, true, volumes_over_percentile[i].bars_ago + 1, volumes_over_percentile[i].low - (TickSize * 30), Brushes.Cyan);
 			}
 
 			for (int i = 0; i < ranges_over_percentile.Count; i++)
             {
-				Draw.TriangleDown(this, "Range" + i, true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].high + 0.03, Brushes.Indigo);
+				Draw.TriangleDown(this, "Range" + CurrentBar, true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].high + (TickSize * 30), Brushes.White);
             }
+            #endregion
 
-			Draw.RegionHighlightX(this, "Region", Look_back_candles, 0, Brushes.AliceBlue);
-
-			volumes.Clear();
+            #region Reset_Arrays
+            volumes.Clear();
 			ranges.Clear();
 
 			volumes_over_percentile.Clear();
 			ranges_over_percentile.Clear();
-		}
+            #endregion
+        }
 
-		public class MyValues
+        public class MyValues
         {
 			public double value;
 			public double high;
 			public double low;
 			public int bars_ago;
-        }
-
-		private void Lists_Cleaning(List<MyValues> list)
-        {
-			while (list.Count > Look_back_candles)
-            {
-				list.RemoveAt(0);
-            }
         }
 
 		public double Percentile(double[] sequence, double excelPercentile)
