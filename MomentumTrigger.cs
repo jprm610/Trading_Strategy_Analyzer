@@ -31,7 +31,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		#region Variables
 		private VolumeUpDown ivolume_up_down;
 		private Range iRange;
-		private int Look_back_candles, a = 0;
+		private int Look_back_candles;
 		private double volumes_percentile, ranges_percentile, Percentile_v;
 		private List<MyValues> volumes = new List<MyValues>();
 		private List<MyValues> ranges = new List<MyValues>();
@@ -80,8 +80,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		protected override void OnBarUpdate()
 		{
 			#region Parameters
-			Look_back_candles = 200;
-			Percentile_v = 0.95;
+			Look_back_candles = 100;
+			Percentile_v = 0.99;
 			#endregion
 
 			#region Chart_Initialization
@@ -97,8 +97,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
 			if (iRange[0] == 0 || Volume[0] == 0)
 				return;
-
-			a++;
 			#endregion
 
             #region Save_Volume_and_Range
@@ -208,8 +206,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}				
             }
 			#endregion
-
-			Print(string.Format("{0} // Range {1}: {2}", Time[0], Percentile_v, ranges_percentile));
 
             #region Reset_Arrays
             //volumes.Clear();
