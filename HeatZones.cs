@@ -30,8 +30,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		#region Variables
 		private ATR iATR;
 		private Swing iSwing1;
-		private int Instance, Heat_zone_strength, Heat_zones_print;
-		private double Width, heat_zone_reference_value, swingDis, last_swingHigh1, last_swingLow1, max_swing, min_swing;
+		private double heat_zone_reference_value, swingDis, last_swingHigh1, last_swingLow1, max_swing, min_swing;
 		List<MySwing> swings1_high = new List<MySwing>();
 		List<MySwing> swings1_low = new List<MySwing>();
 		List<MySwing> heat_zone_swings1 = new List<MySwing>();
@@ -61,6 +60,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 				// Disable this property for performance gains in Strategy Analyzer optimizations
 				// See the Help Guide for additional information
 				IsInstantiatedOnEachOptimizationIteration = true;
+
+				Instance			= 10;
+				Heat_zone_strength	= 2;
+				Width				= 1.5;
+				Heat_zones_print	= 6;
 			}
 			else if (State == State.Configure)
 			{
@@ -82,12 +86,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		protected override void OnBarUpdate()
 		{
+			/*
 			#region Parameters
 			Instance = 10;			//Represents the numeber of swings that are going to be taken into account for later calculations. 
 			Heat_zone_strength = 2; //How many swings have to be in the price range to be considered as a Heat Zone?
 			Width = 1.5;			//The width of the range that is going to be evaluated as a Heat Zone. (Measured in ATR units).
 			Heat_zones_print = 6;	//How many Heat Zones are going to be printed?
             #endregion
+			*/
 
             #region Chart_Initialization
             if (BarsInProgress != 0)
@@ -129,7 +135,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 						bar = CurrentBar - iSwing1.SwingHighBar(0, i, CurrentBar)
 					});
 				}
-				Lists_Cleaning(swings1_high);
+
+				while (swings1_high.Count > Instance)
+				{
+					swings1_high.RemoveAt(0);
+				}
 
 				for (int i = 1; i <= Instance; i++)
 				{
@@ -139,7 +149,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 						bar = CurrentBar - iSwing1.SwingLowBar(0, i, CurrentBar)
 					});
 				}
-				Lists_Cleaning(swings1_low);
+
+				while (swings1_low.Count > Instance)
+				{
+					swings1_low.RemoveAt(0);
+				}
 			}
 			#endregion
 
@@ -185,7 +199,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 						});
 					}
 				}
-				Lists_Cleaning(heat_zone_swings1);
+
+				while (heat_zone_swings1.Count > Instance)
+				{
+					heat_zone_swings1.RemoveAt(0);
+				}
 			}
 			#endregion
 
@@ -286,15 +304,46 @@ namespace NinjaTrader.NinjaScript.Strategies
 			Draw.HorizontalLine(this, "MinLine", min_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
 			#endregion
 
-			Print_Heat_Zones();
+			#region Print_Heat_Zones
+			//Prints rectangles that represents the Heat Zones, the strength ot the Heat Zone and its reference value.
+			//The rectangle dimenssions were set in the Heat_Zone_Identification region.
+			for (int i = 0; i < heat_zones.Count; i++)
+			{
+				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
+				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 80, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+			}
+			#endregion
 
 			//Reset the last swing value in order to execute the swing update processes.
 			last_swingHigh1 = iSwing1.SwingHigh[0];
 			last_swingLow1 = iSwing1.SwingLow[0];
 		}
 
-        #region Classes
-        public class MySwing
+        #region Parameters
+        [NinjaScriptProperty]
+		[Display(Name = "Instance", GroupName = "Parameters", Order = 1)]
+		public int Instance
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Heat_zone_strength", GroupName = "Parameters", Order = 2)]
+		public int Heat_zone_strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Width", GroupName = "Parameters", Order = 3)]
+		public double Width
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Heat_zones_print", GroupName = "Parameters", Order = 4)]
+		public int Heat_zones_print
+		{ get; set; }
+		#endregion
+
+		#region Classes
+		public class MySwing
 		{
 			public double value;
 			public int bar;
@@ -309,28 +358,5 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public int strength;
         }
         #endregion
-
-        #region Functions
-		//Remove the oldest swings.
-        private void Lists_Cleaning(List<MySwing> swings)
-		{
-			while (swings.Count > Instance)
-			{
-				swings.RemoveAt(0);
-			}
-		}
-
-		//Prints rectangles that represents the Heat Zones, the strength ot the Heat Zone and its reference value.
-		//The rectangle dimenssions were set in the Heat_Zone_Identification region.
-		private void Print_Heat_Zones()
-		{
-			for (int i = 0; i < heat_zones.Count; i++)
-            {
-				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
-				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
-				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 80, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
-			}
-		}
-		#endregion
     }
 }
