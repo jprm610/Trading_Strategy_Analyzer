@@ -29,14 +29,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 	public class MomentumTrigger : Strategy
 	{
 		#region Variables
-		private VolumeUpDown ivolume_up_down;
 		private Range iRange;
-		private int Look_back_candles;
-		private double volumes_percentile, ranges_percentile, Percentile_v;
-		private List<MyValues> volumes = new List<MyValues>();
-		private List<MyValues> ranges = new List<MyValues>();
-		private List<MyValues> volumes_over_percentile = new List<MyValues>();
-		private List<MyValues> ranges_over_percentile = new List<MyValues>();
+		private double ranges_percentile;
+		private List<MyRanges> ranges = new List<MyRanges>();
+		private List<MyRanges> ranges_over_percentile = new List<MyRanges>();
 		#endregion
 		protected override void OnStateChange()
 		{
@@ -62,28 +58,23 @@ namespace NinjaTrader.NinjaScript.Strategies
 				// Disable this property for performance gains in Strategy Analyzer optimizations
 				// See the Help Guide for additional information
 				IsInstantiatedOnEachOptimizationIteration = true;
+
+				Look_back_candles = 100;
+				Percentile_v = 0.99;
 			}
 			else if (State == State.Configure)
 			{
 			}
 			else if (State == State.DataLoaded)
 			{
-				ivolume_up_down = VolumeUpDown();
-
 				iRange = Range();
 
-				AddChartIndicator(ivolume_up_down);
 				AddChartIndicator(iRange);
 			}
 		}
 
 		protected override void OnBarUpdate()
 		{
-			#region Parameters
-			Look_back_candles = 100;
-			Percentile_v = 0.99;
-			#endregion
-
 			#region Chart_Initialization
 			if (BarsInProgress != 0)
 				return;
@@ -102,19 +93,9 @@ namespace NinjaTrader.NinjaScript.Strategies
             #region Save_Volume_and_Range
             for (int i = 0; i < Look_back_candles; i++)
 			{
-				/*
-				volumes.Add(new MyValues()
-				{
-					value = Volume[i],
-					high = High[i],
-					low = Low[i],
-					bars_ago = i
-				});
-				*/
-
 				if (Close[i] >= Open[i])
                 {
-					ranges.Add(new MyValues()
+					ranges.Add(new MyRanges()
 					{
 						value = iRange[i],
 						high = High[i],
@@ -125,7 +106,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
                 else
                 {
-					ranges.Add(new MyValues()
+					ranges.Add(new MyRanges()
 					{
 						value = iRange[i],
 						high = High[i],
@@ -138,14 +119,6 @@ namespace NinjaTrader.NinjaScript.Strategies
             #endregion
 
             #region Copy_Volumes_and_Ranges_Values
-			/*
-            double[] volumes_values = new double[volumes.Count];
-			for (int i = 0; i < volumes.Count; i++)
-            {
-				volumes_values[i] = volumes[i].value;
-            }
-			*/
-
 			double[] ranges_values = new double[ranges.Count];
 			for (int i = 0; i < ranges.Count; i++)
 			{
@@ -154,27 +127,13 @@ namespace NinjaTrader.NinjaScript.Strategies
             #endregion
 
             #region Calculate_and_Evaluate_Percentiles
-            //volumes_percentile = Percentile(volumes_values, Percentile_v);
 			ranges_percentile = Percentile(ranges_values, Percentile_v);
 
 			for (int i = 0; i < Look_back_candles; i++)
 			{
-				/*
-				if (volumes[i].value >= volumes_percentile)
-                {
-					volumes_over_percentile.Add(new MyValues()
-					{
-						value = volumes[i].value,
-						high = volumes[i].high,
-						low = volumes[i].low,
-						bars_ago = volumes[i].bars_ago
-					});
-				}
-				*/
-
 				if (ranges[i].value >= ranges_percentile)
                 {
-					ranges_over_percentile.Add(new MyValues()
+					ranges_over_percentile.Add(new MyRanges()
 					{
 						value = ranges[i].value,
 						high = ranges[i].high,
@@ -187,13 +146,6 @@ namespace NinjaTrader.NinjaScript.Strategies
             #endregion
 
             #region Print_Values_over_Percentile
-			/*
-            for (int i = 0; i < volumes_over_percentile.Count; i++)
-			{
-				Draw.TriangleUp(this, "Volume" + CurrentBar, true, volumes_over_percentile[i].bars_ago + 1, volumes_over_percentile[i].low - (TickSize * 30), Brushes.Cyan);
-			}
-			*/
-
 			for (int i = 0; i < ranges_over_percentile.Count; i++)
             {
 				if (ranges_over_percentile[i].is_up)
@@ -208,15 +160,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
             #region Reset_Arrays
-            //volumes.Clear();
 			ranges.Clear();
 
-			//volumes_over_percentile.Clear();
 			ranges_over_percentile.Clear();
             #endregion
         }
 
-        public class MyValues
+		#region Parameters
+		[NinjaScriptProperty]
+		[Display(Name = "Look_back_candles", Order = 1, GroupName = "Parameters")]
+		public int Look_back_candles
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Percentile", Order = 2, GroupName = "Parameters")]
+		public double Percentile_v
+		{ get; set; }
+		#endregion
+
+		public class MyRanges
         {
 			public double value;
 			public double high;
