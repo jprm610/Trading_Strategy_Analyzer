@@ -45,7 +45,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private double ranges_percentile;
 		private List<MyRanges> ranges = new List<MyRanges>();
 		private List<MyRanges> ranges_over_percentile = new List<MyRanges>();
-    #endregion
+		#endregion
     
 		#region Heat_Zones_Process_Variables
 		private double heat_zone_reference_value, swingDis, max_swing, min_swing;
@@ -473,13 +473,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			ranges.Clear();
 
 			ranges_over_percentile.Clear();
-			#endregion
+            #endregion
+            #endregion
 
-			#region Heat_Zones_Process
-			#region Save_Swings
-			//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
-			//This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
-			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
+            #region Heat_Zones_Process
+            #region Save_Swings
+            //In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
+            //This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
+            if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
 			{
 				for (int i = 1; i <= Instance; i++)
 				{
@@ -663,7 +664,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//The rectangle dimenssions were set in the Heat_Zone_Identification region.
 			for (int i = 0; i < heat_zones.Count; i++)
 			{
-				Draw.Rectangle(this, "Rectangle" + i, true, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange, BackBrush, 0);
+				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
 				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 			}
@@ -1746,7 +1747,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
     #region Properties
     #region Indicators
-    [NinjaScriptProperty]
+		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name = "SMA1 (Max)", Order = 1, GroupName = "Indicators")]
 		public int SMA1
@@ -1781,10 +1782,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Display(Name = "Swing2 (Max)", Order = 6, GroupName = "Indicators")]
 		public int Swing2
 		{ get; set; }
-		#endregion
+	#endregion
 
     #region Parameters
-    [NinjaScriptProperty]
+		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
 		[Display(Name = "TrailingUnitsStop", Order = 1, GroupName = "Parameters")]
 		public double TrailingUnitsStop
@@ -1846,7 +1847,7 @@ namespace NinjaTrader.NinjaScript.Strategies
     #endregion
 
     #region Heat_Zone
-    [NinjaScriptProperty]
+		[NinjaScriptProperty]
 		[Display(Name = "Instance", GroupName = "Heat Zone", Order = 1)]
 		public int Instance
 		{ get; set; }
@@ -1881,7 +1882,7 @@ namespace NinjaTrader.NinjaScript.Strategies
     #endregion
 
     #region Classes
-    public class MySwing
+		public class MySwing
 		{
 			public double value;
 			public int bar;
@@ -1896,7 +1897,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public int strength;
 		}
     
-    public class MyRanges
+		public class MyRanges
 		{
 			public double value;
 			public double high;
@@ -1904,9 +1905,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public int bars_ago;
 			public bool is_up;
 		}
-		#endregion
+	#endregion
 
-		#region Functions
+	#region Functions
 		////	METHODS			
 
 		////	Swing Identification Method				
@@ -2968,6 +2969,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return sequence[k - 1] + d * (sequence[k] - sequence[k - 1]);
 			}
 		}
-		#endregion
+	#endregion
 	}
 }
