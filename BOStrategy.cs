@@ -589,6 +589,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			#region Momentum_Process
 			#region Save_Ranges
+			//Save the last n ranges (n = Look_back_candles) using its class.
+			//Saving its value, the bar when it happened, is high and low, 
+			//and wheter it happened in a green or red candle (is_up).
 			for (int i = 0; i < Look_back_candles; i++)
 			{
 				if (Close[i] >= Open[i])
@@ -617,6 +620,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Copy_Ranges_Values
+			//Traspass the ranges values to an array of double (ranges_values)
+			//in order to input the values in the Percentile function 
+			//which will appear in the next region.
 			double[] ranges_values = new double[ranges.Count];
 			for (int i = 0; i < ranges.Count; i++)
 			{
@@ -625,8 +631,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Calculate_and_Evaluate_Percentiles
+			//Find the value equivalent to the Percentile parameter.
 			ranges_percentile = Percentile(ranges_values, Percentile_v);
 
+			//Filter the ranges that are over the Percentile 
+			//and save them in another list which is going to be printed in the next region.  
 			for (int i = 0; i < Look_back_candles; i++)
 			{
 				if (ranges[i].value >= ranges_percentile)
@@ -644,6 +653,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Print_Values_over_Percentile
+			//Print triangles in the candles where the range surpassed the Percentile value.
+			//If the candle is green, print the triangle below the candle pointing upwards.
+			//If the candle is red, print the triangle above the candle pointing downwards.
+			//Both meaning the possible momentum direction of the market.
 			for (int i = 0; i < ranges_over_percentile.Count; i++)
 			{
 				if (ranges_over_percentile[i].is_up)
@@ -2940,7 +2953,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 
-		//Finds the value int he sequence, equivalent to the Percentile given. 
+		//Finds the value int the sequence, equivalent to the Percentile given. 
 		public double Percentile(double[] sequence, double excelPercentile)
 		{
 			Array.Sort(sequence);
