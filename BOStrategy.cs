@@ -227,7 +227,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				iATR[0] == 0 ||
 				iRange[0] == 0)
 				return;
-        
+
 			//Review that the swings are charged to avoid later bugs. In other words, to check if the needed swing instances exist.
 			for (int i = 1; i <= Instance; i++)
 			{
@@ -242,7 +242,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//This has to be done because every Heat Zone has different Reference Values.
 			heat_zone_swings2.Clear();
 			#endregion
-      
+
 			#region Variable_Reset
 
 			//Reset is_BO variable once a new swing comes up.
@@ -473,14 +473,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 			ranges.Clear();
 
 			ranges_over_percentile.Clear();
-            #endregion
-            #endregion
+			#endregion
+			#endregion
 
-            #region Heat_Zones_Process
-            #region Save_Swings
-            //In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
-            //This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
-            if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
+			#region Heat_Zones_Process
+			#region Save_Swings
+			//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
+			//This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
+			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
 			{
 				for (int i = 1; i <= Instance; i++)
 				{
@@ -516,10 +516,44 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//Determine the reference current Heat Zone value in each swing update.
 			//If a swingHigh appears, it is going to be taken as the current reference value. The same happens with swings low.
 			if (last_swingHigh2 != iSwing2.SwingHigh[0])
-				heat_zone_reference_value = swings2_high[0].value;
+            {
+				bool is_in_previous_heat_zone = false;
+
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					if (iSwing2.SwingHigh[0] <= heat_zones[i].max_y &&
+						iSwing2.SwingHigh[0] >= heat_zones[i].min_y)
+					{
+						heat_zones[i].strength++;
+						is_in_previous_heat_zone = true;
+					}
+				}
+
+				if (!is_in_previous_heat_zone)
+                {
+					heat_zone_reference_value = swings2_high[0].value;
+				}
+			}
 
 			if (last_swingLow2 != iSwing2.SwingLow[0])
-				heat_zone_reference_value = swings2_low[0].value;
+			{
+				bool is_in_previous_heat_zone = false;
+
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					if (iSwing2.SwingLow[0] <= heat_zones[i].max_y &&
+						iSwing2.SwingLow[0] >= heat_zones[i].min_y)
+					{
+						heat_zones[i].strength++;
+						is_in_previous_heat_zone = true;
+					}
+				}
+
+				if (!is_in_previous_heat_zone)
+                {
+					heat_zone_reference_value = swings2_low[0].value;
+				}
+			}				
 			#endregion
 
 			#region Swing_Heat
@@ -631,6 +665,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 			while (heat_zones.Count > Heat_zones_print)
 			{
 				heat_zones.RemoveAt(0);
+			}
+            #endregion
+
+            #region Heat_Zones_Update
+			if (last_swingLow2 != iSwing2.SwingLow[0])
+            {
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					if (iSwing2.SwingLow[0] <= heat_zones[i].max_y &&
+						iSwing2.SwingLow[0] >= heat_zones[i].min_y)
+					{
+						heat_zones[i].strength++;
+					}
+				}
 			}
 			#endregion
 
