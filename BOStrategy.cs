@@ -103,7 +103,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				MagicNumber				= 50;
 				Look_back_candles		= 100;
 				Percentile_v			= 0.99;
-				Instance				= 10;
+				Days					= 20;
 				Heat_zone_strength		= 2;
 				Width					= 1.5;
 				Heat_zones_print		= 6;
@@ -229,12 +229,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return;
 
 			//Review that the swings are charged to avoid later bugs. In other words, to check if the needed swing instances exist.
-			for (int i = 1; i <= Instance; i++)
+			for (int i = 0; i <= (Days * 24); i++)
 			{
-				if (iSwing2.SwingHighBar(0, i, CurrentBar) == -1)
+				if (iSwing2.SwingHigh[i] == 0)
 					return;
 
-				if (iSwing2.SwingLowBar(0, i, CurrentBar) == -1)
+				if (iSwing2.SwingLow[i] == 0)
 					return;
 			}
 
@@ -482,36 +482,44 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
 			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
 			{
-				for (int i = 1; i <= Instance; i++)
+				swings2_high.Clear();
+				swings2_low.Clear();
+
+				double last_evaluated_swingHigh = 0;
+				for (int i = 0; i <= (Days * 24); i++)
 				{
-					swings2_high.Add(new MySwing()
+					if (iSwing2.SwingHigh[i] != last_evaluated_swingHigh)
 					{
-						value = iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)],
-						bar = CurrentBar - iSwing2.SwingHighBar(0, i, CurrentBar)
-					});
+						swings2_high.Add(new MySwing()
+						{
+							value = iSwing2.SwingHigh[i],
+							//bar = CurrentBar - iSwing2.SwingHighBar(0, i, CurrentBar),
+							bars_ago = i
+						});
+
+						last_evaluated_swingHigh = iSwing2.SwingHigh[i];
+					}
 				}
 
-				while (swings2_high.Count > Instance)
+				double last_evaluated_swingLow = 0;
+				for (int i = 0; i <= (Days * 24); i++)
 				{
-					swings2_high.RemoveAt(0);
-				}
-
-				for (int i = 1; i <= Instance; i++)
-				{
-					swings2_low.Add(new MySwing()
+					if (iSwing2.SwingLow[i] != last_evaluated_swingLow)
 					{
-						value = iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)],
-						bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar)
-					});
-				}
+						swings2_low.Add(new MySwing()
+						{
+							value = iSwing2.SwingLow[i],
+							//bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar),
+							bars_ago = i
+						});
 
-				while (swings2_low.Count > Instance)
-				{
-					swings2_low.RemoveAt(0);
+						last_evaluated_swingLow = iSwing2.SwingLow[i];
+					}
 				}
 			}
 			#endregion
 
+			/*
 			#region Reference_Value_Definition
 			//Determine the reference current Heat Zone value in each swing update.
 			//If a swingHigh appears, it is going to be taken as the current reference value. The same happens with swings low.
@@ -594,6 +602,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					heat_zone_swings2.RemoveAt(0);
 				}
 			}
+
 			#endregion
 
 			#region Heat_Zone_Identification
@@ -692,16 +701,33 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			Draw.HorizontalLine(this, "MinLine", min_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
 			#endregion
+			*/
 
 			#region Print_Heat_Zones
 			//Prints rectangles that represents the Heat Zones, the strength ot the Heat Zone and its reference value.
 			//The rectangle dimenssions were set in the Heat_Zone_Identification region.
+			/*
 			for (int i = 0; i < heat_zones.Count; i++)
 			{
 				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
 				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 			}
+			*/
+
+			Print(Time[0]);
+			Print("SwingHigh");
+			for (int i = 0; i < swings2_high.Count; i++)
+            {
+				Print(swings2_high[i].value);
+            }
+			Print("------");
+			Print("SwingLow");
+			for (int i = 0; i < swings2_low.Count; i++)
+			{
+				Print(swings2_low[i].value);
+			}
+			Print("-----------------------------------");
 			#endregion
 
 			//Reset the last swing value in order to execute the swing update processes.
@@ -1882,8 +1908,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
     #region Heat_Zone
 		[NinjaScriptProperty]
-		[Display(Name = "Instance", GroupName = "Heat Zone", Order = 1)]
-		public int Instance
+		[Display(Name = "Days", GroupName = "Heat Zone", Order = 1)]
+		public int Days
 		{ get; set; }
 
 		[NinjaScriptProperty]
@@ -1920,6 +1946,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			public double value;
 			public int bar;
+			public int bars_ago;
 		}
 
 		public class MyHeatZone
