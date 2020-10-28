@@ -668,20 +668,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
             #endregion
 
-            #region Heat_Zones_Update
-			if (last_swingLow2 != iSwing2.SwingLow[0])
-            {
-				for (int i = 0; i < heat_zones.Count; i++)
-				{
-					if (iSwing2.SwingLow[0] <= heat_zones[i].max_y &&
-						iSwing2.SwingLow[0] >= heat_zones[i].min_y)
-					{
-						heat_zones[i].strength++;
-					}
-				}
-			}
-			#endregion
-
 			#region Extreme_Swings
 			//Determine the extreme swings of the last n Instances.
 			//Then plot lines at that values.
