@@ -566,7 +566,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//Deetermine if the current Heat Zone satisfies the heat_zone_strength requirement.
 			//In other words, save the current Heat Zone (in a list of class MyHeatZone),
 			//if it has the same or more number of swings in the range.
-			if (heat_zone_swings2.Count - 1 >= Heat_zone_strength)
+			if (heat_zone_swings2.Count >= Heat_zone_strength)
 			{
 				//Initialize Heat Zones characteristics.
 				//max_y, min_y and start_x are going to be established correctly in the next for loop.
@@ -576,7 +576,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					max_y = heat_zone_swings2[0].value,
 					min_y = heat_zone_swings2[0].value,
 					start_x = heat_zone_swings2[0].bar,
-					strength = heat_zone_swings2.Count - 1
+					strength = heat_zone_swings2.Count
 				});
 
 				//Determine the dimensions of the rectangle that will be printed as a Heat Zone. 
