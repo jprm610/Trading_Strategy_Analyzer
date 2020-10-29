@@ -49,6 +49,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		#region Heat_Zones_Process_Variables
 		private double heat_zone_reference_value, swingDis, max_swing, min_swing, last_swingHigh3, last_swingLow3;
+		private List<MySwing> swings2_high = new List<MySwing>();
+		private List<MySwing> swings2_low = new List<MySwing>();
 		private List<MySwing> swings3_high = new List<MySwing>();
 		private List<MySwing> swings3_low = new List<MySwing>();
 		private List<MySwing> heat_zone_swings3 = new List<MySwing>();
@@ -486,10 +488,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#region Save_Swings
 			int candles_look_back = Days * 24;
 
-			//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
-			//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
+			#region Swings3
 			if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
 			{
+				//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
+				//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
 				swings3_high.Clear();
 				swings3_low.Clear();
 
@@ -501,7 +504,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						swings3_high.Add(new MySwing()
 						{
 							value = iSwing3.SwingHigh[i],
-							bar = CurrentBar - iSwing3.SwingHighBar(i, 1, 50),
+							bar = CurrentBar - (i + iSwing3.SwingHighBar(i, 1, 50)),
 							is_broken = false
 						});
 
@@ -517,7 +520,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						swings3_low.Add(new MySwing()
 						{
 							value = iSwing3.SwingLow[i],
-							bar = CurrentBar - iSwing3.SwingLowBar(i, 1, 50),
+							bar = CurrentBar - (i + iSwing3.SwingLowBar(i, 1, 50)),
 							is_broken = false
 						});
 
@@ -525,23 +528,64 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
+			#endregion
 
-            #region is_broken Evaluation
+			#region Swings2
+			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
+			{
+				swings2_high.Clear();
+				swings2_low.Clear();
+
+				double last_evaluated_swingHigh = 0;
+				for (int i = 0; i <= candles_look_back; i++)
+				{
+					if (iSwing2.SwingHigh[i] != last_evaluated_swingHigh)
+					{
+						swings2_high.Add(new MySwing()
+						{
+							value = iSwing2.SwingHigh[i],
+							bar = CurrentBar - (i + iSwing2.SwingHighBar(i, 1, 50)),
+							is_broken = false
+						});
+
+						last_evaluated_swingHigh = iSwing2.SwingHigh[i];
+					}
+				}
+
+				double last_evaluated_swingLow = 0;
+				for (int i = 0; i <= candles_look_back; i++)
+				{
+					if (iSwing2.SwingLow[i] != last_evaluated_swingLow)
+					{
+						swings2_low.Add(new MySwing()
+						{
+							value = iSwing2.SwingLow[i],
+							bar = CurrentBar - (i + iSwing2.SwingLowBar(i, 1, 50)),
+							is_broken = false
+						});
+
+						last_evaluated_swingLow = iSwing2.SwingLow[i];
+					}
+				}
+			}
+			#endregion
+
+			#region is_broken Evaluation
 			for (int i = 0; i < swings3_high.Count; i++)
-            {
+			{
 				if (High[0] > swings3_high[i].value)
-                {
+				{
 					swings3_high[i].is_broken = true;
-                }
-            }
+				}
+			}
 
 			for (int i = 0; i < swings3_low.Count; i++)
-            {
+			{
 				if (Low[0] < swings3_low[i].value)
-                {
+				{
 					swings3_low[i].is_broken = true;
-                }
-            }
+				}
+			}
 			#endregion
 			#endregion
 
