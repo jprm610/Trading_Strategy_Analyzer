@@ -502,6 +502,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							value = iSwing3.SwingHigh[i],
 							bar = CurrentBar - iSwing3.SwingHighBar(i, 1, 50),
+							is_broken = false
 						});
 
 						last_evaluated_swingHigh = iSwing3.SwingHigh[i];
@@ -517,13 +518,34 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							value = iSwing3.SwingLow[i],
 							bar = CurrentBar - iSwing3.SwingLowBar(i, 1, 50),
+							is_broken = false
 						});
 
 						last_evaluated_swingLow = iSwing3.SwingLow[i];
 					}
 				}
 			}
+
+            #region is_broken Evaluation
+			for (int i = 0; i < swings3_high.Count; i++)
+            {
+				if (High[0] > swings3_high[i].value)
+                {
+					swings3_high[i].is_broken = true;
+                }
+            }
+
+			for (int i = 0; i < swings3_low.Count; i++)
+            {
+				if (Low[0] < swings3_low[i].value)
+                {
+					swings3_low[i].is_broken = true;
+                }
+            }
 			#endregion
+			#endregion
+
+			/*
 
 			#region Reference_Value_Definition
 			//Determine the reference current Heat Zone value in each swing update.
@@ -723,7 +745,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 			}
 			#endregion
-
+			*/
 			//Reset the last swing value in order to execute the swing update processes.
 			last_swingHigh1 = iSwing1.SwingHigh[0];
 			last_swingLow1 = iSwing1.SwingLow[0];
@@ -1943,6 +1965,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			public double value;
 			public int bar;
+			public bool is_broken;
 		}
 
 		public class MyHeatZone
