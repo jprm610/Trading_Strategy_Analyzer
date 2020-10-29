@@ -501,7 +501,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						swings3_high.Add(new MySwing()
 						{
 							value = iSwing3.SwingHigh[i],
-							bar = CurrentBar - i,
+							bar = CurrentBar - iSwing3.SwingHighBar(i, 1, 50),
 						});
 
 						last_evaluated_swingHigh = iSwing3.SwingHigh[i];
@@ -516,7 +516,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						swings3_low.Add(new MySwing()
 						{
 							value = iSwing3.SwingLow[i],
-							bar = CurrentBar - i,
+							bar = CurrentBar - iSwing3.SwingLowBar(i, 1, 50),
 						});
 
 						last_evaluated_swingLow = iSwing3.SwingLow[i];
@@ -627,7 +627,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					max_y = heat_zone_swings3[0].value,
 					min_y = heat_zone_swings3[0].value,
 					start_x = heat_zone_swings3[0].bar,
-					strength = heat_zone_swings3.Count - 1
+					strength = heat_zone_swings3.Count
 				});
 
 				//Determine the dimensions of the rectangle that will be printed as a Heat Zone. 
@@ -3009,8 +3009,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
-
-		//Finds the value int the sequence, equivalent to the Percentile given. 
+		///<summary>
+		///Finds the value in the sequence, equivalent to the Percentile given.
+		///</summary>
 		public double Percentile(double[] sequence, double excelPercentile)
 		{
 			Array.Sort(sequence);
