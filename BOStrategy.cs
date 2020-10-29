@@ -104,9 +104,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Look_back_candles		= 100;
 				Percentile_v			= 0.99;
 				Days					= 20;
+				Representative_strength = 5;
 				Heat_zone_strength		= 2;
 				Width					= 1.5;
-				Heat_zones_print		= 6;
 			}
 			else if (State == State.Configure)
 			{
@@ -478,6 +478,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			#region Heat_Zones_Process
 			#region Save_Swings
+			int candles_look_back = Days * 24;
+
 			//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
 			//This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
 			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
@@ -486,7 +488,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				swings2_low.Clear();
 
 				double last_evaluated_swingHigh = 0;
-				for (int i = 0; i <= (Days * 24); i++)
+				for (int i = 0; i <= candles_look_back; i++)
 				{
 					if (iSwing2.SwingHigh[i] != last_evaluated_swingHigh)
 					{
@@ -501,7 +503,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 
 				double last_evaluated_swingLow = 0;
-				for (int i = 0; i <= (Days * 24); i++)
+				for (int i = 0; i <= candles_look_back; i++)
 				{
 					if (iSwing2.SwingLow[i] != last_evaluated_swingLow)
 					{
@@ -596,7 +598,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				for (int i = 0; i < heat_zone_swings2.Count; i++)
                 {
-					if (CurrentBar - heat_zone_swings2[i].bar > (Days * 24))
+					if (CurrentBar - heat_zone_swings2[i].bar > candles_look_back)
                     {
 						heat_zone_swings2.RemoveAt(i);
                     }
@@ -671,10 +673,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 
 			//Erase old Heat Zones.
-			while (heat_zones.Count > Heat_zones_print)
-			{
-				heat_zones.RemoveAt(0);
-			}
+			for (int i = 0; i < heat_zones.Count; i++)
+            {
+				if (candles_look_back < CurrentBar - heat_zones[i].start_x)
+                {
+					if (heat_zones[i].strength < Representative_strength)
+                    {
+						heat_zones.RemoveAt(i);
+                    }
+                }
+            }
             #endregion
 
 			#region Extreme_Swings
@@ -711,22 +719,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
 			}
-
-			/*
-			Print(Time[0]);
-			Print("SwingHigh");
-			for (int i = 0; i < swings2_high.Count; i++)
-            {
-				Print(swings2_high[i].value);
-            }
-			Print("------");
-			Print("SwingLow");
-			for (int i = 0; i < swings2_low.Count; i++)
-			{
-				Print(swings2_low[i].value);
-			}
-			Print("-----------------------------------");
-			*/
 			#endregion
 
 			//Reset the last swing value in order to execute the swing update processes.
@@ -1917,13 +1909,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{ get; set; }
 
 		[NinjaScriptProperty]
-		[Display(Name = "Width", GroupName = "Heat Zone", Order = 3)]
-		public double Width
+		[Display(Name = "Representative_strength", GroupName = "Heat Zone", Order = 3)]
+		public int Representative_strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
-		[Display(Name = "Heat_zones_print", GroupName = "Heat Zone", Order = 4)]
-		public int Heat_zones_print
+		[Display(Name = "Width", GroupName = "Heat Zone", Order = 4)]
+		public double Width
 		{ get; set; }
     #endregion
     
