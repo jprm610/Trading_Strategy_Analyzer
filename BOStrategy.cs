@@ -485,318 +485,432 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Heat_Zones_Process
-			#region Save_Swings
-			int candles_look_back = Days * 24;
-
-			#region Swings3
-			if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
 			{
-				//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
-				//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
-				swings3_high.Clear();
-				swings3_low.Clear();
+				int candles_look_back = Days * 24;
 
-				double last_evaluated_swingHigh = 0;
-				for (int i = 0; i <= candles_look_back; i++)
+				#region Save_Swings
 				{
-					if (iSwing3.SwingHigh[i] != last_evaluated_swingHigh)
+					#region Swings3
+					if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
 					{
-						swings3_high.Add(new MySwing()
+						//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
+						//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
+						swings3_high.Clear();
+						swings3_low.Clear();
+
+						double last_evaluated_swingHigh = 0;
+						for (int i = 0; i <= candles_look_back; i++)
 						{
-							value = iSwing3.SwingHigh[i],
-							bar = CurrentBar - (i + iSwing3.SwingHighBar(i, 1, 50)),
-							is_broken = false
-						});
+							if (iSwing3.SwingHigh[i] != last_evaluated_swingHigh)
+							{
+								swings3_high.Add(new MySwing()
+								{
+									value = iSwing3.SwingHigh[i],
+									bar = 0,
+									is_broken = false
+								});
 
-						last_evaluated_swingHigh = iSwing3.SwingHigh[i];
-					}
-				}
-
-				double last_evaluated_swingLow = 0;
-				for (int i = 0; i <= candles_look_back; i++)
-				{
-					if (iSwing3.SwingLow[i] != last_evaluated_swingLow)
-					{
-						swings3_low.Add(new MySwing()
-						{
-							value = iSwing3.SwingLow[i],
-							bar = CurrentBar - (i + iSwing3.SwingLowBar(i, 1, 50)),
-							is_broken = false
-						});
-
-						last_evaluated_swingLow = iSwing3.SwingLow[i];
-					}
-				}
-			}
-			#endregion
-
-			#region Swings2
-			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
-			{
-				swings2_high.Clear();
-				swings2_low.Clear();
-
-				double last_evaluated_swingHigh = 0;
-				for (int i = 0; i <= candles_look_back; i++)
-				{
-					if (iSwing2.SwingHigh[i] != last_evaluated_swingHigh)
-					{
-						swings2_high.Add(new MySwing()
-						{
-							value = iSwing2.SwingHigh[i],
-							bar = CurrentBar - (i + iSwing2.SwingHighBar(i, 1, 50)),
-							is_broken = false
-						});
-
-						last_evaluated_swingHigh = iSwing2.SwingHigh[i];
-					}
-				}
-
-				double last_evaluated_swingLow = 0;
-				for (int i = 0; i <= candles_look_back; i++)
-				{
-					if (iSwing2.SwingLow[i] != last_evaluated_swingLow)
-					{
-						swings2_low.Add(new MySwing()
-						{
-							value = iSwing2.SwingLow[i],
-							bar = CurrentBar - (i + iSwing2.SwingLowBar(i, 1, 50)),
-							is_broken = false
-						});
-
-						last_evaluated_swingLow = iSwing2.SwingLow[i];
-					}
-				}
-			}
-			#endregion
-
-			#region is_broken Evaluation
-			for (int i = 0; i < swings3_high.Count; i++)
-			{
-				if (High[0] > swings3_high[i].value)
-				{
-					swings3_high[i].is_broken = true;
-				}
-			}
-
-			for (int i = 0; i < swings3_low.Count; i++)
-			{
-				if (Low[0] < swings3_low[i].value)
-				{
-					swings3_low[i].is_broken = true;
-				}
-			}
-			#endregion
-			#endregion
-
-			/*
-
-			#region Reference_Value_Definition
-			//Determine the reference current Heat Zone value in each swing update.
-			//If a swingHigh appears, it is going to be taken as the current reference value. The same happens with swings low.
-			if (last_swingHigh3 != iSwing3.SwingHigh[0])
-			{
-				bool is_in_previous_heat_zone = false;
-
-				for (int i = 0; i < heat_zones.Count; i++)
-				{
-					if (swings3_high[0].value <= heat_zones[i].max_y &&
-						swings3_high[0].value >= heat_zones[i].min_y)
-					{
-						heat_zones[i].strength++;
-						is_in_previous_heat_zone = true;
-					}
-				}
-
-				if (!is_in_previous_heat_zone)
-				{
-					heat_zone_reference_value = swings3_high[0].value;
-				}
-			}
-
-			if (last_swingLow3 != iSwing3.SwingLow[0])
-			{
-				bool is_in_previous_heat_zone = false;
-
-				for (int i = 0; i < heat_zones.Count; i++)
-				{
-					if (swings3_low[0].value <= heat_zones[i].max_y &&
-						swings3_low[0].value >= heat_zones[i].min_y)
-					{
-						heat_zones[i].strength++;
-						is_in_previous_heat_zone = true;
-					}
-				}
-
-				if (!is_in_previous_heat_zone)
-				{
-					heat_zone_reference_value = swings3_low[0].value;
-				}
-			}
-			#endregion
-
-			#region Swing_Heat
-			//In each swing update, determine which of the saved swings are located in the current Heat Zone range.
-			//If the swing (low or high) is in range, its value and CurrentBar is saved in another list (heat_zone_swings3) of class MySwing.
-			if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
-			{
-				for (int i = 0; i < swings3_high.Count - 1; i++)
-				{
-					swingDis = Math.Abs(heat_zone_reference_value - swings3_high[i].value);
-
-					if (swingDis <= iATR[0] * Width)
-					{
-						heat_zone_swings3.Add(new MySwing()
-						{
-							value = swings3_high[i].value,
-							bar = swings3_high[i].bar
-						});
-					}
-				}
-
-				for (int i = 0; i < swings3_low.Count - 1; i++)
-				{
-					swingDis = Math.Abs(heat_zone_reference_value - swings3_low[i].value);
-
-					if (swingDis <= iATR[0] * Width)
-					{
-						heat_zone_swings3.Add(new MySwing()
-						{
-							value = swings3_low[i].value,
-							bar = swings3_low[i].bar
-						});
-					}
-				}
-
-				for (int i = 0; i < heat_zone_swings3.Count; i++)
-				{
-					if (CurrentBar - heat_zone_swings3[i].bar > candles_look_back)
-					{
-						heat_zone_swings3.RemoveAt(i);
-					}
-				}
-			}
-
-			#endregion
-
-			#region Heat_Zone_Identification
-			//Deetermine if the current Heat Zone satisfies the heat_zone_strength requirement.
-			//In other words, save the current Heat Zone (in a list of class MyHeatZone),
-			//if it has the same or more number of swings in the range.
-			if (heat_zone_swings3.Count >= Heat_zone_strength)
-			{
-				//Initialize Heat Zones characteristics.
-				//max_y, min_y and start_x are going to be established correctly in the next for loop.
-				heat_zones.Add(new MyHeatZone()
-				{
-					reference_value = heat_zone_reference_value,
-					max_y = heat_zone_swings3[0].value,
-					min_y = heat_zone_swings3[0].value,
-					start_x = heat_zone_swings3[0].bar,
-					strength = heat_zone_swings3.Count
-				});
-
-				//Determine the dimensions of the rectangle that will be printed as a Heat Zone. 
-				for (int i = 0; i < heat_zone_swings3.Count; i++)
-				{
-					if (heat_zone_swings3[i].value > heat_zones[heat_zones.Count - 1].max_y)
-					{
-						heat_zones[heat_zones.Count - 1].max_y = heat_zone_swings3[i].value;
-					}
-
-					if (heat_zone_swings3[i].value < heat_zones[heat_zones.Count - 1].min_y)
-					{
-						heat_zones[heat_zones.Count - 1].min_y = heat_zone_swings3[i].value;
-					}
-
-					if (heat_zone_swings3[i].bar < heat_zones[heat_zones.Count - 1].start_x)
-					{
-						heat_zones[heat_zones.Count - 1].start_x = heat_zone_swings3[i].bar;
-					}
-				}
-			}
-
-			//Avoid that a Heat Zone is printed over another one.
-			//Evaluating if its Start_x or its reference value is the same. 
-			for (int i = 0; i < heat_zones.Count; i++)
-			{
-				for (int j = 0; j < heat_zones.Count; j++)
-				{
-					if (i != j)
-					{
-						if (heat_zones[i].start_x == heat_zones[j].start_x)
-						{
-							heat_zones.RemoveAt(i);
+								last_evaluated_swingHigh = iSwing3.SwingHigh[i];
+							}
 						}
-						//If its reference value is the same. Erase the oldest of both Heat Zones.
-						else if (heat_zones[i].reference_value == heat_zones[j].reference_value)
+
+						for (int i = 1; i <= swings3_high.Count; i++)
 						{
-							if (heat_zones[i].start_x < heat_zones[j].start_x)
+							swings3_high[i - 1].bar = CurrentBar - iSwing3.SwingHighBar(0, i, CurrentBar);
+						}
+
+						double last_evaluated_swingLow = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing3.SwingLow[i] != last_evaluated_swingLow)
+							{
+								swings3_low.Add(new MySwing()
+								{
+									value = iSwing3.SwingLow[i],
+									bar = 0,
+									is_broken = false
+								});
+
+								last_evaluated_swingLow = iSwing3.SwingLow[i];
+							}
+						}
+
+						for (int i = 1; i <= swings3_low.Count; i++)
+						{
+							swings3_low[i - 1].bar = CurrentBar - iSwing3.SwingLowBar(0, i, CurrentBar);
+						}
+					}
+					#endregion
+
+					#region Swings2
+					if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
+					{
+						if (swings3_high[swings3_high.Count - 1].bar <= swings3_low[swings3_low.Count - 1].bar)
+						{
+							candles_look_back = CurrentBar - swings3_high[swings3_high.Count - 1].bar;
+						}
+						else
+						{
+							candles_look_back = CurrentBar - swings3_low[swings3_low.Count - 1].bar;
+						}
+
+						swings2_high.Clear();
+						swings2_low.Clear();
+
+						double last_evaluated_swingHigh = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing2.SwingHigh[i] != last_evaluated_swingHigh)
+							{
+								swings2_high.Add(new MySwing()
+								{
+									value = iSwing2.SwingHigh[i],
+									bar = 0,
+									is_broken = false
+								});
+
+								last_evaluated_swingHigh = iSwing2.SwingHigh[i];
+							}
+						}
+
+						for (int i = 1; i <= swings2_high.Count; i++)
+						{
+							swings2_high[i - 1].bar = CurrentBar - iSwing2.SwingHighBar(0, i, CurrentBar);
+						}
+
+						double last_evaluated_swingLow = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing2.SwingLow[i] != last_evaluated_swingLow)
+							{
+								swings2_low.Add(new MySwing()
+								{
+									value = iSwing2.SwingLow[i],
+									is_broken = false
+								});
+
+								last_evaluated_swingLow = iSwing2.SwingLow[i];
+							}
+						}
+
+						for (int i = 1; i <= swings2_low.Count; i++)
+						{
+							swings2_low[i - 1].bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar);
+						}
+					}
+                    #endregion
+
+                    #region Remove_Repeated_Swings
+                    {
+						for (int i = 0; i < swings3_high.Count; i++)
+                        {
+							for (int j = 0; j < swings2_high.Count; j++)
+							{
+								if (swings3_high[i].bar == swings2_high[j].bar)
+								{
+									swings2_high.RemoveAt(j);
+								}
+							}
+                        }
+
+						for (int i = 0; i < swings3_low.Count; i++)
+						{
+							for (int j = 0; j < swings2_low.Count; j++)
+							{
+								if (swings3_low[i].bar == swings2_low[j].bar)
+								{
+									swings2_low.RemoveAt(j);
+								}
+							}
+						}
+					}
+                    #endregion
+
+                    #region is_broken Evaluation
+                    {
+                        for (int i = 0; i < swings3_high.Count; i++)
+						{
+							for (int j = 0; j < CurrentBar - swings3_high[i].bar; j++)
+							{
+								if (High[j] > swings3_high[i].value)
+								{
+									swings3_high[i].is_broken = true;
+								}
+							}
+						}
+
+						for (int i = 0; i < swings3_low.Count; i++)
+						{
+							for (int j = 0; j < CurrentBar - swings3_low[i].bar; j++)
+							{
+								if (Low[j] < swings3_low[i].value)
+								{
+									swings3_low[i].is_broken = true;
+								}
+							}
+						}
+
+						for (int i = 0; i < swings2_high.Count; i++)
+						{
+							for (int j = 0; j < CurrentBar - swings2_high[i].bar; j++)
+							{
+								if (High[j] > swings2_high[i].value)
+								{
+									swings2_high[i].is_broken = true;
+								}
+							}
+						}
+
+						for (int i = 0; i < swings2_low.Count; i++)
+						{
+							for (int j = 0; j < CurrentBar - swings2_low[i].bar; j++)
+							{
+								if (Low[j] < swings2_low[i].value)
+								{
+									swings2_low[i].is_broken = true;
+								}
+							}
+						}
+					}
+					#endregion
+
+					Print(Time[0]);
+					Print("SwingHigh3");
+					for (int i = 0; i < swings3_high.Count; i++)
+					{
+						Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings3_high[i].value, swings3_high[i].is_broken, swings3_high[i].bar));
+					}
+					Print("-------");
+					Print("SwingLow3");
+					for (int i = 0; i < swings3_low.Count; i++)
+					{
+						Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings3_low[i].value, swings3_low[i].is_broken, swings3_low[i].bar));
+					}
+					Print("-------");
+					Print("SwingHigh2");
+					for (int i = 0; i < swings2_high.Count; i++)
+					{
+						Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings2_high[i].value, swings2_high[i].is_broken, swings2_high[i].bar));
+					}
+					Print("-------");
+					Print("SwingLow2");
+					for (int i = 0; i < swings2_low.Count; i++)
+					{
+						Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings2_low[i].value, swings2_low[i].is_broken, swings2_low[i].bar));
+					}
+					Print("---------------------------------------");
+				}
+				#endregion
+
+				/*
+
+				#region Reference_Value_Definition
+				//Determine the reference current Heat Zone value in each swing update.
+				//If a swingHigh appears, it is going to be taken as the current reference value. The same happens with swings low.
+				if (last_swingHigh3 != iSwing3.SwingHigh[0])
+				{
+					bool is_in_previous_heat_zone = false;
+
+					for (int i = 0; i < heat_zones.Count; i++)
+					{
+						if (swings3_high[0].value <= heat_zones[i].max_y &&
+							swings3_high[0].value >= heat_zones[i].min_y)
+						{
+							heat_zones[i].strength++;
+							is_in_previous_heat_zone = true;
+						}
+					}
+
+					if (!is_in_previous_heat_zone)
+					{
+						heat_zone_reference_value = swings3_high[0].value;
+					}
+				}
+
+				if (last_swingLow3 != iSwing3.SwingLow[0])
+				{
+					bool is_in_previous_heat_zone = false;
+
+					for (int i = 0; i < heat_zones.Count; i++)
+					{
+						if (swings3_low[0].value <= heat_zones[i].max_y &&
+							swings3_low[0].value >= heat_zones[i].min_y)
+						{
+							heat_zones[i].strength++;
+							is_in_previous_heat_zone = true;
+						}
+					}
+
+					if (!is_in_previous_heat_zone)
+					{
+						heat_zone_reference_value = swings3_low[0].value;
+					}
+				}
+				#endregion
+
+				#region Swing_Heat
+				//In each swing update, determine which of the saved swings are located in the current Heat Zone range.
+				//If the swing (low or high) is in range, its value and CurrentBar is saved in another list (heat_zone_swings3) of class MySwing.
+				if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
+				{
+					for (int i = 0; i < swings3_high.Count - 1; i++)
+					{
+						swingDis = Math.Abs(heat_zone_reference_value - swings3_high[i].value);
+
+						if (swingDis <= iATR[0] * Width)
+						{
+							heat_zone_swings3.Add(new MySwing()
+							{
+								value = swings3_high[i].value,
+								bar = swings3_high[i].bar
+							});
+						}
+					}
+
+					for (int i = 0; i < swings3_low.Count - 1; i++)
+					{
+						swingDis = Math.Abs(heat_zone_reference_value - swings3_low[i].value);
+
+						if (swingDis <= iATR[0] * Width)
+						{
+							heat_zone_swings3.Add(new MySwing()
+							{
+								value = swings3_low[i].value,
+								bar = swings3_low[i].bar
+							});
+						}
+					}
+
+					for (int i = 0; i < heat_zone_swings3.Count; i++)
+					{
+						if (CurrentBar - heat_zone_swings3[i].bar > candles_look_back)
+						{
+							heat_zone_swings3.RemoveAt(i);
+						}
+					}
+				}
+
+				#endregion
+
+				#region Heat_Zone_Identification
+				//Deetermine if the current Heat Zone satisfies the heat_zone_strength requirement.
+				//In other words, save the current Heat Zone (in a list of class MyHeatZone),
+				//if it has the same or more number of swings in the range.
+				if (heat_zone_swings3.Count >= Heat_zone_strength)
+				{
+					//Initialize Heat Zones characteristics.
+					//max_y, min_y and start_x are going to be established correctly in the next for loop.
+					heat_zones.Add(new MyHeatZone()
+					{
+						reference_value = heat_zone_reference_value,
+						max_y = heat_zone_swings3[0].value,
+						min_y = heat_zone_swings3[0].value,
+						start_x = heat_zone_swings3[0].bar,
+						strength = heat_zone_swings3.Count
+					});
+
+					//Determine the dimensions of the rectangle that will be printed as a Heat Zone. 
+					for (int i = 0; i < heat_zone_swings3.Count; i++)
+					{
+						if (heat_zone_swings3[i].value > heat_zones[heat_zones.Count - 1].max_y)
+						{
+							heat_zones[heat_zones.Count - 1].max_y = heat_zone_swings3[i].value;
+						}
+
+						if (heat_zone_swings3[i].value < heat_zones[heat_zones.Count - 1].min_y)
+						{
+							heat_zones[heat_zones.Count - 1].min_y = heat_zone_swings3[i].value;
+						}
+
+						if (heat_zone_swings3[i].bar < heat_zones[heat_zones.Count - 1].start_x)
+						{
+							heat_zones[heat_zones.Count - 1].start_x = heat_zone_swings3[i].bar;
+						}
+					}
+				}
+
+				//Avoid that a Heat Zone is printed over another one.
+				//Evaluating if its Start_x or its reference value is the same. 
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					for (int j = 0; j < heat_zones.Count; j++)
+					{
+						if (i != j)
+						{
+							if (heat_zones[i].start_x == heat_zones[j].start_x)
 							{
 								heat_zones.RemoveAt(i);
 							}
-							else
+							//If its reference value is the same. Erase the oldest of both Heat Zones.
+							else if (heat_zones[i].reference_value == heat_zones[j].reference_value)
 							{
-								heat_zones.RemoveAt(j);
+								if (heat_zones[i].start_x < heat_zones[j].start_x)
+								{
+									heat_zones.RemoveAt(i);
+								}
+								else
+								{
+									heat_zones.RemoveAt(j);
+								}
 							}
 						}
 					}
 				}
-			}
 
-			//Erase old Heat Zones.
-			for (int i = 0; i < heat_zones.Count; i++)
-			{
-				if (candles_look_back < CurrentBar - heat_zones[i].start_x)
+				//Erase old Heat Zones.
+				for (int i = 0; i < heat_zones.Count; i++)
 				{
-					heat_zones.RemoveAt(i);
+					if (candles_look_back < CurrentBar - heat_zones[i].start_x)
+					{
+						heat_zones.RemoveAt(i);
+					}
 				}
-			}
-			#endregion
+				#endregion
 
-			#region Extreme_Swings
-			//Determine the extreme swings of the last n Instances.
-			//Then plot lines at that values.
+				#region Extreme_Swings
+				//Determine the extreme swings of the last n Instances.
+				//Then plot lines at that values.
 
-			max_swing = iSwing3.SwingHigh[0];
-			for (int i = 0; i < swings3_high.Count; i++)
-			{
-				if (swings3_high[i].value > max_swing)
+				max_swing = iSwing3.SwingHigh[0];
+				for (int i = 0; i < swings3_high.Count; i++)
 				{
-					max_swing = swings3_high[i].value;
+					if (swings3_high[i].value > max_swing)
+					{
+						max_swing = swings3_high[i].value;
+					}
 				}
-			}
-			Draw.HorizontalLine(this, "MaxLine", max_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
+				Draw.HorizontalLine(this, "MaxLine", max_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
 
-			min_swing = iSwing3.SwingLow[0];
-			for (int i = 0; i < swings3_low.Count; i++)
-			{
-				if (swings3_low[i].value < min_swing)
+				min_swing = iSwing3.SwingLow[0];
+				for (int i = 0; i < swings3_low.Count; i++)
 				{
-					min_swing = swings3_low[i].value;
+					if (swings3_low[i].value < min_swing)
+					{
+						min_swing = swings3_low[i].value;
+					}
 				}
-			}
-			Draw.HorizontalLine(this, "MinLine", min_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
-			#endregion
+				Draw.HorizontalLine(this, "MinLine", min_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
+				#endregion
 
-			#region Print_Heat_Zones
-			//Prints rectangles that represents the Heat Zones, the strength ot the Heat Zone and its reference value.
-			//The rectangle dimenssions were set in the Heat_Zone_Identification region.
-			for (int i = 0; i < heat_zones.Count; i++)
-			{
-				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
-				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
-				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+				#region Print_Heat_Zones
+				//Prints rectangles that represents the Heat Zones, the strength ot the Heat Zone and its reference value.
+				//The rectangle dimenssions were set in the Heat_Zone_Identification region.
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
+					Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+					Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
+				}
+				#endregion
+				*/
+				//Reset the last swing value in order to execute the swing update processes.
+				last_swingHigh1 = iSwing1.SwingHigh[0];
+				last_swingLow1 = iSwing1.SwingLow[0];
+				last_swingHigh2 = iSwing2.SwingHigh[0];
+				last_swingLow2 = iSwing2.SwingLow[0];
+				last_swingHigh3 = iSwing3.SwingHigh[0];
+				last_swingLow3 = iSwing3.SwingLow[0];
 			}
-			#endregion
-			*/
-			//Reset the last swing value in order to execute the swing update processes.
-			last_swingHigh1 = iSwing1.SwingHigh[0];
-			last_swingLow1 = iSwing1.SwingLow[0];
-			last_swingHigh2 = iSwing2.SwingHigh[0];
-			last_swingLow2 = iSwing2.SwingLow[0];
-			last_swingHigh3 = iSwing3.SwingHigh[0];
-			last_swingLow3 = iSwing3.SwingLow[0];
 			#endregion
 
 			#region Overall_Market_Movement
