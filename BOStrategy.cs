@@ -482,19 +482,23 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			#region Heat_Zones_Process
 			{
+				//Define the look back period for the swing calculation converting the Days parameters into candles.
+				//Define the width of the possible heat zone, using the Width parameter.
 				int candles_look_back = Days * 24;
 				double width = Width * iATR[0];
 
 				#region Save_Swings
 				{
 					#region Swings3
+					//In each swing3 update, save the last n swings highs and lows, with its corresponding CurrentBar. (n = Instance)
+					//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
 					if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
 					{
-						//In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
-						//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
+						//Always clean the lists when a swing comes up.
 						swings3_high.Clear();
 						swings3_low.Clear();
 
+						//Save all the swing3Highs that appeared in the candles_look_back_period.
 						double last_evaluated_swingHigh = 0;
 						for (int i = 0; i <= candles_look_back; i++)
 						{
@@ -505,18 +509,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 									value = iSwing3.SwingHigh[i],
 									bar = 0,
 									is_broken = false,
-									is_heat_zone = false
 								});
 
 								last_evaluated_swingHigh = iSwing3.SwingHigh[i];
 							}
-						}
-
+						}						
+						//Then save its CurrentBar that is going to be our ID.
 						for (int i = 1; i <= swings3_high.Count; i++)
 						{
 							swings3_high[i - 1].bar = CurrentBar - iSwing3.SwingHighBar(0, i, CurrentBar);
 						}
 
+						//Save all the swing3Lows that appeared in the candles_look_back_period.
 						double last_evaluated_swingLow = 0;
 						for (int i = 0; i <= candles_look_back; i++)
 						{
@@ -527,13 +531,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 									value = iSwing3.SwingLow[i],
 									bar = 0,
 									is_broken = false,
-									is_heat_zone = false
 								});
 
 								last_evaluated_swingLow = iSwing3.SwingLow[i];
 							}
 						}
-
+						//Then save its CurrentBar that is going to be our ID.
 						for (int i = 1; i <= swings3_low.Count; i++)
 						{
 							swings3_low[i - 1].bar = CurrentBar - iSwing3.SwingLowBar(0, i, CurrentBar);
@@ -542,8 +545,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 					#endregion
 
 					#region Swings2
+					//In each swing2 update, save the last n swings highs and lows, with its corresponding CurrentBar. (n = Instance)
+					//This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
 					if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
 					{
+						//Extend the candles look back if needed.
 						if (swings3_high[swings3_high.Count - 1].bar <= swings3_low[swings3_low.Count - 1].bar)
 						{
 							candles_look_back = CurrentBar - swings3_high[swings3_high.Count - 1].bar;
@@ -553,9 +559,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							candles_look_back = CurrentBar - swings3_low[swings3_low.Count - 1].bar;
 						}
 
+						//Always clean the lists when a swing comes up.
 						swings2_high.Clear();
 						swings2_low.Clear();
 
+						//Save all the swing2Highs that appeared in the candles_look_back_period.
 						double last_evaluated_swingHigh = 0;
 						for (int i = 0; i <= candles_look_back; i++)
 						{
@@ -566,18 +574,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 									value = iSwing2.SwingHigh[i],
 									bar = 0,
 									is_broken = false,
-									is_heat_zone = false
 								});
 
 								last_evaluated_swingHigh = iSwing2.SwingHigh[i];
 							}
 						}
-
+						//Then save its CurrentBar that is going to be our ID.
 						for (int i = 1; i <= swings2_high.Count; i++)
 						{
 							swings2_high[i - 1].bar = CurrentBar - iSwing2.SwingHighBar(0, i, CurrentBar);
 						}
 
+						//Save all the swing2Lows that appeared in the candles_look_back_period.
 						double last_evaluated_swingLow = 0;
 						for (int i = 0; i <= candles_look_back; i++)
 						{
@@ -588,13 +596,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 									value = iSwing2.SwingLow[i],
 									bar = 0,
 									is_broken = false,
-									is_heat_zone = false
 								});
 
 								last_evaluated_swingLow = iSwing2.SwingLow[i];
 							}
 						}
-
+						//Then save its CurrentBar that is going to be our ID.
 						for (int i = 1; i <= swings2_low.Count; i++)
 						{
 							swings2_low[i - 1].bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar);
@@ -606,6 +613,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				#region Remove_Repeated_Swings
 				{
+					//Knowing that a Swing3 is also a Swing2, the following loops
+					//clean the swings2 that asre swings3 using its ID (CurrentBar) for its later use.
+
 					for (int i = 0; i < swings3_high.Count; i++)
 					{
 						for (int j = 0; j < swings2_high.Count; j++)
@@ -632,6 +642,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				#region is_broken Evaluation
 				{
+					//Determine which swings (3 or 4) are broken,
+					//this in order to determine if it is a Heat Zone or not.
+
 					for (int i = 0; i < swings3_high.Count; i++)
 					{
 						for (int j = 0; j < CurrentBar - swings3_high[i].bar; j++)
@@ -680,10 +693,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				#region Heat_Zone 
 				{
+					//Clean the Heat_zones list due to its constant change in time.
 					heat_zones.Clear();
 
 					#region Swings3_Based
 					{
+						//Every swing3 that is not broken will be added as a Heat_Zone
+
 						for (int i = 0; i < swings3_high.Count; i++)
 						{
 							if (!swings3_high[i].is_broken)
@@ -710,6 +726,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 					#region Swings2_Based
 					{
+						//If a swing2High happened later than a swing3 (Low or high) that is broken,
+						//this swing can confirm that there is a Heat Zone at that price level and 
+						//that is why it is going to be added as a Heat Zone.
 						for (int i = 0; i < swings2_high.Count; i++)
 						{
 							for (int j = 0; j < swings3_high.Count; j++)
@@ -747,6 +766,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 
+						//If a swing2Low happened later than a swing3 (Low or high) that is broken,
+						//this swing can confirm that there is a Heat Zone at that price level and 
+						//that is why it is going to be added as a Heat Zone.
 						for (int i = 0; i < swings2_low.Count; i++)
 						{
 							for (int j = 0; j < swings3_high.Count; j++)
@@ -788,6 +810,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 					#region Heat_Zones_Cleaning
 					{
+						//First remove the Heat Zones that have the same price level (Basically that are repeated).
 						for (int i = 0; i < heat_zones.Count; i++)
 						{
 							for (int j = 0; j < heat_zones.Count; j++)
@@ -802,6 +825,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 
+						//If there are 2 Heat Zones that are close enough (Less or equal to the width),
+						//determine which is closer to the current price and erase the further one. 
 						for (int i = 0; i < heat_zones.Count; i++)
 						{
 							for (int j = 0; j < heat_zones.Count; j++)
@@ -836,6 +861,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 
+						//Re-check if there are repeated Heat Zones.
 						for (int i = 0; i < heat_zones.Count; i++)
 						{
 							for (int j = 0; j < heat_zones.Count; j++)
@@ -865,14 +891,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 					last_swingLow3 = iSwing3.SwingLow[0];
 				}
 				#endregion
-
-				MyPrint();
-				Print("Heat Zones");
-				for (int i = 0; i < heat_zones.Count; i++)
-                {
-					Print(heat_zones[i].value);
-                }
-				Print("-----------------");
             }
             #endregion
 
@@ -2087,7 +2105,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public double value;
 			public int bar;
 			public bool is_broken;
-			public bool is_heat_zone;
 		}
 
 		public class MyHeatZone
