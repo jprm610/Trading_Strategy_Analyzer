@@ -1959,7 +1959,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 			}
 			#endregion
-			#endregion
+			#endregion			
+
+			Tuple<bool, double> returned_values = Stop_Review(Close[0], false);
+
+			Print(Time[0]);
+			Print(string.Format("is_stop: {0} // Stop: {1}", returned_values.Item1, returned_values.Item2));
+			Print("--------------------");
 		}
 
     #region Properties
@@ -3168,10 +3174,248 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
-		///<summary>
-		///Finds the value in the sequence, equivalent to the Percentile given.
-		///</summary>
-		public double Percentile(double[] sequence, double excelPercentile)
+		public Tuple<bool, double> Stop_Review(double trade_point, bool is_long)
+		{
+			List<double> possible_stops = new List<double>();
+			double stop;
+
+			#region SMAs_Review
+			{
+				#region SMA1
+				{
+					double SMA_distance = Math.Abs(trade_point - iSMA1[0]);
+
+					if (is_long)
+					{
+						if (SMA_distance > 0)
+						{
+							if (SMA_distance <= current_stop)
+							{
+								possible_stops.Add(iSMA1[0]);
+							}
+						}
+					}
+					else
+					{
+						if (SMA_distance < 0)
+						{
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= current_stop)
+							{
+								possible_stops.Add(iSMA1[0]);
+							}
+						}
+                    }					
+				}
+				#endregion
+
+				#region SMA2
+				{
+					double SMA_distance = Math.Abs(trade_point - iSMA2[0]);
+
+					if (is_long)
+                    {
+						if (SMA_distance > 0)
+                        {
+							if (SMA_distance <= current_stop)
+							{
+								possible_stops.Add(iSMA2[0]);
+							}
+						}
+                    }
+					else
+                    {
+						if (SMA_distance < 0)
+                        {
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= current_stop)
+							{
+								possible_stops.Add(iSMA2[0]);
+							}
+						}
+                    }					
+				}
+				#endregion
+			}
+            #endregion
+
+            #region Swings_Review
+            {
+                #region Swing1
+                {
+					{
+						double swing_distance = trade_point - iSwing1.SwingHigh[0];
+
+						if (is_long)
+                        {
+							if (swing_distance > 0)
+                            {
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing1.SwingHigh[0]);
+								}
+							}
+						}
+						else
+                        {
+							if (swing_distance < 0)
+							{
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing1.SwingHigh[0]);
+								}
+							}
+						}
+					}
+
+                    {
+						double swing_distance = trade_point - iSwing1.SwingLow[0];
+
+						if (is_long)
+						{
+							if (swing_distance > 0)
+							{
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing1.SwingLow[0]);
+								}
+							}
+						}
+						else
+						{
+							if (swing_distance < 0)
+							{
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing1.SwingLow[0]);
+								}
+							}
+						}
+					}
+                }
+				#endregion
+
+				#region Swing2
+				{
+					{
+						double swing_distance = trade_point - iSwing2.SwingHigh[0];
+
+						if (is_long &&
+							swing_distance > 0)
+						{
+							if (swing_distance <= current_stop)
+							{
+								possible_stops.Add(iSwing2.SwingHigh[0]);
+							}
+						}
+
+						if (!is_long &&
+							swing_distance < 0)
+						{
+							swing_distance = Math.Abs(swing_distance);
+
+							if (swing_distance <= current_stop)
+							{
+								possible_stops.Add(iSwing2.SwingHigh[0]);
+							}
+						}
+					}
+
+					{
+						double swing_distance = trade_point - iSwing2.SwingLow[0];
+
+						if (is_long &&
+							swing_distance > 0)
+						{
+							if (swing_distance <= current_stop)
+							{
+								possible_stops.Add(iSwing2.SwingLow[0]);
+							}
+						}
+
+						if (!is_long &&
+							swing_distance < 0)
+						{
+							swing_distance = Math.Abs(swing_distance);
+
+							if (swing_distance <= current_stop)
+							{
+								possible_stops.Add(iSwing2.SwingLow[0]);
+							}
+						}
+					}
+				}
+                #endregion
+            }
+            #endregion
+
+            #region Heat_Zones_Review
+			if (heat_zones.Count > 0)
+            {
+				for (int i = 0; i < heat_zones.Count; i++)
+                {
+					double heat_zone_distance = trade_point - heat_zones[i].value;
+
+					if (is_long)
+                    {
+						if (heat_zone_distance > 0)
+                        {
+							if (heat_zone_distance <= current_stop)
+							{
+								possible_stops.Add(heat_zones[i].value);
+							}
+						}
+					}
+                    else
+                    {
+						if (heat_zone_distance < 0)
+                        {
+							heat_zone_distance = Math.Abs(heat_zone_distance);
+
+							if (heat_zone_distance <= current_stop)
+							{
+								possible_stops.Add(heat_zones[i].value);
+							}
+						}
+                    }
+                }
+            }
+			#endregion
+
+			if (possible_stops.Count == 0) return new Tuple<bool, double>(false, -1);
+
+			if (is_long)
+            {
+				stop = possible_stops.Min();
+            }
+			else
+            {
+				stop = possible_stops.Max();
+            }			
+
+			Print(Time[0]);
+			Print(trade_point);
+			Print("Possible Stops:");
+			for (int i = 0; i < possible_stops.Count; i++)
+			{
+				Print(possible_stops[i]);
+			}
+			Print(string.Format("Stop: {0}", stop));
+			Print("----------------");
+
+			return new Tuple<bool, double>(true, stop);
+        }
+
+        ///<summary>
+        ///Finds the value in the sequence, equivalent to the Percentile given.
+        ///</summary>
+        public double Percentile(double[] sequence, double excelPercentile)
 		{
 			Array.Sort(sequence);
 			int N = sequence.Length;
@@ -3191,6 +3435,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		public void MyPrint()
         {
 			Print(Time[0]);
+			/*
 			Print("SwingHigh3");
 			for (int i = 0; i < swings3_high.Count; i++)
 			{
@@ -3215,6 +3460,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings2_low[i].value, swings2_low[i].is_broken, swings2_low[i].bar));
 			}
 			Print("---------------------------------------");
+			*/
 		}
 	}
 }
