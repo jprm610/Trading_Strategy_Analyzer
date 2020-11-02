@@ -362,20 +362,44 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 
 			//This condition evaluates if the SMAs parameters are set incorrectly or unsorted.
-			//The Swings values have to be set like the following: Swing1 < Swing2.
+			//The Swings values have to be set like the following: Swing1 < Swing2 < Swing3.
 			//This block of code sorts and sets sorted values to the Swings with a simple swap.
-			if (Swing2 < Swing1)
+			if (Swing1 > Swing2 || Swing1 > Swing3 || Swing2 > Swing3)
 			{
-				//Swap
-				int tmp = Swing2;
-				Swing2 = Swing1;
-				Swing1 = tmp;
+				//Create an array so that we can iterate through the values.
+				int[] Swing_v = new int[3];
+				Swing_v[0] = Swing1;
+				Swing_v[1] = Swing2;
+				Swing_v[2] = Swing3;
+
+				//Sort using the Bubble Sort algorithm.
+				bool isSorted = false;
+				while (!isSorted)
+				{
+					isSorted = true;
+					for (int i = 0; i < 2; i++)
+					{
+						if (Swing_v[i] > Swing_v[i + 1])
+						{
+							int tmp = Swing_v[i];
+							Swing_v[i] = Swing_v[i + 1];
+							Swing_v[i + 1] = tmp;
+							isSorted = false;
+						}
+					}
+				}
 
 				//Asign sorted values to the Swing indicators.
 				iSwing1 = Swing(Close, Swing1);
 				iSwing2 = Swing(Close, Swing2);
+				iSwing3 = Swing(Close, Swing3);
 
-				Print(string.Format("The Swings have been sorted as follow: iSwing1: {0} // iSwing2: {1}.", Swing1, Swing2));
+				//This reassignment is done to avoid this conditional to be executed again.
+				Swing1 = Swing_v[0];
+				Swing2 = Swing_v[1];
+				Swing3 = Swing_v[2];
+
+				Print(string.Format("The Swings have been sorted as follow: iSwing1: {0} // iSwing2: {1} // iSwing3: {2}.", Swing1, Swing2, Swing3));
 			}
 			#endregion
 
@@ -1961,11 +1985,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 			#endregion			
 
+			/*
 			Tuple<bool, double> returned_values = Stop_Review(Close[0], false);
 
 			Print(Time[0]);
 			Print(string.Format("is_stop: {0} // Stop: {1}", returned_values.Item1, returned_values.Item2));
 			Print("--------------------");
+			*/
 		}
 
     #region Properties
