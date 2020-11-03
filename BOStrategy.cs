@@ -638,7 +638,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				#region Remove_Repeated_Swings
 				{
 					//Knowing that a Swing3 is also a Swing2, the following loops
-					//clean the swings2 that asre swings3 using its ID (CurrentBar) for its later use.
+					//clean the swings2 that are swings3 using its ID (CurrentBar).
 
 					for (int i = 0; i < swings3_high.Count; i++)
 					{
@@ -666,7 +666,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				#region is_broken Evaluation
 				{
-					//Determine which swings (3 or 4) are broken,
+					//Determine which swings (2 or 3) are broken,
 					//this in order to determine if it is a Heat Zone or not.
 
 					for (int i = 0; i < swings3_high.Count; i++)
@@ -1984,14 +1984,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			#endregion
 			#endregion			
-
-			/*
-			Tuple<bool, double> returned_values = Stop_Review(Close[0], false);
-
-			Print(Time[0]);
-			Print(string.Format("is_stop: {0} // Stop: {1}", returned_values.Item1, returned_values.Item2));
-			Print("--------------------");
-			*/
 		}
 
     #region Properties
@@ -3200,8 +3192,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
+		///<summary>
+		///Determines wheter there is a stop in which a trade can be sustained. 
+		///If there is not a stop the function returns false and -1 as the stop value.
+		///If there is a stop then it returns true and the value of the stop.
+		///</summary>
 		public Tuple<bool, double> Stop_Review(double trade_point, bool is_long)
 		{
+			//Create a list in where possible stops are going to be saved.
+			//Declare the variable stop which is going to bve returned. 
 			List<double> possible_stops = new List<double>();
 			double stop;
 
@@ -3209,7 +3208,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				#region SMA1
 				{
-					double SMA_distance = Math.Abs(trade_point - iSMA1[0]);
+					//Determine the distance from the SMA1.
+					double SMA_distance = trade_point - iSMA1[0];
+
+					//Know if the SMA is below or above the price (if it is a barrier or a possible stop).
+					//If it isn't a barrier, determine wheter it is in the stop range or not.
+					//If yes save it as a possible stop.
 
 					if (is_long)
 					{
@@ -3238,7 +3242,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				#region SMA2
 				{
-					double SMA_distance = Math.Abs(trade_point - iSMA2[0]);
+					//Determine the distance from the SMA2.
+					double SMA_distance = trade_point - iSMA2[0];
+
+					//Know if the SMA is below or above the price (if it is a barrier or a possible stop).
+					//If it isn't a barrier, determine wheter it is in the stop range or not.
+					//If yes save it as a possible stop.
 
 					if (is_long)
                     {
@@ -3272,8 +3281,12 @@ namespace NinjaTrader.NinjaScript.Strategies
                 #region Swing1
                 {
 					{
+						//Determine the distance from the current Swing1High.
 						double swing_distance = trade_point - iSwing1.SwingHigh[0];
 
+						//Know if the Swing1High is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
 						if (is_long)
                         {
 							if (swing_distance > 0)
@@ -3299,8 +3312,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 
                     {
+						//Determine the distance from the current Swing1Low.
 						double swing_distance = trade_point - iSwing1.SwingLow[0];
 
+						//Know if the Swing1Low is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
 						if (is_long)
 						{
 							if (swing_distance > 0)
@@ -3330,49 +3347,65 @@ namespace NinjaTrader.NinjaScript.Strategies
 				#region Swing2
 				{
 					{
+						//Determine the distance from the current Swing2High.
 						double swing_distance = trade_point - iSwing2.SwingHigh[0];
 
-						if (is_long &&
-							swing_distance > 0)
+						//Know if the Swing2High is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
+
+						if (is_long)
 						{
-							if (swing_distance <= current_stop)
+							if (swing_distance > 0)
 							{
-								possible_stops.Add(iSwing2.SwingHigh[0]);
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing2.SwingHigh[0]);
+								}
 							}
 						}
-
-						if (!is_long &&
-							swing_distance < 0)
+						else
 						{
-							swing_distance = Math.Abs(swing_distance);
-
-							if (swing_distance <= current_stop)
+							if (swing_distance < 0)
 							{
-								possible_stops.Add(iSwing2.SwingHigh[0]);
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing2.SwingHigh[0]);
+								}
 							}
 						}
 					}
 
 					{
+						//Determine the distance from the current Swing2Low.
 						double swing_distance = trade_point - iSwing2.SwingLow[0];
 
-						if (is_long &&
-							swing_distance > 0)
-						{
-							if (swing_distance <= current_stop)
+						//Know if the Swing2Low is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
+
+						if (is_long)
+                        {
+							if (swing_distance > 0)
 							{
-								possible_stops.Add(iSwing2.SwingLow[0]);
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing2.SwingLow[0]);
+								}
 							}
 						}
-
-						if (!is_long &&
-							swing_distance < 0)
-						{
-							swing_distance = Math.Abs(swing_distance);
-
-							if (swing_distance <= current_stop)
+                        else
+                        {
+							if (swing_distance < 0)
 							{
-								possible_stops.Add(iSwing2.SwingLow[0]);
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= current_stop)
+								{
+									possible_stops.Add(iSwing2.SwingLow[0]);
+								}
 							}
 						}
 					}
@@ -3382,8 +3415,10 @@ namespace NinjaTrader.NinjaScript.Strategies
             #endregion
 
             #region Heat_Zones_Review
+			//Determine wheter there are Heat Zones or not.			
 			if (heat_zones.Count > 0)
             {
+				//If yes, loop through all the possible heat_zones and determine wheter they are possible stops or barriers.
 				for (int i = 0; i < heat_zones.Count; i++)
                 {
 					double heat_zone_distance = trade_point - heat_zones[i].value;
@@ -3414,8 +3449,10 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
 			#endregion
 
+			//If there isn't possible stops, it means that a trade can't be executed.
 			if (possible_stops.Count == 0) return new Tuple<bool, double>(false, -1);
 
+			//The stop is always going to be the furthest possible stop.
 			if (is_long)
             {
 				stop = possible_stops.Min();
@@ -3423,17 +3460,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			else
             {
 				stop = possible_stops.Max();
-            }			
-
-			Print(Time[0]);
-			Print(trade_point);
-			Print("Possible Stops:");
-			for (int i = 0; i < possible_stops.Count; i++)
-			{
-				Print(possible_stops[i]);
-			}
-			Print(string.Format("Stop: {0}", stop));
-			Print("----------------");
+            }
 
 			return new Tuple<bool, double>(true, stop);
         }
