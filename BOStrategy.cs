@@ -99,6 +99,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				ClosnessFactor = 2;
 				ClosnessToTrade = 1;
 				MagicNumber = 50;
+				Stop_Strength = 6;
 				Look_back_candles = 100;
 				Percentile_v = 0.99;
 				Days = 20;
@@ -673,7 +674,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						for (int j = 0; j < CurrentBar - swings3_high[i].bar; j++)
 						{
-							if (High[j] > swings3_high[i].value)
+							if (Close[j] > swings3_high[i].value)
 							{
 								swings3_high[i].is_broken = true;
 							}
@@ -684,7 +685,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						for (int j = 0; j < CurrentBar - swings3_low[i].bar; j++)
 						{
-							if (Low[j] < swings3_low[i].value)
+							if (Close[j] < swings3_low[i].value)
 							{
 								swings3_low[i].is_broken = true;
 							}
@@ -695,7 +696,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						for (int j = 0; j < CurrentBar - swings2_high[i].bar; j++)
 						{
-							if (High[j] > swings2_high[i].value)
+							if (Close[j] > swings2_high[i].value)
 							{
 								swings2_high[i].is_broken = true;
 							}
@@ -706,7 +707,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						for (int j = 0; j < CurrentBar - swings2_low[i].bar; j++)
 						{
-							if (Low[j] < swings2_low[i].value)
+							if (Close[j] < swings2_low[i].value)
 							{
 								swings2_low[i].is_broken = true;
 							}
@@ -2091,9 +2092,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Display(Name = "MagicNumber(Percent (%) of ATR)", Order = 10, GroupName = "Parameters")]
 		public double MagicNumber
 		{ get; set; }
-    #endregion
 
-    #region Heat_Zone
+		[NinjaScriptProperty]
+		[Display(Name = "Stop_Strength", Order = 11, GroupName = "Parameters")]
+		public int Stop_Strength
+		{ get; set; }
+		#endregion
+
+	#region Heat_Zone
 		[NinjaScriptProperty]
 		[Display(Name = "Days", GroupName = "Heat Zone", Order = 1)]
 		public int Days
@@ -2244,18 +2250,28 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount							
-				stop_price_long = Close[0] - current_stop; //calculates the stop price level
-				trigger_price_long = Close[0] + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
+				Tuple<double, double> Stop_Values = Stop_Review(Close[0], true);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_long = Stop_Values.Item1;
+				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)); //calculates trade amount
 				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
+				//Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
 			{
-				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				stop_price_long = (BO_level[0] + distance_to_BO) - current_stop; //calculates the stop price level
-				trigger_price_long = (BO_level[0] + distance_to_BO) + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger
+				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_long = Stop_Values.Item1;
+				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_long = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
+				//Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return false;
 			}
 			else
@@ -2269,18 +2285,28 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount							
-				stop_price_short = Close[0] + current_stop; //calculates the stop price level
-				trigger_price_short = Close[0] - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger
+				Tuple<double, double> Stop_Values = Stop_Review(Close[0], false);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_short = Stop_Values.Item1; //calculates the stop price level
+				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount		
 				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
+				//Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
 			{
-				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				stop_price_short = (BO_level[0] - distance_to_BO) + current_stop; //calculates the stop price level
-				trigger_price_short = (BO_level[0] - distance_to_BO) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
+				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_short = Stop_Values.Item1; //calculates the stop price level
+				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
+				//Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return false;
 			}
 			else
@@ -3193,16 +3219,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		///<summary>
-		///Determines wheter there is a stop in which a trade can be sustained. 
-		///If there is not a stop the function returns false and -1 as the stop value.
-		///If there is a stop then it returns true and the value of the stop.
+		///Determines wheter there is a stop in which a trade can be sustained.
+		///The function returns a Tuple(stop, stop_distance).
+		///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
+		///If there is a stop then it returns the stop value and the stop_distance.
 		///</summary>
-		public Tuple<bool, double> Stop_Review(double trade_point, bool is_long)
+		public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
 		{
 			//Create a list in where possible stops are going to be saved.
 			//Declare the variable stop which is going to bve returned. 
 			List<double> possible_stops = new List<double>();
-			double stop;
+			double stop, stop_distance;
 
 			#region SMAs_Review
 			{
@@ -3450,19 +3477,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			//If there isn't possible stops, it means that a trade can't be executed.
-			if (possible_stops.Count == 0) return new Tuple<bool, double>(false, -1);
+			if (possible_stops.Count < Stop_Strength) return new Tuple<double, double>(-1, 0);
 
 			//The stop is always going to be the furthest possible stop.
 			if (is_long)
             {
-				stop = possible_stops.Min();
+				stop = possible_stops.Min() - iATR[0];
             }
 			else
             {
-				stop = possible_stops.Max();
+				stop = possible_stops.Max() + iATR[0];
             }
 
-			return new Tuple<bool, double>(true, stop);
+			stop_distance = Math.Abs(trade_point - stop);
+
+			return new Tuple<double, double>(stop, stop_distance);
         }
 
         ///<summary>
