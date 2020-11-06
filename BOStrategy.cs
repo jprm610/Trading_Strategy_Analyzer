@@ -2258,7 +2258,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)); //calculates trade amount
 				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
-				//Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
+				Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
@@ -2271,7 +2271,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_long = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
-				//Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
+				Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return false;
 			}
 			else
@@ -2293,7 +2293,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount		
 				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
-				//Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
+				Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
@@ -2306,7 +2306,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
-				//Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
+				Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return false;
 			}
 			else
@@ -3219,17 +3219,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		///<summary>
-		///Determines wheter there is a stop in which a trade can be sustained.
+		///Determines wheter there is stop in which a trade can be sustained.
 		///The function returns a Tuple(stop, stop_distance).
 		///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
+		///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
 		///If there is a stop then it returns the stop value and the stop_distance.
 		///</summary>
 		public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
 		{
 			//Create a list in where possible stops are going to be saved.
-			//Declare the variable stop which is going to bve returned. 
+			//Declare the variable stop which is going to be returned.
+			//Define the stop_evaluation range as the stop size minus 1 ATR, 
+			//in order to avoid that the stop is positioned outside the absolute stop range.
 			List<double> possible_stops = new List<double>();
+			List<double> shields = new List<double>();
 			double stop, stop_distance;
+			double stop_evaluation_range = current_stop - iATR[0];
 
 			#region SMAs_Review
 			{
@@ -3241,15 +3246,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//Know if the SMA is below or above the price (if it is a barrier or a possible stop).
 					//If it isn't a barrier, determine wheter it is in the stop range or not.
 					//If yes save it as a possible stop.
+					//If the SMA is not in the stop evaluation range, save it only as a shield.
 
 					if (is_long)
 					{
 						if (SMA_distance > 0)
 						{
-							if (SMA_distance <= current_stop)
+							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA1[0]);
+								shields.Add(iSMA1[0]);
 							}
+							else if (SMA_distance <= current_stop)
+                            {
+								shields.Add(iSMA1[0]);
+                            }
 						}
 					}
 					else
@@ -3258,9 +3269,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							SMA_distance = Math.Abs(SMA_distance);
 
-							if (SMA_distance <= current_stop)
+							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA1[0]);
+								shields.Add(iSMA1[0]);
+							}
+							else if (SMA_distance <= current_stop)
+							{
+								shields.Add(iSMA1[0]);
 							}
 						}
                     }					
@@ -3275,14 +3291,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//Know if the SMA is below or above the price (if it is a barrier or a possible stop).
 					//If it isn't a barrier, determine wheter it is in the stop range or not.
 					//If yes save it as a possible stop.
+					//If the SMA is not in the stop evaluation range, save it only as a shield.
 
 					if (is_long)
                     {
 						if (SMA_distance > 0)
                         {
-							if (SMA_distance <= current_stop)
+							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA2[0]);
+								shields.Add(iSMA2[0]);
+							}
+							else if (SMA_distance <= current_stop)
+							{
+								shields.Add(iSMA2[0]);
 							}
 						}
                     }
@@ -3292,9 +3314,14 @@ namespace NinjaTrader.NinjaScript.Strategies
                         {
 							SMA_distance = Math.Abs(SMA_distance);
 
-							if (SMA_distance <= current_stop)
+							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA2[0]);
+								shields.Add(iSMA2[0]);
+							}
+							else if (SMA_distance <= current_stop)
+							{
+								shields.Add(iSMA2[0]);
 							}
 						}
                     }					
@@ -3314,14 +3341,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//Know if the Swing1High is below or above the price (if it is a barrier or a possible stop).
 						//If it isn't a barrier, determine wheter it is in the stop range or not.
 						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
+
 						if (is_long)
                         {
 							if (swing_distance > 0)
                             {
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingHigh[0]);
+									shields.Add(iSwing1.SwingHigh[0]);
 								}
+								else if (swing_distance <= current_stop)
+                                {
+									shields.Add(iSwing1.SwingHigh[0]);
+                                }
 							}
 						}
 						else
@@ -3330,9 +3364,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								swing_distance = Math.Abs(swing_distance);
 
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingHigh[0]);
+									shields.Add(iSwing1.SwingHigh[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing1.SwingHigh[0]);
 								}
 							}
 						}
@@ -3345,13 +3384,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//Know if the Swing1Low is below or above the price (if it is a barrier or a possible stop).
 						//If it isn't a barrier, determine wheter it is in the stop range or not.
 						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
+
 						if (is_long)
 						{
 							if (swing_distance > 0)
 							{
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingLow[0]);
+									shields.Add(iSwing1.SwingLow[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing1.SwingLow[0]);
 								}
 							}
 						}
@@ -3361,9 +3407,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								swing_distance = Math.Abs(swing_distance);
 
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingLow[0]);
+									shields.Add(iSwing1.SwingLow[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing1.SwingLow[0]);
 								}
 							}
 						}
@@ -3380,14 +3431,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//Know if the Swing2High is below or above the price (if it is a barrier or a possible stop).
 						//If it isn't a barrier, determine wheter it is in the stop range or not.
 						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
 
 						if (is_long)
 						{
 							if (swing_distance > 0)
 							{
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingHigh[0]);
+									shields.Add(iSwing2.SwingHigh[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing2.SwingHigh[0]);
 								}
 							}
 						}
@@ -3397,9 +3454,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								swing_distance = Math.Abs(swing_distance);
 
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingHigh[0]);
+									shields.Add(iSwing2.SwingHigh[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing2.SwingHigh[0]);
 								}
 							}
 						}
@@ -3412,14 +3474,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//Know if the Swing2Low is below or above the price (if it is a barrier or a possible stop).
 						//If it isn't a barrier, determine wheter it is in the stop range or not.
 						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
 
 						if (is_long)
                         {
 							if (swing_distance > 0)
 							{
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingLow[0]);
+									shields.Add(iSwing2.SwingLow[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing2.SwingLow[0]);
 								}
 							}
 						}
@@ -3429,9 +3497,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								swing_distance = Math.Abs(swing_distance);
 
-								if (swing_distance <= current_stop)
+								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingLow[0]);
+									shields.Add(iSwing2.SwingLow[0]);
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields.Add(iSwing2.SwingLow[0]);
 								}
 							}
 						}
@@ -3445,7 +3518,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//Determine wheter there are Heat Zones or not.			
 			if (heat_zones.Count > 0)
             {
-				//If yes, loop through all the possible heat_zones and determine wheter they are possible stops or barriers.
+				//Know if the Heat Zone is below or above the price (if it is a barrier or a possible stop).
+				//If it isn't a barrier, determine wheter it is in the stop range or not.
+				//If yes save it as a possible stop.
+				//If the Heat Zone is not in the stop evaluation range, save it only as a shield.
+
 				for (int i = 0; i < heat_zones.Count; i++)
                 {
 					double heat_zone_distance = trade_point - heat_zones[i].value;
@@ -3454,10 +3531,15 @@ namespace NinjaTrader.NinjaScript.Strategies
                     {
 						if (heat_zone_distance > 0)
                         {
-							if (heat_zone_distance <= current_stop)
+							if (heat_zone_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(heat_zones[i].value);
+								shields.Add(heat_zones[i].value);
 							}
+							else if (heat_zone_distance <= current_stop)
+                            {
+								shields.Add(heat_zones[i].value);
+                            }
 						}
 					}
                     else
@@ -3466,9 +3548,14 @@ namespace NinjaTrader.NinjaScript.Strategies
                         {
 							heat_zone_distance = Math.Abs(heat_zone_distance);
 
-							if (heat_zone_distance <= current_stop)
+							if (heat_zone_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(heat_zones[i].value);
+								shields.Add(heat_zones[i].value);
+							}
+							else if (heat_zone_distance <= current_stop)
+							{
+								shields.Add(heat_zones[i].value);
 							}
 						}
                     }
@@ -3476,8 +3563,9 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
 			#endregion
 
-			//If there isn't possible stops, it means that a trade can't be executed.
-			if (possible_stops.Count < Stop_Strength) return new Tuple<double, double>(-1, 0);
+			//If there isn't a certain amount of shields in the stop range, 
+			//it means that a trade can't be executed.
+			if (shields.Count < Stop_Strength) return new Tuple<double, double>(-1, 0);
 
 			//The stop is always going to be the furthest possible stop.
 			if (is_long)
