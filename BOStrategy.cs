@@ -93,18 +93,23 @@ namespace NinjaTrader.NinjaScript.Strategies
 				TrailingUnitsStop = 5;
 				RiskUnit = 1;
 				IncipientTrandFactor = 2;
-				ATRStopFactor = 3;
 				TicksToBO = 10;
 				SwingPenetration = 50;
 				ClosnessFactor = 2;
 				ClosnessToTrade = 1;
 				MagicNumber = 50;
-				Stop_Strength = 6;
 				Look_back_candles = 100;
 				Percentile_v = 0.99;
 				Days = 20;
 				Heat_zone_strength = 2;
 				Width = 1.5;
+				ATRStopFactor = 3;
+				Stop_Strength = 6;
+				SMA1_Strength = 5;
+				SMA2_Strength = 4;
+				Swing1_Strength = 1;
+				Swing2_Strength = 2;
+				Heat_Zone_Stop_Strength = 3;
 			}
 			else if (State == State.Configure)
 			{
@@ -442,14 +447,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 				#endregion
 
 				#region Copy_Ranges_Values
-					//Traspass the ranges values to an array of double (ranges_values)
-					//in order to input the values in the Percentile function 
-					//which will appear in the next region.
-					double[] ranges_values = new double[ranges.Count];
-					for (int i = 0; i < ranges.Count; i++)
-					{
-						ranges_values[i] = ranges[i].value;
-					}
+				//Traspass the ranges values to an array of double (ranges_values)
+				//in order to input the values in the Percentile function 
+				//which will appear in the next region.
+				double[] ranges_values = new double[ranges.Count];
+				for (int i = 0; i < ranges.Count; i++)
+				{
+					ranges_values[i] = ranges[i].value;
+				}
 				#endregion
 
 				#region Calculate_and_Evaluate_Percentiles
@@ -538,7 +543,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 								last_evaluated_swingHigh = iSwing3.SwingHigh[i];
 							}
-						}						
+						}
 						//Then save its CurrentBar that is going to be our ID.
 						for (int i = 1; i <= swings3_high.Count; i++)
 						{
@@ -632,7 +637,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							swings2_low[i - 1].bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar);
 						}
 					}
-                    #endregion                    
+					#endregion
 				}
 				#endregion
 
@@ -901,8 +906,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
-                    #endregion
-                }
+					#endregion
+				}
 				#endregion
 
 				#region Swings_Update_Reset
@@ -916,14 +921,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 					last_swingLow3 = iSwing3.SwingLow[0];
 				}
 				#endregion
-            }
-            #endregion
+			}
+			#endregion
 
-            #region Overall_Market_Movement
-            //If the second biggest SMA crosses above the biggest SMA it means the market is going upwards.
-            //The ATR value is saved immediately, the is_upward flag is set to true while its opposite flag (is_downward) is set to false.
-            //Finally the CurrentBar of the event is saved for later calculations.
-            if (CrossAbove(iSMA2, iSMA1, 1))
+			#region Overall_Market_Movement
+			//If the second biggest SMA crosses above the biggest SMA it means the market is going upwards.
+			//The ATR value is saved immediately, the is_upward flag is set to true while its opposite flag (is_downward) is set to false.
+			//Finally the CurrentBar of the event is saved for later calculations.
+			if (CrossAbove(iSMA2, iSMA1, 1))
 			{
 				ATR_crossing_value = iATR[0];
 				is_upward = true;
@@ -1984,11 +1989,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 			}
 			#endregion
-			#endregion			
+			#endregion
 		}
 
-    #region Properties
-    #region Indicators
+		#region Properties
+		#region Indicators
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name = "SMA1 (Max)", Order = 1, GroupName = "Indicators")]
@@ -2030,9 +2035,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Display(Name = "Swing3 (Max)", Order = 7, GroupName = "Indicators")]
 		public int Swing3
 		{ get; set; }
-	#endregion
+		#endregion
 
-	#region Parameters
+		#region Parameters
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
 		[Display(Name = "TrailingUnitsStop", Order = 1, GroupName = "Parameters")]
@@ -2059,47 +2064,36 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "ATRStopFactor", Order = 5, GroupName = "Parameters")]
-		public double ATRStopFactor
-		{ get; set; }
-
-		[NinjaScriptProperty]
-		[Range(0, int.MaxValue)]
-		[Display(Name = "TicksToBO", Order = 6, GroupName = "Parameters")]
+		[Display(Name = "TicksToBO", Order = 5, GroupName = "Parameters")]
 		public double TicksToBO
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, 100)]
-		[Display(Name = "SwingPenetration(%)", Order = 7, GroupName = "Parameters")]
+		[Display(Name = "SwingPenetration(%)", Order = 6, GroupName = "Parameters")]
 		public double SwingPenetration
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "ClosnessFactor", Order = 8, GroupName = "Parameters")]
+		[Display(Name = "ClosnessFactor", Order = 7, GroupName = "Parameters")]
 		public double ClosnessFactor
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "ClosnessToTrade", Order = 9, GroupName = "Parameters")]
+		[Display(Name = "ClosnessToTrade", Order = 8, GroupName = "Parameters")]
 		public double ClosnessToTrade
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, 100)]
-		[Display(Name = "MagicNumber(Percent (%) of ATR)", Order = 10, GroupName = "Parameters")]
+		[Display(Name = "MagicNumber(Percent (%) of ATR)", Order = 9, GroupName = "Parameters")]
 		public double MagicNumber
-		{ get; set; }
-
-		[NinjaScriptProperty]
-		[Display(Name = "Stop_Strength", Order = 11, GroupName = "Parameters")]
-		public int Stop_Strength
 		{ get; set; }
 		#endregion
 
-	#region Heat_Zone
+		#region Heat_Zone
 		[NinjaScriptProperty]
 		[Display(Name = "Days", GroupName = "Heat Zone", Order = 1)]
 		public int Days
@@ -2114,9 +2108,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Display(Name = "Width", GroupName = "Heat Zone", Order = 4)]
 		public double Width
 		{ get; set; }
-    #endregion
-    
-    #region Momentum
+		#endregion
+
+		#region Momentum
 		[NinjaScriptProperty]
 		[Display(Name = "Look_back_candles", Order = 1, GroupName = "Momentum")]
 		public int Look_back_candles
@@ -2127,9 +2121,52 @@ namespace NinjaTrader.NinjaScript.Strategies
 		public double Percentile_v
 		{ get; set; }
 		#endregion
-    #endregion
 
-    #region Classes
+		#region Stop
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "ATRStopFactor", Order = 1, GroupName = "Stop")]
+		public int ATRStopFactor
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Stop_Strength", Order = 2, GroupName = "Stop")]
+		public int Stop_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "SMA1", Order = 3, GroupName = "Stop")]
+		public int SMA1_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "SMA2", Order = 4, GroupName = "Stop")]
+		public int SMA2_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Swing1", Order = 5, GroupName = "Stop")]
+		public int Swing1_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Swing2", Order = 6, GroupName = "Stop")]
+		public int Swing2_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Heat Zone", Order = 7, GroupName = "Stop")]
+		public int Heat_Zone_Stop_Strength
+		{ get; set; }
+		#endregion
+		#endregion
+
+		#region Classes
 		public class MySwing
 		{
 			public double value;
@@ -2142,7 +2179,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public double value;
 			public bool is_removable = false;
 		}
-    
+
 		public class MyRanges
 		{
 			public double value;
@@ -2151,9 +2188,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public int bars_ago;
 			public bool is_up;
 		}
-	#endregion
+		#endregion
 
-	#region Functions
+		#region Functions
 		////	METHODS			
 
 		////	Swing Identification Method				
@@ -2258,7 +2295,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)); //calculates trade amount
 				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
-				Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
+														//Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
@@ -2271,7 +2308,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_long = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
-				Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
+				//Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return false;
 			}
 			else
@@ -2293,7 +2330,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount		
 				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
-				Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
+														  //Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
@@ -2306,7 +2343,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
-				Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
+				//Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return false;
 			}
 			else
@@ -3232,7 +3269,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//Define the stop_evaluation range as the stop size minus 1 ATR, 
 			//in order to avoid that the stop is positioned outside the absolute stop range.
 			List<double> possible_stops = new List<double>();
-			List<double> shields = new List<double>();
+			int shields_count = 0;
 			double stop, stop_distance;
 			double stop_evaluation_range = current_stop - iATR[0];
 
@@ -3255,12 +3292,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA1[0]);
-								shields.Add(iSMA1[0]);
+								shields_count += SMA1_Strength;
 							}
 							else if (SMA_distance <= current_stop)
                             {
-								shields.Add(iSMA1[0]);
-                            }
+								shields_count += SMA1_Strength;
+							}
 						}
 					}
 					else
@@ -3272,11 +3309,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA1[0]);
-								shields.Add(iSMA1[0]);
+								shields_count += SMA1_Strength;
 							}
 							else if (SMA_distance <= current_stop)
 							{
-								shields.Add(iSMA1[0]);
+								shields_count += SMA1_Strength;
 							}
 						}
                     }					
@@ -3300,11 +3337,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA2[0]);
-								shields.Add(iSMA2[0]);
+								shields_count += SMA2_Strength;
 							}
 							else if (SMA_distance <= current_stop)
 							{
-								shields.Add(iSMA2[0]);
+								shields_count += SMA2_Strength;
 							}
 						}
                     }
@@ -3317,11 +3354,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (SMA_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(iSMA2[0]);
-								shields.Add(iSMA2[0]);
+								shields_count += SMA2_Strength;
 							}
 							else if (SMA_distance <= current_stop)
 							{
-								shields.Add(iSMA2[0]);
+								shields_count += SMA2_Strength;
 							}
 						}
                     }					
@@ -3350,12 +3387,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingHigh[0]);
-									shields.Add(iSwing1.SwingHigh[0]);
+									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
                                 {
-									shields.Add(iSwing1.SwingHigh[0]);
-                                }
+									shields_count += Swing1_Strength;
+								}
 							}
 						}
 						else
@@ -3367,11 +3404,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingHigh[0]);
-									shields.Add(iSwing1.SwingHigh[0]);
+									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing1.SwingHigh[0]);
+									shields_count += Swing1_Strength;
 								}
 							}
 						}
@@ -3393,11 +3430,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingLow[0]);
-									shields.Add(iSwing1.SwingLow[0]);
+									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing1.SwingLow[0]);
+									shields_count += Swing1_Strength;
 								}
 							}
 						}
@@ -3410,11 +3447,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing1.SwingLow[0]);
-									shields.Add(iSwing1.SwingLow[0]);
+									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing1.SwingLow[0]);
+									shields_count += Swing1_Strength;
 								}
 							}
 						}
@@ -3440,11 +3477,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingHigh[0]);
-									shields.Add(iSwing2.SwingHigh[0]);
+									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing2.SwingHigh[0]);
+									shields_count += Swing2_Strength;
 								}
 							}
 						}
@@ -3457,11 +3494,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingHigh[0]);
-									shields.Add(iSwing2.SwingHigh[0]);
+									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing2.SwingHigh[0]);
+									shields_count += Swing2_Strength;
 								}
 							}
 						}
@@ -3483,11 +3520,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingLow[0]);
-									shields.Add(iSwing2.SwingLow[0]);
+									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing2.SwingLow[0]);
+									shields_count += Swing2_Strength;
 								}
 							}
 						}
@@ -3500,11 +3537,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								if (swing_distance <= stop_evaluation_range)
 								{
 									possible_stops.Add(iSwing2.SwingLow[0]);
-									shields.Add(iSwing2.SwingLow[0]);
+									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
 								{
-									shields.Add(iSwing2.SwingLow[0]);
+									shields_count += Swing2_Strength;
 								}
 							}
 						}
@@ -3534,12 +3571,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (heat_zone_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(heat_zones[i].value);
-								shields.Add(heat_zones[i].value);
+								shields_count += Heat_Zone_Stop_Strength;
 							}
 							else if (heat_zone_distance <= current_stop)
                             {
-								shields.Add(heat_zones[i].value);
-                            }
+								shields_count += Heat_Zone_Stop_Strength;
+							}
 						}
 					}
                     else
@@ -3551,11 +3588,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (heat_zone_distance <= stop_evaluation_range)
 							{
 								possible_stops.Add(heat_zones[i].value);
-								shields.Add(heat_zones[i].value);
+								shields_count += Heat_Zone_Stop_Strength;
 							}
 							else if (heat_zone_distance <= current_stop)
 							{
-								shields.Add(heat_zones[i].value);
+								shields_count += Heat_Zone_Stop_Strength;
 							}
 						}
                     }
@@ -3565,7 +3602,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 			//If there isn't a certain amount of shields in the stop range, 
 			//it means that a trade can't be executed.
-			if (shields.Count < Stop_Strength) return new Tuple<double, double>(-1, 0);
+			if (shields_count < Stop_Strength || possible_stops.Count == 0) return new Tuple<double, double>(-1, 0);
 
 			//The stop is always going to be the furthest possible stop.
 			if (is_long)
