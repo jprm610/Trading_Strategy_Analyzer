@@ -31,28 +31,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 		#region Variables
 		private SMA iSMA1, iSMA2, iSMA3;
 		private ATR iATR;
-		private Swing iSwing1, iSwing2;
-		private ArrayList LastSwingHigh14Cache, LastSwingLow14Cache;
+		private Swing iSwing1, iSwing2, iSwing3;
 		private int cross_above_bar, cross_below_bar, amount_long, fix_amount_long, amount_short, fix_amount_short, max_indicator_bar_calculation;
-		private double ATR_crossing_value, SMA_dis, stop_price_long, trigger_price_long, stop_price_short, trigger_price_short, swingHigh2_max, swingLow2_min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
+		private double ATR_crossing_value, SMA_dis, stop_price_long, trigger_price_long, stop_price_short, trigger_price_short, swingHigh2_max, swingLow2_min;
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, distance_to_BO;
-		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, swingHigh2_max_reentry, swingLow2_min_reentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
-		private double last_swingHigh2, last_swingLow2, last_swingHigh1, last_swingLow1, current_ATR, current_stop, CurrentOpen, CurrentClose, CurrentHigh, CurrentLow, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
+		private double swingHigh2_max_reentry, swingLow2_min_reentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
+		private double last_swingHigh3, last_swingLow3, last_swingHigh2, last_swingLow2, last_swingHigh1, last_swingLow1, current_ATR, current_stop, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
 		private bool is_incipient_up_trend, is_incipient_down_trend, is_upward, is_downward, gray_ellipse_long, gray_ellipse_short, is_reentry_long, is_reentry_short, is_long, is_short, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;
 
 		#region Momentum_Process_Variables
 		private Range iRange;
-		private double ranges_percentile;
-		private List<MyRanges> ranges = new List<MyRanges>();
 		private List<MyRanges> ranges_over_percentile = new List<MyRanges>();
 		#endregion
-    
+
 		#region Heat_Zones_Process_Variables
-		private double heat_zone_reference_value, swingDis, max_swing, min_swing;
-		List<MySwing> swings2_high = new List<MySwing>();
-		List<MySwing> swings2_low = new List<MySwing>();
-		List<MySwing> heat_zone_swings2 = new List<MySwing>();
-		List<MyHeatZone> heat_zones = new List<MyHeatZone>();
+		private List<MySwing> swings2_high = new List<MySwing>();
+		private List<MySwing> swings2_low = new List<MySwing>();
+		private List<MySwing> swings3_high = new List<MySwing>();
+		private List<MySwing> swings3_low = new List<MySwing>();
+		private List<MyHeatZone> heat_zones = new List<MyHeatZone>();
 		#endregion
 
 		private bool cross_below_iSMA3_to_iSMA2, cross_above_iSMA3_to_iSMA2;
@@ -64,49 +61,55 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (State == State.SetDefaults)
 			{
-				Description						= @"Strategy that Operates Breakouts";
-				Name							= "BOStrategy";
-				Calculate						= Calculate.OnBarClose;
-				EntriesPerDirection				= 1;
-				EntryHandling					= EntryHandling.AllEntries;
-				IsExitOnSessionCloseStrategy	= false;
-				ExitOnSessionCloseSeconds		= 30;
-				IsFillLimitOnTouch				= false;
-				MaximumBarsLookBack				= MaximumBarsLookBack.Infinite;
-				OrderFillResolution				= OrderFillResolution.Standard;
-				Slippage						= 0;
-				StartBehavior					= StartBehavior.WaitUntilFlat;
-				TimeInForce						= TimeInForce.Gtc;
-				TraceOrders						= false;
-				RealtimeErrorHandling			= RealtimeErrorHandling.StopCancelClose;
-				StopTargetHandling				= StopTargetHandling.PerEntryExecution;
-				BarsRequiredToTrade				= 20;
+				Description = @"Strategy that Operates Breakouts";
+				Name = "BOStrategy";
+				Calculate = Calculate.OnBarClose;
+				EntriesPerDirection = 1;
+				EntryHandling = EntryHandling.AllEntries;
+				IsExitOnSessionCloseStrategy = false;
+				ExitOnSessionCloseSeconds = 30;
+				IsFillLimitOnTouch = false;
+				MaximumBarsLookBack = MaximumBarsLookBack.Infinite;
+				OrderFillResolution = OrderFillResolution.Standard;
+				Slippage = 0;
+				StartBehavior = StartBehavior.WaitUntilFlat;
+				TimeInForce = TimeInForce.Gtc;
+				TraceOrders = false;
+				RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
+				StopTargetHandling = StopTargetHandling.PerEntryExecution;
+				BarsRequiredToTrade = 20;
 				// Disable this property for performance gains in Strategy Analyzer optimizations
 				// See the Help Guide for additional information
 				IsInstantiatedOnEachOptimizationIteration = true;
 
-				SMA1					= 200;
-				SMA2					= 50;
-				SMA3					= 20;
-				ATR1					= 100;
-				Swing1					= 4;
-				Swing2					= 14;
+				SMA1 = 200;
+				SMA2 = 50;
+				SMA3 = 20;
+				ATR1 = 100;
+				Swing1 = 4;
+				Swing2 = 14;
+				Swing3 = 36;
 				UnitsTriggerForTrailing = 1;
-				TrailingUnitsStop		= 5;
-				RiskUnit				= 1;
-				IncipientTrandFactor	= 2;
-				ATRStopFactor			= 3;
-				TicksToBO				= 10;
-				SwingPenetration		= 50;
-				ClosnessFactor			= 2;
-				ClosnessToTrade			= 1;
-				MagicNumber				= 50;
-				Look_back_candles		= 100;
-				Percentile_v			= 0.99;
-				Instance				= 10;
-				Heat_zone_strength		= 2;
-				Width					= 1.5;
-				Heat_zones_print		= 6;
+				TrailingUnitsStop = 5;
+				RiskUnit = 1;
+				IncipientTrandFactor = 2;
+				TicksToBO = 10;
+				SwingPenetration = 50;
+				ClosnessFactor = 2;
+				ClosnessToTrade = 1;
+				MagicNumber = 50;
+				Look_back_candles = 100;
+				Percentile_v = 0.99;
+				Days = 20;
+				Heat_zone_strength = 2;
+				Width = 1.5;
+				ATRStopFactor = 3;
+				Stop_Strength = 6;
+				SMA1_Strength = 5;
+				SMA2_Strength = 4;
+				Swing1_Strength = 1;
+				Swing2_Strength = 2;
+				Heat_Zone_Stop_Strength = 3;
 			}
 			else if (State == State.Configure)
 			{
@@ -126,6 +129,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				// iSwing1 < iSwing2
 				iSwing1 = Swing(Close, Swing1);
 				iSwing2 = Swing(Close, Swing2);
+				iSwing3 = Swing(Close, Swing3);
 
 				iSMA1.Plots[0].Brush = Brushes.Red;
 				iSMA2.Plots[0].Brush = Brushes.Gold;
@@ -135,15 +139,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 				iSwing1.Plots[1].Brush = Brushes.Gold;
 				iSwing2.Plots[0].Brush = Brushes.Silver;
 				iSwing2.Plots[1].Brush = Brushes.Silver;
+				iSwing3.Plots[0].Brush = Brushes.DarkCyan;
+				iSwing3.Plots[1].Brush = Brushes.DarkCyan;
+
 				AddChartIndicator(iSMA1);
 				AddChartIndicator(iSMA2);
 				AddChartIndicator(iSMA3);
 				AddChartIndicator(iATR);
 				AddChartIndicator(iSwing1);
 				AddChartIndicator(iSwing2);
+				AddChartIndicator(iSwing3);
 				AddChartIndicator(iRange);
-				LastSwingHigh14Cache = new ArrayList();
-				LastSwingLow14Cache = new ArrayList();
 			}
 		}
 
@@ -224,25 +230,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
 			if (iSwing1.SwingHigh[0] == 0 || iSwing1.SwingLow[0] == 0 ||
 				iSwing2.SwingHigh[0] == 0 || iSwing2.SwingLow[0] == 0 ||
+				iSwing3.SwingHigh[0] == 0 || iSwing3.SwingLow[0] == 0 ||
 				iATR[0] == 0 ||
 				iRange[0] == 0)
 				return;
-        
+
 			//Review that the swings are charged to avoid later bugs. In other words, to check if the needed swing instances exist.
-			for (int i = 1; i <= Instance; i++)
+			for (int i = 0; i <= (Days * 24); i++)
 			{
-				if (iSwing2.SwingHighBar(0, i, CurrentBar) == -1)
+				if (iSwing3.SwingHigh[i] == 0)
 					return;
 
-				if (iSwing2.SwingLowBar(0, i, CurrentBar) == -1)
+				if (iSwing3.SwingLow[i] == 0)
 					return;
 			}
-
-			//Reset the swings that are going to be evaluated in each Heat Zone claculation.
-			//This has to be done because every Heat Zone has different Reference Values.
-			heat_zone_swings2.Clear();
 			#endregion
-      
+
 			#region Variable_Reset
 
 			//Reset is_BO variable once a new swing comes up.
@@ -279,10 +282,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#region Variable_Initialization
 			current_ATR = iATR[0];
 			current_stop = current_ATR * ATRStopFactor;
-			CurrentOpen = Open[0];
-			CurrentClose = Close[0];
-			CurrentHigh = High[0];
-			CurrentLow = Low[0];
 			distance_to_BO = TicksToBO * TickSize;
 
 			//Save the distance between the 2 biggest SMAs.
@@ -369,312 +368,560 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 
 			//This condition evaluates if the SMAs parameters are set incorrectly or unsorted.
-			//The Swings values have to be set like the following: Swing1 < Swing2.
+			//The Swings values have to be set like the following: Swing1 < Swing2 < Swing3.
 			//This block of code sorts and sets sorted values to the Swings with a simple swap.
-			if (Swing2 < Swing1)
+			if (Swing1 > Swing2 || Swing1 > Swing3 || Swing2 > Swing3)
 			{
-				//Swap
-				int tmp = Swing2;
-				Swing2 = Swing1;
-				Swing1 = tmp;
+				//Create an array so that we can iterate through the values.
+				int[] Swing_v = new int[3];
+				Swing_v[0] = Swing1;
+				Swing_v[1] = Swing2;
+				Swing_v[2] = Swing3;
+
+				//Sort using the Bubble Sort algorithm.
+				bool isSorted = false;
+				while (!isSorted)
+				{
+					isSorted = true;
+					for (int i = 0; i < 2; i++)
+					{
+						if (Swing_v[i] > Swing_v[i + 1])
+						{
+							int tmp = Swing_v[i];
+							Swing_v[i] = Swing_v[i + 1];
+							Swing_v[i + 1] = tmp;
+							isSorted = false;
+						}
+					}
+				}
 
 				//Asign sorted values to the Swing indicators.
 				iSwing1 = Swing(Close, Swing1);
 				iSwing2 = Swing(Close, Swing2);
+				iSwing3 = Swing(Close, Swing3);
 
-				Print(string.Format("The Swings have been sorted as follow: iSwing1: {0} // iSwing2: {1}.", Swing1, Swing2));
+				//This reassignment is done to avoid this conditional to be executed again.
+				Swing1 = Swing_v[0];
+				Swing2 = Swing_v[1];
+				Swing3 = Swing_v[2];
+
+				Print(string.Format("The Swings have been sorted as follow: iSwing1: {0} // iSwing2: {1} // iSwing3: {2}.", Swing1, Swing2, Swing3));
 			}
 			#endregion
 
 			#region Momentum_Process
-			#region Save_Ranges
-			//Save the last n ranges (n = Look_back_candles) using its class.
-			//Saving its value, the bar when it happened, is high and low, 
-			//and wheter it happened in a green or red candle (is_up).
-			for (int i = 0; i < Look_back_candles; i++)
 			{
-				if (Close[i] >= Open[i])
+				List<MyRanges> ranges = new List<MyRanges>();
+
+				#region Save_Ranges
 				{
-					ranges.Add(new MyRanges()
+					//Save the last n ranges (n = Look_back_candles) using its class.
+					//Saving its value, the bar when it happened, is high and low, 
+					//and wheter it happened in a green or red candle (is_up).
+					for (int i = 0; i < Look_back_candles; i++)
 					{
-						value = iRange[i],
-						high = High[i],
-						low = Low[i],
-						bars_ago = i,
-						is_up = true
-					});
-				}
-				else
-				{
-					ranges.Add(new MyRanges()
-					{
-						value = iRange[i],
-						high = High[i],
-						low = Low[i],
-						bars_ago = i,
-						is_up = false
-					});
-				}
-			}
-			#endregion
-
-			#region Copy_Ranges_Values
-			//Traspass the ranges values to an array of double (ranges_values)
-			//in order to input the values in the Percentile function 
-			//which will appear in the next region.
-			double[] ranges_values = new double[ranges.Count];
-			for (int i = 0; i < ranges.Count; i++)
-			{
-				ranges_values[i] = ranges[i].value;
-			}
-			#endregion
-
-			#region Calculate_and_Evaluate_Percentiles
-			//Find the value equivalent to the Percentile parameter.
-			ranges_percentile = Percentile(ranges_values, Percentile_v);
-
-			//Filter the ranges that are over the Percentile 
-			//and save them in another list which is going to be printed in the next region.  
-			for (int i = 0; i < Look_back_candles; i++)
-			{
-				if (ranges[i].value >= ranges_percentile)
-				{
-					ranges_over_percentile.Add(new MyRanges()
-					{
-						value = ranges[i].value,
-						high = ranges[i].high,
-						low = ranges[i].low,
-						bars_ago = ranges[i].bars_ago,
-						is_up = ranges[i].is_up
-					});
-				}
-			}
-			#endregion
-
-			#region Print_Values_over_Percentile
-			//Print triangles in the candles where the range surpassed the Percentile value.
-			//If the candle is green, print the triangle below the candle pointing upwards.
-			//If the candle is red, print the triangle above the candle pointing downwards.
-			//Both meaning the possible momentum direction of the market.
-			for (int i = 0; i < ranges_over_percentile.Count; i++)
-			{
-				if (ranges_over_percentile[i].is_up)
-				{
-					Draw.TriangleUp(this, "Range_Up" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].low - (TickSize * 30), Brushes.White);
-				}
-				else
-				{
-					Draw.TriangleDown(this, "Range_Down" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].high + (TickSize * 30), Brushes.White);
-				}
-			}
-			#endregion
-
-			#region Reset_Arrays
-			ranges.Clear();
-
-			ranges_over_percentile.Clear();
-            #endregion
-            #endregion
-
-            #region Heat_Zones_Process
-            #region Save_Swings
-            //In each swing update, save the last n swings highs and lows, whit its corresponding CurrentBar. (n = Instance)
-            //This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
-            if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
-			{
-				for (int i = 1; i <= Instance; i++)
-				{
-					swings2_high.Add(new MySwing()
-					{
-						value = iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)],
-						bar = CurrentBar - iSwing2.SwingHighBar(0, i, CurrentBar)
-					});
-				}
-
-				while (swings2_high.Count > Instance)
-				{
-					swings2_high.RemoveAt(0);
-				}
-
-				for (int i = 1; i <= Instance; i++)
-				{
-					swings2_low.Add(new MySwing()
-					{
-						value = iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)],
-						bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar)
-					});
-				}
-
-				while (swings2_low.Count > Instance)
-				{
-					swings2_low.RemoveAt(0);
-				}
-			}
-			#endregion
-
-			#region Reference_Value_Definition
-			//Determine the reference current Heat Zone value in each swing update.
-			//If a swingHigh appears, it is going to be taken as the current reference value. The same happens with swings low.
-			if (last_swingHigh2 != iSwing2.SwingHigh[0])
-				heat_zone_reference_value = swings2_high[0].value;
-
-			if (last_swingLow2 != iSwing2.SwingLow[0])
-				heat_zone_reference_value = swings2_low[0].value;
-			#endregion
-
-			#region Swing_Heat
-			//In each swing update, determine which of the saved swings are located in the current Heat Zone range.
-			//If the swing (low or high) is in range, its value and CurrentBar is saved in another list (heat_zone_swings2) of class MySwing.
-			if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
-			{
-				for (int i = 0; i < swings2_high.Count - 1; i++)
-				{
-					swingDis = Math.Abs(heat_zone_reference_value - swings2_high[i].value);
-
-					if (swingDis <= iATR[0] * Width)
-					{
-						heat_zone_swings2.Add(new MySwing()
+						if (Close[i] >= Open[i])
 						{
-							value = swings2_high[i].value,
-							bar = swings2_high[i].bar
-						});
-					}
-				}
-
-				for (int i = 0; i < swings2_low.Count - 1; i++)
-				{
-					swingDis = Math.Abs(heat_zone_reference_value - swings2_low[i].value);
-
-					if (swingDis <= iATR[0] * Width)
-					{
-						heat_zone_swings2.Add(new MySwing()
-						{
-							value = swings2_low[i].value,
-							bar = swings2_low[i].bar
-						});
-					}
-				}
-
-				while (heat_zone_swings2.Count > Instance)
-				{
-					heat_zone_swings2.RemoveAt(0);
-				}
-			}
-			#endregion
-
-			#region Heat_Zone_Identification
-			//Deetermine if the current Heat Zone satisfies the heat_zone_strength requirement.
-			//In other words, save the current Heat Zone (in a list of class MyHeatZone),
-			//if it has the same or more number of swings in the range.
-			if (heat_zone_swings2.Count - 1 >= Heat_zone_strength)
-			{
-				//Initialize Heat Zones characteristics.
-				//max_y, min_y and start_x are going to be established correctly in the next for loop.
-				heat_zones.Add(new MyHeatZone()
-				{
-					reference_value = heat_zone_reference_value,
-					max_y = heat_zone_swings2[0].value,
-					min_y = heat_zone_swings2[0].value,
-					start_x = heat_zone_swings2[0].bar,
-					strength = heat_zone_swings2.Count - 1
-				});
-
-				//Determine the dimensions of the rectangle that will be printed as a Heat Zone. 
-				for (int i = 0; i < heat_zone_swings2.Count; i++)
-				{
-					if (heat_zone_swings2[i].value > heat_zones[heat_zones.Count - 1].max_y)
-					{
-						heat_zones[heat_zones.Count - 1].max_y = heat_zone_swings2[i].value;
-					}
-
-					if (heat_zone_swings2[i].value < heat_zones[heat_zones.Count - 1].min_y)
-					{
-						heat_zones[heat_zones.Count - 1].min_y = heat_zone_swings2[i].value;
-					}
-
-					if (heat_zone_swings2[i].bar < heat_zones[heat_zones.Count - 1].start_x)
-					{
-						heat_zones[heat_zones.Count - 1].start_x = heat_zone_swings2[i].bar;
-					}
-				}
-			}
-
-			//Avoid that a Heat Zone is printed over another one.
-			//Evaluating if its Start_x or its reference value is the same. 
-			for (int i = 0; i < heat_zones.Count; i++)
-			{
-				for (int j = 0; j < heat_zones.Count; j++)
-				{
-					if (i != j)
-					{
-						if (heat_zones[i].start_x == heat_zones[j].start_x)
-						{
-							heat_zones.RemoveAt(i);
+							ranges.Add(new MyRanges()
+							{
+								value = iRange[i],
+								high = High[i],
+								low = Low[i],
+								bars_ago = i,
+								is_up = true
+							});
 						}
-						//If its reference value is the same. Erase the oldest of both Heat Zones.
-						else if (heat_zones[i].reference_value == heat_zones[j].reference_value)
+						else
 						{
-							if (heat_zones[i].start_x < heat_zones[j].start_x)
+							ranges.Add(new MyRanges()
+							{
+								value = iRange[i],
+								high = High[i],
+								low = Low[i],
+								bars_ago = i,
+								is_up = false
+							});
+						}
+					}
+				}
+				#endregion
+
+				#region Copy_Ranges_Values
+				//Traspass the ranges values to an array of double (ranges_values)
+				//in order to input the values in the Percentile function 
+				//which will appear in the next region.
+				double[] ranges_values = new double[ranges.Count];
+				for (int i = 0; i < ranges.Count; i++)
+				{
+					ranges_values[i] = ranges[i].value;
+				}
+				#endregion
+
+				#region Calculate_and_Evaluate_Percentiles
+				{
+					//Find the value equivalent to the Percentile parameter.
+					double ranges_percentile = Percentile(ranges_values, Percentile_v);
+
+					//Filter the ranges that are over the Percentile 
+					//and save them in another list which is going to be printed in the next region.  
+					for (int i = 0; i < Look_back_candles; i++)
+					{
+						if (ranges[i].value >= ranges_percentile)
+						{
+							ranges_over_percentile.Add(new MyRanges()
+							{
+								value = ranges[i].value,
+								high = ranges[i].high,
+								low = ranges[i].low,
+								bars_ago = ranges[i].bars_ago,
+								is_up = ranges[i].is_up
+							});
+						}
+					}
+				}
+				#endregion
+
+				#region Print_Values_over_Percentile
+				{
+					//Print triangles in the candles where the range surpassed the Percentile value.
+					//If the candle is green, print the triangle below the candle pointing upwards.
+					//If the candle is red, print the triangle above the candle pointing downwards.
+					//Both meaning the possible momentum direction of the market.
+					for (int i = 0; i < ranges_over_percentile.Count; i++)
+					{
+						if (ranges_over_percentile[i].is_up)
+						{
+							Draw.TriangleUp(this, "Range_Up" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].low - (TickSize * 30), Brushes.White);
+						}
+						else
+						{
+							Draw.TriangleDown(this, "Range_Down" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].high + (TickSize * 30), Brushes.White);
+						}
+					}
+				}
+				#endregion
+
+				#region Reset_Arrays
+				{
+					ranges.Clear();
+					ranges_over_percentile.Clear();
+				}
+				#endregion
+			}
+			#endregion
+
+			#region Heat_Zones_Process
+			{
+				//Define the look back period for the swing calculation converting the Days parameters into candles.
+				//Define the width of the possible heat zone, using the Width parameter.
+				int candles_look_back = Days * 24;
+				double width = Width * iATR[0];
+
+				#region Save_Swings
+				{
+					#region Swings3
+					//In each swing3 update, save the last n swings highs and lows, with its corresponding CurrentBar. (n = Instance)
+					//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
+					if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
+					{
+						//Always clean the lists when a swing comes up.
+						swings3_high.Clear();
+						swings3_low.Clear();
+
+						//Save all the swing3Highs that appeared in the candles_look_back_period.
+						double last_evaluated_swingHigh = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing3.SwingHigh[i] != last_evaluated_swingHigh)
+							{
+								swings3_high.Add(new MySwing()
+								{
+									value = iSwing3.SwingHigh[i],
+									bar = 0,
+									is_broken = false,
+								});
+
+								last_evaluated_swingHigh = iSwing3.SwingHigh[i];
+							}
+						}
+						//Then save its CurrentBar that is going to be our ID.
+						for (int i = 1; i <= swings3_high.Count; i++)
+						{
+							swings3_high[i - 1].bar = CurrentBar - iSwing3.SwingHighBar(0, i, CurrentBar);
+						}
+
+						//Save all the swing3Lows that appeared in the candles_look_back_period.
+						double last_evaluated_swingLow = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing3.SwingLow[i] != last_evaluated_swingLow)
+							{
+								swings3_low.Add(new MySwing()
+								{
+									value = iSwing3.SwingLow[i],
+									bar = 0,
+									is_broken = false,
+								});
+
+								last_evaluated_swingLow = iSwing3.SwingLow[i];
+							}
+						}
+						//Then save its CurrentBar that is going to be our ID.
+						for (int i = 1; i <= swings3_low.Count; i++)
+						{
+							swings3_low[i - 1].bar = CurrentBar - iSwing3.SwingLowBar(0, i, CurrentBar);
+						}
+					}
+					#endregion
+
+					#region Swings2
+					//In each swing2 update, save the last n swings highs and lows, with its corresponding CurrentBar. (n = Instance)
+					//This swings are saved in a list (swings2_high and swings2_low) of class MySwing which is defined in the classes region.
+					if (last_swingHigh2 != iSwing2.SwingHigh[0] || last_swingLow2 != iSwing2.SwingLow[0])
+					{
+						//Extend the candles look back if needed.
+						if (swings3_high[swings3_high.Count - 1].bar <= swings3_low[swings3_low.Count - 1].bar)
+						{
+							candles_look_back = CurrentBar - swings3_high[swings3_high.Count - 1].bar;
+						}
+						else
+						{
+							candles_look_back = CurrentBar - swings3_low[swings3_low.Count - 1].bar;
+						}
+
+						//Always clean the lists when a swing comes up.
+						swings2_high.Clear();
+						swings2_low.Clear();
+
+						//Save all the swing2Highs that appeared in the candles_look_back_period.
+						double last_evaluated_swingHigh = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing2.SwingHigh[i] != last_evaluated_swingHigh)
+							{
+								swings2_high.Add(new MySwing()
+								{
+									value = iSwing2.SwingHigh[i],
+									bar = 0,
+									is_broken = false,
+								});
+
+								last_evaluated_swingHigh = iSwing2.SwingHigh[i];
+							}
+						}
+						//Then save its CurrentBar that is going to be our ID.
+						for (int i = 1; i <= swings2_high.Count; i++)
+						{
+							swings2_high[i - 1].bar = CurrentBar - iSwing2.SwingHighBar(0, i, CurrentBar);
+						}
+
+						//Save all the swing2Lows that appeared in the candles_look_back_period.
+						double last_evaluated_swingLow = 0;
+						for (int i = 0; i <= candles_look_back; i++)
+						{
+							if (iSwing2.SwingLow[i] != last_evaluated_swingLow)
+							{
+								swings2_low.Add(new MySwing()
+								{
+									value = iSwing2.SwingLow[i],
+									bar = 0,
+									is_broken = false,
+								});
+
+								last_evaluated_swingLow = iSwing2.SwingLow[i];
+							}
+						}
+						//Then save its CurrentBar that is going to be our ID.
+						for (int i = 1; i <= swings2_low.Count; i++)
+						{
+							swings2_low[i - 1].bar = CurrentBar - iSwing2.SwingLowBar(0, i, CurrentBar);
+						}
+					}
+					#endregion
+				}
+				#endregion
+
+				#region Remove_Repeated_Swings
+				{
+					//Knowing that a Swing3 is also a Swing2, the following loops
+					//clean the swings2 that are swings3 using its ID (CurrentBar).
+
+					for (int i = 0; i < swings3_high.Count; i++)
+					{
+						for (int j = 0; j < swings2_high.Count; j++)
+						{
+							if (swings3_high[i].bar == swings2_high[j].bar)
+							{
+								swings2_high.RemoveAt(j);
+							}
+						}
+					}
+
+					for (int i = 0; i < swings3_low.Count; i++)
+					{
+						for (int j = 0; j < swings2_low.Count; j++)
+						{
+							if (swings3_low[i].bar == swings2_low[j].bar)
+							{
+								swings2_low.RemoveAt(j);
+							}
+						}
+					}
+				}
+				#endregion
+
+				#region is_broken Evaluation
+				{
+					//Determine which swings (2 or 3) are broken,
+					//this in order to determine if it is a Heat Zone or not.
+
+					for (int i = 0; i < swings3_high.Count; i++)
+					{
+						for (int j = 0; j < CurrentBar - swings3_high[i].bar; j++)
+						{
+							if (Close[j] > swings3_high[i].value)
+							{
+								swings3_high[i].is_broken = true;
+							}
+						}
+					}
+
+					for (int i = 0; i < swings3_low.Count; i++)
+					{
+						for (int j = 0; j < CurrentBar - swings3_low[i].bar; j++)
+						{
+							if (Close[j] < swings3_low[i].value)
+							{
+								swings3_low[i].is_broken = true;
+							}
+						}
+					}
+
+					for (int i = 0; i < swings2_high.Count; i++)
+					{
+						for (int j = 0; j < CurrentBar - swings2_high[i].bar; j++)
+						{
+							if (Close[j] > swings2_high[i].value)
+							{
+								swings2_high[i].is_broken = true;
+							}
+						}
+					}
+
+					for (int i = 0; i < swings2_low.Count; i++)
+					{
+						for (int j = 0; j < CurrentBar - swings2_low[i].bar; j++)
+						{
+							if (Close[j] < swings2_low[i].value)
+							{
+								swings2_low[i].is_broken = true;
+							}
+						}
+					}
+				}
+				#endregion
+
+				#region Heat_Zone 
+				{
+					//Clean the Heat_zones list due to its constant change in time.
+					heat_zones.Clear();
+
+					#region Swings3_Based
+					{
+						//Every swing3 that is not broken will be added as a Heat_Zone
+
+						for (int i = 0; i < swings3_high.Count; i++)
+						{
+							if (!swings3_high[i].is_broken)
+							{
+								heat_zones.Add(new MyHeatZone()
+								{
+									value = swings3_high[i].value
+								});
+							}
+						}
+
+						for (int i = 0; i < swings3_low.Count; i++)
+						{
+							if (!swings3_low[i].is_broken)
+							{
+								heat_zones.Add(new MyHeatZone()
+								{
+									value = swings3_low[i].value
+								});
+							}
+						}
+					}
+					#endregion
+
+					#region Swings2_Based
+					{
+						//If a swing2High happened later than a swing3 (Low or high) that is broken,
+						//this swing can confirm that there is a Heat Zone at that price level and 
+						//that is why it is going to be added as a Heat Zone.
+						for (int i = 0; i < swings2_high.Count; i++)
+						{
+							for (int j = 0; j < swings3_high.Count; j++)
+							{
+								if (swings3_high[j].is_broken && !swings2_high[i].is_broken &&
+									swings3_high[j].bar < swings2_high[i].bar)
+								{
+									double swing_distance = Math.Abs(swings2_high[i].value - swings3_high[j].value);
+
+									if (swing_distance <= width)
+									{
+										heat_zones.Add(new MyHeatZone()
+										{
+											value = swings2_high[i].value
+										});
+									}
+								}
+							}
+
+							for (int j = 0; j < swings3_low.Count; j++)
+							{
+								if (swings3_low[j].is_broken && !swings2_high[i].is_broken &&
+									swings3_low[j].bar < swings2_high[i].bar)
+								{
+									double swing_distance = Math.Abs(swings2_high[i].value - swings3_low[j].value);
+
+									if (swing_distance <= width)
+									{
+										heat_zones.Add(new MyHeatZone()
+										{
+											value = swings2_high[i].value
+										});
+									}
+								}
+							}
+						}
+
+						//If a swing2Low happened later than a swing3 (Low or high) that is broken,
+						//this swing can confirm that there is a Heat Zone at that price level and 
+						//that is why it is going to be added as a Heat Zone.
+						for (int i = 0; i < swings2_low.Count; i++)
+						{
+							for (int j = 0; j < swings3_high.Count; j++)
+							{
+								if (swings3_high[j].is_broken && !swings2_low[i].is_broken &&
+									swings3_high[j].bar < swings2_low[i].bar)
+								{
+									double swing_distance = Math.Abs(swings2_low[i].value - swings3_high[j].value);
+
+									if (swing_distance <= width)
+									{
+										heat_zones.Add(new MyHeatZone()
+										{
+											value = swings2_low[i].value
+										});
+									}
+								}
+							}
+
+							for (int j = 0; j < swings3_low.Count; j++)
+							{
+								if (swings3_low[j].is_broken && !swings2_low[i].is_broken &&
+									swings3_low[j].bar < swings2_low[i].bar)
+								{
+									double swing_distance = Math.Abs(swings2_low[i].value - swings3_low[j].value);
+
+									if (swing_distance <= width)
+									{
+										heat_zones.Add(new MyHeatZone()
+										{
+											value = swings2_low[i].value
+										});
+									}
+								}
+							}
+						}
+					}
+					#endregion
+
+					#region Heat_Zones_Cleaning
+					{
+						//First remove the Heat Zones that have the same price level (Basically that are repeated).
+						for (int i = 0; i < heat_zones.Count; i++)
+						{
+							for (int j = 0; j < heat_zones.Count; j++)
+							{
+								if (i != j)
+								{
+									if (heat_zones[i] == heat_zones[j])
+									{
+										heat_zones.RemoveAt(j);
+									}
+								}
+							}
+						}
+
+						//If there are 2 Heat Zones that are close enough (Less or equal to the width),
+						//determine which is closer to the current price and erase the further one. 
+						for (int i = 0; i < heat_zones.Count; i++)
+						{
+							for (int j = 0; j < heat_zones.Count; j++)
+							{
+								if (i != j)
+								{
+									double heat_zones_distance = Math.Abs(heat_zones[i].value - heat_zones[j].value);
+
+									if (heat_zones_distance <= width)
+									{
+										double price_distance_i = Math.Abs(Open[0] - heat_zones[i].value);
+										double price_distance_j = Math.Abs(Open[0] - heat_zones[j].value);
+
+										if (price_distance_i <= price_distance_j)
+										{
+											heat_zones[j].is_removable = true;
+										}
+										else
+										{
+											heat_zones[i].is_removable = true;
+										}
+									}
+								}
+							}
+						}
+
+						for (int i = 0; i < heat_zones.Count; i++)
+						{
+							if (heat_zones[i].is_removable)
 							{
 								heat_zones.RemoveAt(i);
 							}
-							else
+						}
+
+						//Re-check if there are repeated Heat Zones.
+						for (int i = 0; i < heat_zones.Count; i++)
+						{
+							for (int j = 0; j < heat_zones.Count; j++)
 							{
-								heat_zones.RemoveAt(j);
+								if (i != j)
+								{
+									if (heat_zones[i] == heat_zones[j])
+									{
+										heat_zones.RemoveAt(j);
+									}
+								}
 							}
 						}
 					}
+					#endregion
 				}
-			}
+				#endregion
 
-			//Erase old Heat Zones.
-			while (heat_zones.Count > Heat_zones_print)
-			{
-				heat_zones.RemoveAt(0);
-			}
-			#endregion
-
-			#region Extreme_Swings
-			//Determine the extreme swings of the last n Instances.
-			//Then plot lines at that values.
-
-			max_swing = iSwing2.SwingHigh[0];
-			for (int i = 1; i < Instance; i++)
-			{
-				if (iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)] > max_swing)
+				#region Swings_Update_Reset
 				{
-					max_swing = iSwing2.SwingHigh[iSwing2.SwingHighBar(0, i, CurrentBar)];
+					//Reset the last swing value in order to execute the swing update processes.
+					last_swingHigh1 = iSwing1.SwingHigh[0];
+					last_swingLow1 = iSwing1.SwingLow[0];
+					last_swingHigh2 = iSwing2.SwingHigh[0];
+					last_swingLow2 = iSwing2.SwingLow[0];
+					last_swingHigh3 = iSwing3.SwingHigh[0];
+					last_swingLow3 = iSwing3.SwingLow[0];
 				}
+				#endregion
 			}
-			Draw.HorizontalLine(this, "MaxLine", max_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
-
-			min_swing = iSwing2.SwingLow[0];
-			for (int i = 1; i < Instance; i++)
-			{
-				if (iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)] < min_swing)
-				{
-					min_swing = iSwing2.SwingLow[iSwing2.SwingLowBar(0, i, CurrentBar)];
-				}
-			}
-			Draw.HorizontalLine(this, "MinLine", min_swing, Brushes.LimeGreen, DashStyleHelper.Solid, 5);
-			#endregion
-
-			#region Print_Heat_Zones
-			//Prints rectangles that represents the Heat Zones, the strength ot the Heat Zone and its reference value.
-			//The rectangle dimenssions were set in the Heat_Zone_Identification region.
-			for (int i = 0; i < heat_zones.Count; i++)
-			{
-				Draw.Rectangle(this, "Rectangle" + i, CurrentBar - heat_zones[i].start_x, heat_zones[i].min_y, 0, heat_zones[i].max_y, Brushes.Orange);
-				Draw.Text(this, "Strength" + i, heat_zones[i].strength.ToString(), 10, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
-				Draw.Text(this, "RV" + i, heat_zones[i].reference_value.ToString(), 30, (heat_zones[i].max_y + heat_zones[i].min_y) / 2);
-			}
-			#endregion
-
-			//Reset the last swing value in order to execute the swing update processes.
-			last_swingHigh1 = iSwing2.SwingHigh[0];
-			last_swingLow1 = iSwing2.SwingLow[0];
-			last_swingHigh2 = iSwing2.SwingHigh[0];
-			last_swingLow2 = iSwing2.SwingLow[0];
 			#endregion
 
 			#region Overall_Market_Movement
@@ -1745,8 +1992,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 		}
 
-    #region Properties
-    #region Indicators
+		#region Properties
+		#region Indicators
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name = "SMA1 (Max)", Order = 1, GroupName = "Indicators")]
@@ -1779,12 +2026,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name = "Swing2 (Max)", Order = 6, GroupName = "Indicators")]
+		[Display(Name = "Swing2 (Med)", Order = 6, GroupName = "Indicators")]
 		public int Swing2
 		{ get; set; }
-	#endregion
 
-    #region Parameters
+		[NinjaScriptProperty]
+		[Range(1, int.MaxValue)]
+		[Display(Name = "Swing3 (Max)", Order = 7, GroupName = "Indicators")]
+		public int Swing3
+		{ get; set; }
+		#endregion
+
+		#region Parameters
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
 		[Display(Name = "TrailingUnitsStop", Order = 1, GroupName = "Parameters")]
@@ -1811,45 +2064,39 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "ATRStopFactor", Order = 5, GroupName = "Parameters")]
-		public double ATRStopFactor
-		{ get; set; }
-
-		[NinjaScriptProperty]
-		[Range(0, int.MaxValue)]
-		[Display(Name = "TicksToBO", Order = 6, GroupName = "Parameters")]
+		[Display(Name = "TicksToBO", Order = 5, GroupName = "Parameters")]
 		public double TicksToBO
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, 100)]
-		[Display(Name = "SwingPenetration(%)", Order = 7, GroupName = "Parameters")]
+		[Display(Name = "SwingPenetration(%)", Order = 6, GroupName = "Parameters")]
 		public double SwingPenetration
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "ClosnessFactor", Order = 8, GroupName = "Parameters")]
+		[Display(Name = "ClosnessFactor", Order = 7, GroupName = "Parameters")]
 		public double ClosnessFactor
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "ClosnessToTrade", Order = 9, GroupName = "Parameters")]
+		[Display(Name = "ClosnessToTrade", Order = 8, GroupName = "Parameters")]
 		public double ClosnessToTrade
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, 100)]
-		[Display(Name = "MagicNumber(Percent (%) of ATR)", Order = 10, GroupName = "Parameters")]
+		[Display(Name = "MagicNumber(Percent (%) of ATR)", Order = 9, GroupName = "Parameters")]
 		public double MagicNumber
 		{ get; set; }
-    #endregion
+		#endregion
 
-    #region Heat_Zone
+		#region Heat_Zone
 		[NinjaScriptProperty]
-		[Display(Name = "Instance", GroupName = "Heat Zone", Order = 1)]
-		public int Instance
+		[Display(Name = "Days", GroupName = "Heat Zone", Order = 1)]
+		public int Days
 		{ get; set; }
 
 		[NinjaScriptProperty]
@@ -1858,17 +2105,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{ get; set; }
 
 		[NinjaScriptProperty]
-		[Display(Name = "Width", GroupName = "Heat Zone", Order = 3)]
+		[Display(Name = "Width", GroupName = "Heat Zone", Order = 4)]
 		public double Width
 		{ get; set; }
+		#endregion
 
-		[NinjaScriptProperty]
-		[Display(Name = "Heat_zones_print", GroupName = "Heat Zone", Order = 4)]
-		public int Heat_zones_print
-		{ get; set; }
-    #endregion
-    
-    #region Momentum
+		#region Momentum
 		[NinjaScriptProperty]
 		[Display(Name = "Look_back_candles", Order = 1, GroupName = "Momentum")]
 		public int Look_back_candles
@@ -1879,24 +2121,65 @@ namespace NinjaTrader.NinjaScript.Strategies
 		public double Percentile_v
 		{ get; set; }
 		#endregion
-    #endregion
 
-    #region Classes
+		#region Stop
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "ATRStopFactor", Order = 1, GroupName = "Stop")]
+		public int ATRStopFactor
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Stop_Strength", Order = 2, GroupName = "Stop")]
+		public int Stop_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "SMA1", Order = 3, GroupName = "Stop")]
+		public int SMA1_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "SMA2", Order = 4, GroupName = "Stop")]
+		public int SMA2_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Swing1", Order = 5, GroupName = "Stop")]
+		public int Swing1_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Swing2", Order = 6, GroupName = "Stop")]
+		public int Swing2_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Heat Zone", Order = 7, GroupName = "Stop")]
+		public int Heat_Zone_Stop_Strength
+		{ get; set; }
+		#endregion
+		#endregion
+
+		#region Classes
 		public class MySwing
 		{
 			public double value;
 			public int bar;
+			public bool is_broken;
 		}
 
 		public class MyHeatZone
 		{
-			public double reference_value;
-			public double max_y;
-			public double min_y;
-			public int start_x;
-			public int strength;
+			public double value;
+			public bool is_removable = false;
 		}
-    
+
 		public class MyRanges
 		{
 			public double value;
@@ -1905,9 +2188,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public int bars_ago;
 			public bool is_up;
 		}
-	#endregion
+		#endregion
 
-	#region Functions
+		#region Functions
 		////	METHODS			
 
 		////	Swing Identification Method				
@@ -2004,18 +2287,28 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount							
-				stop_price_long = Close[0] - current_stop; //calculates the stop price level
-				trigger_price_long = Close[0] + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger	
+				Tuple<double, double> Stop_Values = Stop_Review(Close[0], true);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_long = Stop_Values.Item1;
+				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)); //calculates trade amount
 				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
+														//Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
 			{
-				amount_long = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				stop_price_long = (BO_level[0] + distance_to_BO) - current_stop; //calculates the stop price level
-				trigger_price_long = (BO_level[0] + distance_to_BO) + current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger
+				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_long = Stop_Values.Item1;
+				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_long = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
+				//Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return false;
 			}
 			else
@@ -2029,18 +2322,28 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount							
-				stop_price_short = Close[0] + current_stop; //calculates the stop price level
-				trigger_price_short = Close[0] - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger
+				Tuple<double, double> Stop_Values = Stop_Review(Close[0], false);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_short = Stop_Values.Item1; //calculates the stop price level
+				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount		
 				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
+														  //Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
 			{
-				amount_short = Convert.ToInt32((RiskUnit / ((current_stop / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
-				stop_price_short = (BO_level[0] - distance_to_BO) + current_stop; //calculates the stop price level
-				trigger_price_short = (BO_level[0] - distance_to_BO) - current_stop * UnitsTriggerForTrailing; //calculates the price level where the trailing stop is going to be trigger					
+				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
+
+				if (Stop_Values.Item1 == -1) return false;
+
+				stop_price_short = Stop_Values.Item1; //calculates the stop price level
+				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
+				//Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
 				return false;
 			}
 			else
@@ -2952,9 +3255,374 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
+		///<summary>
+		///Determines wheter there is stop in which a trade can be sustained.
+		///The function returns a Tuple(stop, stop_distance).
+		///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
+		///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
+		///If there is a stop then it returns the stop value and the stop_distance.
+		///</summary>
+		public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
+		{
+			//Create a list in where possible stops are going to be saved.
+			//Declare the variable stop which is going to be returned.
+			//Define the stop_evaluation range as the stop size minus 1 ATR, 
+			//in order to avoid that the stop is positioned outside the absolute stop range.
+			List<double> possible_stops = new List<double>();
+			int shields_count = 0;
+			double stop, stop_distance;
+			double stop_evaluation_range = current_stop - iATR[0];
 
-		//Finds the value int the sequence, equivalent to the Percentile given. 
-		public double Percentile(double[] sequence, double excelPercentile)
+			#region SMAs_Review
+			{
+				#region SMA1
+				{
+					//Determine the distance from the SMA1.
+					double SMA_distance = trade_point - iSMA1[0];
+
+					//Know if the SMA is below or above the price (if it is a barrier or a possible stop).
+					//If it isn't a barrier, determine wheter it is in the stop range or not.
+					//If yes save it as a possible stop.
+					//If the SMA is not in the stop evaluation range, save it only as a shield.
+
+					if (is_long)
+					{
+						if (SMA_distance > 0)
+						{
+							if (SMA_distance <= stop_evaluation_range)
+							{
+								possible_stops.Add(iSMA1[0]);
+								shields_count += SMA1_Strength;
+							}
+							else if (SMA_distance <= current_stop)
+                            {
+								shields_count += SMA1_Strength;
+							}
+						}
+					}
+					else
+					{
+						if (SMA_distance < 0)
+						{
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= stop_evaluation_range)
+							{
+								possible_stops.Add(iSMA1[0]);
+								shields_count += SMA1_Strength;
+							}
+							else if (SMA_distance <= current_stop)
+							{
+								shields_count += SMA1_Strength;
+							}
+						}
+                    }					
+				}
+				#endregion
+
+				#region SMA2
+				{
+					//Determine the distance from the SMA2.
+					double SMA_distance = trade_point - iSMA2[0];
+
+					//Know if the SMA is below or above the price (if it is a barrier or a possible stop).
+					//If it isn't a barrier, determine wheter it is in the stop range or not.
+					//If yes save it as a possible stop.
+					//If the SMA is not in the stop evaluation range, save it only as a shield.
+
+					if (is_long)
+                    {
+						if (SMA_distance > 0)
+                        {
+							if (SMA_distance <= stop_evaluation_range)
+							{
+								possible_stops.Add(iSMA2[0]);
+								shields_count += SMA2_Strength;
+							}
+							else if (SMA_distance <= current_stop)
+							{
+								shields_count += SMA2_Strength;
+							}
+						}
+                    }
+					else
+                    {
+						if (SMA_distance < 0)
+                        {
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= stop_evaluation_range)
+							{
+								possible_stops.Add(iSMA2[0]);
+								shields_count += SMA2_Strength;
+							}
+							else if (SMA_distance <= current_stop)
+							{
+								shields_count += SMA2_Strength;
+							}
+						}
+                    }					
+				}
+				#endregion
+			}
+            #endregion
+
+            #region Swings_Review
+            {
+                #region Swing1
+                {
+					{
+						//Determine the distance from the current Swing1High.
+						double swing_distance = trade_point - iSwing1.SwingHigh[0];
+
+						//Know if the Swing1High is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
+
+						if (is_long)
+                        {
+							if (swing_distance > 0)
+                            {
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing1.SwingHigh[0]);
+									shields_count += Swing1_Strength;
+								}
+								else if (swing_distance <= current_stop)
+                                {
+									shields_count += Swing1_Strength;
+								}
+							}
+						}
+						else
+                        {
+							if (swing_distance < 0)
+							{
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing1.SwingHigh[0]);
+									shields_count += Swing1_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing1_Strength;
+								}
+							}
+						}
+					}
+
+                    {
+						//Determine the distance from the current Swing1Low.
+						double swing_distance = trade_point - iSwing1.SwingLow[0];
+
+						//Know if the Swing1Low is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
+
+						if (is_long)
+						{
+							if (swing_distance > 0)
+							{
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing1.SwingLow[0]);
+									shields_count += Swing1_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing1_Strength;
+								}
+							}
+						}
+						else
+						{
+							if (swing_distance < 0)
+							{
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing1.SwingLow[0]);
+									shields_count += Swing1_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing1_Strength;
+								}
+							}
+						}
+					}
+                }
+				#endregion
+
+				#region Swing2
+				{
+					{
+						//Determine the distance from the current Swing2High.
+						double swing_distance = trade_point - iSwing2.SwingHigh[0];
+
+						//Know if the Swing2High is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
+
+						if (is_long)
+						{
+							if (swing_distance > 0)
+							{
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing2.SwingHigh[0]);
+									shields_count += Swing2_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing2_Strength;
+								}
+							}
+						}
+						else
+						{
+							if (swing_distance < 0)
+							{
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing2.SwingHigh[0]);
+									shields_count += Swing2_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing2_Strength;
+								}
+							}
+						}
+					}
+
+					{
+						//Determine the distance from the current Swing2Low.
+						double swing_distance = trade_point - iSwing2.SwingLow[0];
+
+						//Know if the Swing2Low is below or above the price (if it is a barrier or a possible stop).
+						//If it isn't a barrier, determine wheter it is in the stop range or not.
+						//If yes save it as a possible stop.
+						//If the swing is not in the stop evaluation range, save it only as a shield.
+
+						if (is_long)
+                        {
+							if (swing_distance > 0)
+							{
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing2.SwingLow[0]);
+									shields_count += Swing2_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing2_Strength;
+								}
+							}
+						}
+                        else
+                        {
+							if (swing_distance < 0)
+							{
+								swing_distance = Math.Abs(swing_distance);
+
+								if (swing_distance <= stop_evaluation_range)
+								{
+									possible_stops.Add(iSwing2.SwingLow[0]);
+									shields_count += Swing2_Strength;
+								}
+								else if (swing_distance <= current_stop)
+								{
+									shields_count += Swing2_Strength;
+								}
+							}
+						}
+					}
+				}
+                #endregion
+            }
+            #endregion
+
+            #region Heat_Zones_Review
+			//Determine wheter there are Heat Zones or not.			
+			if (heat_zones.Count > 0)
+            {
+				//Know if the Heat Zone is below or above the price (if it is a barrier or a possible stop).
+				//If it isn't a barrier, determine wheter it is in the stop range or not.
+				//If yes save it as a possible stop.
+				//If the Heat Zone is not in the stop evaluation range, save it only as a shield.
+
+				for (int i = 0; i < heat_zones.Count; i++)
+                {
+					double heat_zone_distance = trade_point - heat_zones[i].value;
+
+					if (is_long)
+                    {
+						if (heat_zone_distance > 0)
+                        {
+							if (heat_zone_distance <= stop_evaluation_range)
+							{
+								possible_stops.Add(heat_zones[i].value);
+								shields_count += Heat_Zone_Stop_Strength;
+							}
+							else if (heat_zone_distance <= current_stop)
+                            {
+								shields_count += Heat_Zone_Stop_Strength;
+							}
+						}
+					}
+                    else
+                    {
+						if (heat_zone_distance < 0)
+                        {
+							heat_zone_distance = Math.Abs(heat_zone_distance);
+
+							if (heat_zone_distance <= stop_evaluation_range)
+							{
+								possible_stops.Add(heat_zones[i].value);
+								shields_count += Heat_Zone_Stop_Strength;
+							}
+							else if (heat_zone_distance <= current_stop)
+							{
+								shields_count += Heat_Zone_Stop_Strength;
+							}
+						}
+                    }
+                }
+            }
+			#endregion
+
+			//If there isn't a certain amount of shields in the stop range, 
+			//it means that a trade can't be executed.
+			if (shields_count < Stop_Strength || possible_stops.Count == 0) return new Tuple<double, double>(-1, 0);
+
+			//The stop is always going to be the furthest possible stop.
+			if (is_long)
+            {
+				stop = possible_stops.Min() - iATR[0];
+            }
+			else
+            {
+				stop = possible_stops.Max() + iATR[0];
+            }
+
+			stop_distance = Math.Abs(trade_point - stop);
+
+			return new Tuple<double, double>(stop, stop_distance);
+        }
+
+        ///<summary>
+        ///Finds the value in the sequence, equivalent to the Percentile given.
+        ///</summary>
+        public double Percentile(double[] sequence, double excelPercentile)
 		{
 			Array.Sort(sequence);
 			int N = sequence.Length;
@@ -2970,5 +3638,36 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 	#endregion
+
+		public void MyPrint()
+        {
+			Print(Time[0]);
+			/*
+			Print("SwingHigh3");
+			for (int i = 0; i < swings3_high.Count; i++)
+			{
+				Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings3_high[i].value, swings3_high[i].is_broken, swings3_high[i].bar));
+			}
+			Print("-------");
+			Print("SwingLow3");
+			for (int i = 0; i < swings3_low.Count; i++)
+			{
+				Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings3_low[i].value, swings3_low[i].is_broken, swings3_low[i].bar));
+			}
+			Print("-------");
+			Print("SwingHigh2");
+			for (int i = 0; i < swings2_high.Count; i++)
+			{
+				Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings2_high[i].value, swings2_high[i].is_broken, swings2_high[i].bar));
+			}
+			Print("-------");
+			Print("SwingLow2");
+			for (int i = 0; i < swings2_low.Count; i++)
+			{
+				Print(string.Format("Value: {0} // is_broken: {1} // bar: {2}", swings2_low[i].value, swings2_low[i].is_broken, swings2_low[i].bar));
+			}
+			Print("---------------------------------------");
+			*/
+		}
 	}
 }
