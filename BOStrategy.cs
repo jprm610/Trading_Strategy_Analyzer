@@ -2289,7 +2289,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(Close[0], true);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(Close[0], true).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(Close[0], true).Item2;
+				Print(string.Format("{0} // BuyMarket", Time[0]));
+				for (int i = 0; i < Liquidation_Values.Count; i++)
+                {
+					Print(Liquidation_Values[i]);
+                }
+				Print("-------------");
 
 				stop_price_long = Stop_Values.Item1;
 				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -2302,7 +2310,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(BO_level[0] + distance_to_BO, true).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] + distance_to_BO, true).Item2;
+				Print(string.Format("{0} // BuyPending", Time[0]));
+				for (int i = 0; i < Liquidation_Values.Count; i++)
+				{
+					Print(Liquidation_Values[i]);
+				}
+				Print("-------------");
 
 				stop_price_long = Stop_Values.Item1;
 				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -2324,7 +2340,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(Close[0], false);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(Close[0], false).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(Close[0], false).Item2;
+				Print(string.Format("{0} // SellMarket", Time[0]));
+				for (int i = 0; i < Liquidation_Values.Count; i++)
+				{
+					Print(Liquidation_Values[i]);
+				}
+				Print("-------------");
 
 				stop_price_short = Stop_Values.Item1; //calculates the stop price level
 				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -2337,7 +2361,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(BO_level[0] - distance_to_BO, false).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] - distance_to_BO, false).Item2;
+				Print(string.Format("{0} // SellPending", Time[0]));
+				for (int i = 0; i < Liquidation_Values.Count; i++)
+				{
+					Print(Liquidation_Values[i]);
+				}
+				Print("-------------");
 
 				stop_price_short = Stop_Values.Item1; //calculates the stop price level
 				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -3255,14 +3287,45 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
-		///<summary>
-		///Determines wheter there is stop in which a trade can be sustained.
-		///The function returns a Tuple(stop, stop_distance).
-		///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
-		///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
-		///If there is a stop then it returns the stop value and the stop_distance.
-		///</summary>
-		public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
+		public Tuple<bool, List<double>> Liquidation_Points(double trade_point, bool is_long)
+        {
+			List<double> possible_liquidation_points = new List<double>();
+
+            #region Heat_Zones_Evaluation
+			for (int i = 0; i < heat_zones.Count; i++)
+            {
+				double heat_zone_distance = trade_point - heat_zones[i].value;
+
+				if (is_long)
+                {
+					if (heat_zone_distance < 0)
+                    {
+						possible_liquidation_points.Add(heat_zones[i].value);
+                    }
+                }
+                else
+                {
+					if (heat_zone_distance > 0)
+                    {
+						possible_liquidation_points.Add(heat_zones[i].value);
+					}
+                }
+            }
+			#endregion
+
+			if (possible_liquidation_points.Count == 0) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
+
+			return new Tuple<bool, List<double>>(true, possible_liquidation_points);
+		}
+
+        ///<summary>
+        ///Determines wheter there is stop in which a trade can be sustained.
+        ///The function returns a Tuple(stop, stop_distance).
+        ///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
+        ///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
+        ///If there is a stop then it returns the stop value and the stop_distance.
+        ///</summary>
+        public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
 		{
 			//Create a list in where possible stops are going to be saved.
 			//Declare the variable stop which is going to be returned.
