@@ -110,6 +110,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Swing1_Strength = 1;
 				Swing2_Strength = 2;
 				Heat_Zone_Stop_Strength = 3;
+				Fluency_Range = 1;
+				Minimum_Liquidation_Points = 2;
 			}
 			else if (State == State.Configure)
 			{
@@ -2164,6 +2166,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 		public int Heat_Zone_Stop_Strength
 		{ get; set; }
 		#endregion
+
+		#region Liquidation
+		[NinjaScriptProperty]
+		[Display(Name = "Fluency Range", Order = 1, GroupName = "Liquidation")]
+		public double Fluency_Range
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Minimum Liquidation Points", Order = 2, GroupName = "Liquidation")]
+		public int Minimum_Liquidation_Points
+		{ get; set; }
+		#endregion
 		#endregion
 
 		#region Classes
@@ -3287,35 +3301,60 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 		}
 
+		///<summary>
+		///Finds the trade liquidation's point.
+		///Takes the reference price (trade_point) and the type of trade (is_long) as arguments.
+		///If there are more than enough liquidation points, returns true as the first value and 
+		///the list of liquidation points.
+		///If there is a liquidation point located in the fluent range, returns false as the first value 
+		///and a irrelevant list.
+		///</summary>
 		public Tuple<bool, List<double>> Liquidation_Points(double trade_point, bool is_long)
         {
+			//Define the list in which the liquidation 
 			List<double> possible_liquidation_points = new List<double>();
 
-            #region Heat_Zones_Evaluation
-			for (int i = 0; i < heat_zones.Count; i++)
-            {
-				double heat_zone_distance = trade_point - heat_zones[i].value;
+			#region Heat_Zones_Evaluation
+			if (heat_zones.Count > 0)
+			{
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					double heat_zone_distance = trade_point - heat_zones[i].value;
 
-				if (is_long)
-                {
-					if (heat_zone_distance < 0)
-                    {
-						possible_liquidation_points.Add(heat_zones[i].value);
-                    }
-                }
-                else
-                {
-					if (heat_zone_distance > 0)
-                    {
-						possible_liquidation_points.Add(heat_zones[i].value);
+					if (is_long)
+					{
+						if (heat_zone_distance < 0)
+						{
+							possible_liquidation_points.Add(heat_zones[i].value);
+						}
 					}
-                }
-            }
+					else
+					{
+						if (heat_zone_distance > 0)
+						{
+							possible_liquidation_points.Add(heat_zones[i].value);
+						}
+					}
+				}
+			}
 			#endregion
 
-			if (possible_liquidation_points.Count == 0) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
+			if (possible_liquidation_points.Count < Minimum_Liquidation_Points) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
 
-			return new Tuple<bool, List<double>>(true, possible_liquidation_points);
+			#region Fluency_Range
+			{
+				double fluency_range_size = Fluency_Range * iATR[0];
+
+				for (int i = 0; i < possible_liquidation_points.Count; i++)
+                {
+					double liquidation_point_distance = Math.Abs(trade_point - possible_liquidation_points[i]);
+
+					if (liquidation_point_distance <= fluency_range_size) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
+				}
+			}
+            #endregion
+
+            return new Tuple<bool, List<double>>(true, possible_liquidation_points);
 		}
 
         ///<summary>
