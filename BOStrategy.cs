@@ -36,7 +36,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private double ATR_crossing_value, SMA_dis, stop_price_long, trigger_price_long, stop_price_short, trigger_price_short, swingHigh2_max, swingLow2_min;
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, distance_to_BO;
 		private double swingHigh2_max_reentry, swingLow2_min_reentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
-		private double last_swingHigh3, last_swingLow3, last_swingHigh2, last_swingLow2, last_swingHigh1, last_swingLow1, current_ATR, current_stop, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
+		private double current_ATR, current_stop, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
 		private bool is_incipient_up_trend, is_incipient_down_trend, is_upward, is_downward, gray_ellipse_long, gray_ellipse_short, is_reentry_long, is_reentry_short, is_long, is_short, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;
 
 		#region Momentum_Process_Variables
@@ -50,6 +50,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private List<MySwing> swings3_high = new List<MySwing>();
 		private List<MySwing> swings3_low = new List<MySwing>();
 		private List<MyHeatZone> heat_zones = new List<MyHeatZone>();
+		private double last_swingHigh3 = 0, last_swingLow3 = 0, last_swingHigh2 = 0, last_swingLow2 = 0, last_swingHigh1 = 0, last_swingLow1 = 0;
 		#endregion
 
 		private bool cross_below_iSMA3_to_iSMA2, cross_above_iSMA3_to_iSMA2;
@@ -110,6 +111,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Swing1_Strength = 1;
 				Swing2_Strength = 2;
 				Heat_Zone_Stop_Strength = 3;
+				Fluency_Range = 1;
+				Minimum_Liquidation_Points = 2;
 			}
 			else if (State == State.Configure)
 			{
@@ -522,11 +525,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 					#region Swings3
 					//In each swing3 update, save the last n swings highs and lows, with its corresponding CurrentBar. (n = Instance)
 					//This swings are saved in a list (swings3_high and swings3_low) of class MySwing which is defined in the classes region.
-					if (last_swingHigh3 != iSwing3.SwingHigh[0] || last_swingLow3 != iSwing3.SwingLow[0])
+					if (last_swingHigh3 != iSwing3.SwingHigh[0])
 					{
 						//Always clean the lists when a swing comes up.
 						swings3_high.Clear();
-						swings3_low.Clear();
 
 						//Save all the swing3Highs that appeared in the candles_look_back_period.
 						double last_evaluated_swingHigh = 0;
@@ -549,6 +551,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							swings3_high[i - 1].bar = CurrentBar - iSwing3.SwingHighBar(0, i, CurrentBar);
 						}
+					}
+
+					if (last_swingLow3 != iSwing3.SwingLow[0])
+					{
+						//Always clean the lists when a swing comes up.
+						swings3_low.Clear();
 
 						//Save all the swing3Lows that appeared in the candles_look_back_period.
 						double last_evaluated_swingLow = 0;
@@ -2164,6 +2172,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 		public int Heat_Zone_Stop_Strength
 		{ get; set; }
 		#endregion
+
+		#region Liquidation
+		[NinjaScriptProperty]
+		[Display(Name = "Fluency Range (Risk Units)", Order = 1, GroupName = "Liquidation")]
+		public double Fluency_Range
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Minimum Liquidation Points", Order = 2, GroupName = "Liquidation")]
+		public int Minimum_Liquidation_Points
+		{ get; set; }
+		#endregion
 		#endregion
 
 		#region Classes
@@ -2289,7 +2309,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(Close[0], true);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, true).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(Close[0], Stop_Values.Item2, true).Item2;
 
 				stop_price_long = Stop_Values.Item1;
 				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -2302,7 +2324,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item2;
 
 				stop_price_long = Stop_Values.Item1;
 				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -2324,7 +2348,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(Close[0], false);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, false).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(Close[0], Stop_Values.Item2, false).Item2;
 
 				stop_price_short = Stop_Values.Item1; //calculates the stop price level
 				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -2337,7 +2363,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{
 				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
 
-				if (Stop_Values.Item1 == -1) return false;
+				if (Stop_Values.Item1 == -1 || !Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item1) return false;
+
+				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item2;
 
 				stop_price_short = Stop_Values.Item1; //calculates the stop price level
 				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
@@ -3256,13 +3284,102 @@ namespace NinjaTrader.NinjaScript.Strategies
 		}
 
 		///<summary>
-		///Determines wheter there is stop in which a trade can be sustained.
-		///The function returns a Tuple(stop, stop_distance).
-		///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
-		///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
-		///If there is a stop then it returns the stop value and the stop_distance.
+		///Finds the trade liquidation's point.
+		///Takes the reference price (trade_point) and the type of trade (is_long) as arguments.
+		///If there are more than enough liquidation points, returns true as the first value and 
+		///the list of liquidation points.
+		///If there is a liquidation point located in the fluent range, returns false as the first value 
+		///and a irrelevant list.
 		///</summary>
-		public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
+		public Tuple<bool, List<double>> Liquidation_Points(double trade_point, double stop_size, bool is_long)
+		{
+			//Define the list in which the liquidation 
+			List<double> possible_liquidation_points = new List<double>();
+
+			#region Heat_Zones_Evaluation
+			if (heat_zones.Count > 0)
+			{
+				for (int i = 0; i < heat_zones.Count; i++)
+				{
+					double heat_zone_distance = trade_point - heat_zones[i].value;
+
+					if (is_long)
+					{
+						if (heat_zone_distance < 0)
+						{
+							possible_liquidation_points.Add(heat_zones[i].value);
+						}
+					}
+					else
+					{
+						if (heat_zone_distance > 0)
+						{
+							possible_liquidation_points.Add(heat_zones[i].value);
+						}
+					}
+				}
+			}
+			#endregion
+
+			//Pending Review!!!!!!!!!
+			#region Swings3_Evaluation
+			{
+				double swing_distance_high = trade_point - iSwing3.SwingHigh[0];
+				double swing_distance_low = trade_point - iSwing3.SwingLow[0];
+
+				if (is_long)
+                {
+					if (swing_distance_high < 0)
+                    {
+						possible_liquidation_points.Add(iSwing3.SwingHigh[0]);
+                    }
+
+					if (swing_distance_low < 0)
+                    {
+						possible_liquidation_points.Add(iSwing3.SwingLow[0]);
+                    }
+                }
+				else
+                {
+					if (swing_distance_high > 0)
+					{
+						possible_liquidation_points.Add(iSwing3.SwingHigh[0]);
+					}
+
+					if (swing_distance_low > 0)
+					{
+						possible_liquidation_points.Add(iSwing3.SwingLow[0]);
+					}
+				}
+			}
+            #endregion
+
+            if (possible_liquidation_points.Count < Minimum_Liquidation_Points) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
+
+			#region Fluency_Range
+			{
+				double fluency_range_size = Fluency_Range * stop_size;
+
+				for (int i = 0; i < possible_liquidation_points.Count; i++)
+                {
+					double liquidation_point_distance = Math.Abs(trade_point - possible_liquidation_points[i]);
+
+					if (liquidation_point_distance <= fluency_range_size) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
+				}
+			}
+            #endregion
+
+            return new Tuple<bool, List<double>>(true, possible_liquidation_points);
+		}
+
+        ///<summary>
+        ///Determines wheter there is stop in which a trade can be sustained.
+        ///The function returns a Tuple(stop, stop_distance).
+        ///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
+        ///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
+        ///If there is a stop then it returns the stop value and the stop_distance.
+        ///</summary>
+        public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
 		{
 			//Create a list in where possible stops are going to be saved.
 			//Declare the variable stop which is going to be returned.
@@ -3668,6 +3785,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			Print("---------------------------------------");
 			*/
+		}
+
+		public void Display(List<double> list)
+		{
+			foreach (double g in list)
+			{
+				Print(g);
+			}
+		}
+
+		public void Display(List<MyHeatZone> list)
+		{
+			foreach (MyHeatZone g in list)
+			{
+				Print(g.value);
+			}
 		}
 	}
 }
