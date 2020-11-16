@@ -1492,25 +1492,35 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
 			///Stop Updating Process (by both trailing and SMA)
 			#region Long
-			//While Long
-			if (Position.MarketPosition == MarketPosition.Long)
+			///While Long	
+			if (!is_long &&
+				Position.MarketPosition == MarketPosition.Long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
-				if (!is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
-				{
-					is_long = true;
-					is_short = false;
-					fix_amount_long = amount_long;
-					fix_stop_price_long = stop_price_long;
-					fix_trigger_price_long = trigger_price_long;
-					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
-				}
+				is_long = true;
+				is_short = false;
+				fix_amount_long = amount_long;
+				fix_stop_price_long = stop_price_long;
+				fix_trigger_price_long = trigger_price_long;
+				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
+			}
 
-				if (is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			if (Position.MarketPosition == MarketPosition.Long && is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			{
+				if (my_entry_order == null || my_entry_market == null)
 				{
-                    #region Order
-                    if (my_entry_order.OrderState == OrderState.Filled)
+					if (my_entry_market == null && my_entry_order.OrderState == OrderState.Filled)
 					{
+						//						if (my_entry_order.OrderState == OrderState.Filled)
+						//						{
+						//							if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
+						//							{
+						//								Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
+						//							}
+						//							else
+						//							{
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
+						//							}
+						//						}										
 						if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] + distance_to_BO)
 						{
 							bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1522,7 +1532,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 									break;
 								}
 							}
-
 							if (HighCrossEma50 == false)
 							{
 								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
@@ -1550,7 +1559,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 								ExitLong(fix_amount_long, @"exit", @"entryOrder");
 							}
 						}
-
 						if (High[0] >= fix_trigger_price_long)
 						{
 							fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
@@ -1559,22 +1567,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
 						}
 					}
-                    #endregion
-
-                    #region Market
-                    else if (my_entry_market.OrderState == OrderState.Filled)
+					else if (my_entry_order == null && my_entry_market.OrderState == OrderState.Filled)
 					{
-						if (my_entry_order.OrderType == OrderType.StopMarket &&
-							my_entry_order.OrderState == OrderState.Working &&
-							my_entry_order.OrderAction == OrderAction.SellShort)
-						{
-							//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
-						}
-						else
-						{
-							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
-						}
-
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
+						//						}
+						//					}				
 						if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + distance_to_BO)
 						{
 							bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1586,7 +1583,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 									break;
 								}
 							}
-
 							if (HighCrossEma50 == false)
 							{
 								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
@@ -1614,7 +1610,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 								ExitLong(fix_amount_long, @"exit", @"entryMarket");
 							}
 						}
-
 						if (High[0] >= fix_trigger_price_long)
 						{
 							fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
@@ -1623,31 +1618,158 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
 						}
 					}
-                    #endregion
-                }
-            }
+				}
+				else if (my_entry_order.OrderState == OrderState.Filled/* && my_entry_market.OrderState != OrderState.Filled*/)
+				{
+					//					if (my_entry_order.OrderState == OrderState.Filled && my_entry_market.OrderState != OrderState.Filled)
+					//					{
+					//						if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
+					//						{
+					//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
+					//						}
+					//						else
+					//						{
+					ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
+					//						}
+					//					}				
+					if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] + distance_to_BO)
+					{
+						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
+						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
+						{
+							if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
+							{
+								HighCrossEma50 = true; //And saves that value in this variable
+								break;
+							}
+						}
+
+						if (HighCrossEma50 == false)
+						{
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
+								ExitLong(fix_amount_long, @"exit", @"entryOrder");
+							}
+						}
+						else
+						{
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
+								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
+								ExitLong(fix_amount_long, @"exit", @"entryOrder");
+							}
+						}
+					}
+					else
+					{
+						if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
+							Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
+						{
+							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
+							ExitLong(fix_amount_long, @"exit", @"entryOrder");
+						}
+					}
+
+					if (High[0] >= fix_trigger_price_long)
+					{
+						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
+						fix_trigger_price_long = High[0];
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
+						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
+					}
+				}
+				else if (my_entry_market.OrderState == OrderState.Filled/* && my_entry_order.OrderState != OrderState.Filled*/)
+				{
+					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
+					//					{
+					if (my_entry_order.OrderType == OrderType.StopMarket &&
+						my_entry_order.OrderState == OrderState.Working &&
+						my_entry_order.OrderAction == OrderAction.SellShort)
+					{
+						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
+					}
+					else
+					{
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
+					}
+					//					}	
+
+					if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + distance_to_BO)
+					{
+						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
+						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
+						{
+							if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
+							{
+								HighCrossEma50 = true; //And saves that value in this variable
+								break;
+							}
+						}
+
+						if (HighCrossEma50 == false)
+						{
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
+								ExitLong(fix_amount_long, @"exit", @"entryMarket");
+							}
+						}
+						else
+						{
+							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
+								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
+								ExitLong(fix_amount_long, @"exit", @"entryMarket");
+							}
+						}
+					}
+					else
+					{
+						if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
+							Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
+						{
+							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
+							ExitLong(fix_amount_long, @"exit", @"entryMarket");
+						}
+					}
+
+					if (High[0] >= fix_trigger_price_long)
+					{
+						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
+						fix_trigger_price_long = High[0];
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
+						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
+					}
+				}
+			}
 			#endregion
 
 			#region Short
-			//While Short
-			if (Position.MarketPosition == MarketPosition.Short)
+			///While Short	
+			if (!is_short &&
+				Position.MarketPosition == MarketPosition.Short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
-				if (!is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
-				{
-					is_long = false;
-					is_short = true;
-					fix_amount_short = amount_short;
-					fix_stop_price_short = stop_price_short;
-					fix_trigger_price_short = trigger_price_short;
-					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
-				}
+				is_long = false;
+				is_short = true;
+				fix_amount_short = amount_short;
+				fix_stop_price_short = stop_price_short;
+				fix_trigger_price_short = trigger_price_short;
+				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
+			}
 
-				if (is_short)
+			if (is_short &&
+				Position.MarketPosition == MarketPosition.Short)
+			{
+				if (my_entry_order == null || my_entry_market == null)
 				{
-                    #region Order
-                    if (my_entry_order.OrderState == OrderState.Filled)
+					if (my_entry_market == null && my_entry_order.OrderState == OrderState.Filled)
 					{
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
+						//						}
+						//					}
 						if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] - distance_to_BO)
 						{
 							bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1687,7 +1809,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 								ExitShort(fix_amount_short, @"exit", @"entryOrder");
 							}
 						}
-
 						if (Low[0] <= fix_trigger_price_short)
 						{
 							fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
@@ -1696,22 +1817,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
 						}
 					}
-                    #endregion
-
-                    #region Market
-                    else if (my_entry_market.OrderState == OrderState.Filled)
+					else if (my_entry_order == null && my_entry_market.OrderState == OrderState.Filled)
 					{
-						if (my_entry_order.OrderType == OrderType.StopMarket &&
-							my_entry_order.OrderState == OrderState.Working &&
-							my_entry_order.OrderAction == OrderAction.Buy)
-						{
-							//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
-						}
-						else
-						{
-							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
-						}
-
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
+						//						}
+						//					}
 						if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - distance_to_BO)
 						{
 							bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1760,9 +1870,132 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
 						}
 					}
-                    #endregion
-                }
-            }
+				}
+				else if (my_entry_order.OrderState == OrderState.Filled/* && my_entry_market.OrderState != OrderState.Filled*/)
+				{
+					//					if (my_entry_order.OrderState == OrderState.Filled && my_entry_market.OrderState != OrderState.Filled)
+					//					{
+					//						if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.Buy)
+					//						{
+					//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
+					//						}
+					//						else
+					//						{
+					ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
+					//						}
+					//					}
+					if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] - distance_to_BO)
+					{
+						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
+						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
+						{
+							if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
+							{
+								LowCrossEma50 = true; //And saves that value in this variable
+								break;
+							}
+						}
+
+						if (LowCrossEma50 == false)
+						{
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
+								ExitShort(fix_amount_short, @"exit", @"entryOrder");
+							}
+						}
+						else
+						{
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
+								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
+								ExitShort(fix_amount_short, @"exit", @"entryOrder");
+							}
+						}
+					}
+					else
+					{
+						if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
+							Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
+						{
+							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
+							ExitShort(fix_amount_short, @"exit", @"entryOrder");
+						}
+					}
+					if (Low[0] <= fix_trigger_price_short)
+					{
+						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
+						fix_trigger_price_short = Low[0];
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
+						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
+					}
+				}
+				else if (my_entry_market.OrderState == OrderState.Filled/* && my_entry_order.OrderState != OrderState.Filled*/)
+				{
+					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
+					//					{
+					if (my_entry_order.OrderType == OrderType.StopMarket &&
+						my_entry_order.OrderState == OrderState.Working &&
+						my_entry_order.OrderAction == OrderAction.Buy)
+					{
+						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
+					}
+					else
+					{
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
+					}
+					//					}
+
+					if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - distance_to_BO)
+					{
+						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
+						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
+						{
+							if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
+							{
+								LowCrossEma50 = true; //And saves that value in this variable
+								break;
+							}
+						}
+
+						if (LowCrossEma50 == false)
+						{
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
+								ExitShort(fix_amount_short, @"exit", @"entryMarket");
+							}
+						}
+						else
+						{
+							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
+								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
+							{
+								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
+								ExitShort(fix_amount_short, @"exit", @"entryMarket");
+							}
+						}
+					}
+					else
+					{
+						if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
+							Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
+						{
+							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
+							ExitShort(fix_amount_short, @"exit", @"entryMarket");
+						}
+					}
+
+					if (Low[0] <= fix_trigger_price_short)
+					{
+						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
+						fix_trigger_price_short = Low[0];
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
+						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
+					}
+				}
+			}
 			#endregion
 			#endregion
 		}
@@ -1975,6 +2208,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public int bars_ago;
 			public bool is_up;
 		}
+
+		public class MyStop
+		{
+			public double value;
+			public bool is_static;
+		}
 		#endregion
 
 		#region Functions
@@ -2074,13 +2313,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				Tuple<double, double> Stop_Values = Stop_Review(Close[0], true);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(Close[0], true);
 
-				if (Stop_Values.Item1 == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, true).Item1) return false;
+				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, true).Item1) return false;
+
+				Print(string.Format("BuyMarket: {0} // {1} // {2}", Time[0], Stop_Values.Item1.value, Stop_Values.Item1.is_static));
 
 				List<double> Liquidation_Values = Liquidation_Points(Close[0], Stop_Values.Item2, true).Item2;
 
-				stop_price_long = Stop_Values.Item1;
+				stop_price_long = Stop_Values.Item1.value;
 				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)); //calculates trade amount
 				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
@@ -2089,13 +2330,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (order_type == "PendingOrder")
 			{
-				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
 
-				if (Stop_Values.Item1 == -1 || !Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item1) return false;
+				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item1) return false;
+
+				Print(string.Format("BuyPending: {0} // {1} // {2}", Time[0], Stop_Values.Item1.value, Stop_Values.Item1.is_static));
 
 				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item2;
 
-				stop_price_long = Stop_Values.Item1;
+				stop_price_long = Stop_Values.Item1.value;
 				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_long = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
@@ -2113,13 +2356,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				Tuple<double, double> Stop_Values = Stop_Review(Close[0], false);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(Close[0], false);
 
-				if (Stop_Values.Item1 == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, false).Item1) return false;
+				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, false).Item1) return false;
+
+				Print(string.Format("SellMarket: {0} // {1} // {2}", Time[0], Stop_Values.Item1.value, Stop_Values.Item1.is_static));
 
 				List<double> Liquidation_Values = Liquidation_Points(Close[0], Stop_Values.Item2, false).Item2;
 
-				stop_price_short = Stop_Values.Item1; //calculates the stop price level
+				stop_price_short = Stop_Values.Item1.value; //calculates the stop price level
 				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount		
 				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
@@ -2128,13 +2373,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (order_type == "PendingOrder")
 			{
-				Tuple<double, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
 
-				if (Stop_Values.Item1 == -1 || !Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item1) return false;
+				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item1) return false;
+
+				Print(string.Format("SellPending: {0} // {1} // {2}", Time[0], Stop_Values.Item1.value, Stop_Values.Item1.is_static));
 
 				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item2;
 
-				stop_price_short = Stop_Values.Item1; //calculates the stop price level
+				stop_price_short = Stop_Values.Item1.value; //calculates the stop price level
 				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
@@ -3095,19 +3342,19 @@ namespace NinjaTrader.NinjaScript.Strategies
 				double swing_distance_low = trade_point - iSwing3.SwingLow[0];
 
 				if (is_long)
-                {
+				{
 					if (swing_distance_high < 0)
-                    {
+					{
 						possible_liquidation_points.Add(iSwing3.SwingHigh[0]);
-                    }
+					}
 
 					if (swing_distance_low < 0)
-                    {
+					{
 						possible_liquidation_points.Add(iSwing3.SwingLow[0]);
-                    }
-                }
+					}
+				}
 				else
-                {
+				{
 					if (swing_distance_high > 0)
 					{
 						possible_liquidation_points.Add(iSwing3.SwingHigh[0]);
@@ -3119,42 +3366,43 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
-            #endregion
+			#endregion
 
-            if (possible_liquidation_points.Count < Minimum_Liquidation_Points) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
+			if (possible_liquidation_points.Count < Minimum_Liquidation_Points) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
 
 			#region Fluency_Range
 			{
 				double fluency_range_size = Fluency_Range * stop_size;
 
 				for (int i = 0; i < possible_liquidation_points.Count; i++)
-                {
+				{
 					double liquidation_point_distance = Math.Abs(trade_point - possible_liquidation_points[i]);
 
 					if (liquidation_point_distance <= fluency_range_size) return new Tuple<bool, List<double>>(false, possible_liquidation_points);
 				}
 			}
-            #endregion
+			#endregion
 
-            return new Tuple<bool, List<double>>(true, possible_liquidation_points);
+			return new Tuple<bool, List<double>>(true, possible_liquidation_points);
 		}
 
-        ///<summary>
-        ///Determines wheter there is stop in which a trade can be sustained.
-        ///The function returns a Tuple(stop, stop_distance).
-        ///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
-        ///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
-        ///If there is a stop then it returns the stop value and the stop_distance.
-        ///</summary>
-        public Tuple<double, double> Stop_Review(double trade_point, bool is_long)
+		///<summary>
+		///Determines wheter there is stop in which a trade can be sustained.
+		///The function returns a Tuple(stop, stop_distance).
+		///If there is not a stop the function returns -1 as the stop value and 0 as the stop_distance.
+		///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
+		///If there is a stop then it returns the stop value and the stop_distance.
+		///</summary>
+		public Tuple<MyStop, double> Stop_Review(double trade_point, bool is_long)
 		{
 			//Create a list in where possible stops are going to be saved.
 			//Declare the variable stop which is going to be returned.
 			//Define the stop_evaluation range as the stop size minus 1 ATR, 
 			//in order to avoid that the stop is positioned outside the absolute stop range.
-			List<double> possible_stops = new List<double>();
+			List<MyStop> possible_stops = new List<MyStop>();
+			MyStop stop = new MyStop();
 			int shields_count = 0;
-			double stop, stop_distance;
+			double stop_distance;
 			double stop_evaluation_range = current_stop - iATR[0];
 
 			#region SMAs_Review
@@ -3175,11 +3423,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							if (SMA_distance <= stop_evaluation_range)
 							{
-								possible_stops.Add(iSMA1[0]);
+								possible_stops.Add(new MyStop()
+								{
+									value = iSMA1[0],
+									is_static = false
+								});
+
 								shields_count += SMA1_Strength;
 							}
 							else if (SMA_distance <= current_stop)
-                            {
+							{
 								shields_count += SMA1_Strength;
 							}
 						}
@@ -3192,7 +3445,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 							if (SMA_distance <= stop_evaluation_range)
 							{
-								possible_stops.Add(iSMA1[0]);
+								possible_stops.Add(new MyStop()
+								{
+									value = iSMA1[0],
+									is_static = false
+								});
+
 								shields_count += SMA1_Strength;
 							}
 							else if (SMA_distance <= current_stop)
@@ -3200,7 +3458,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								shields_count += SMA1_Strength;
 							}
 						}
-                    }					
+					}
 				}
 				#endregion
 
@@ -3215,12 +3473,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//If the SMA is not in the stop evaluation range, save it only as a shield.
 
 					if (is_long)
-                    {
+					{
 						if (SMA_distance > 0)
-                        {
+						{
 							if (SMA_distance <= stop_evaluation_range)
 							{
-								possible_stops.Add(iSMA2[0]);
+								possible_stops.Add(new MyStop()
+								{
+									value = iSMA2[0],
+									is_static = false
+								});
+
 								shields_count += SMA2_Strength;
 							}
 							else if (SMA_distance <= current_stop)
@@ -3228,16 +3491,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 								shields_count += SMA2_Strength;
 							}
 						}
-                    }
+					}
 					else
-                    {
+					{
 						if (SMA_distance < 0)
-                        {
+						{
 							SMA_distance = Math.Abs(SMA_distance);
 
 							if (SMA_distance <= stop_evaluation_range)
 							{
-								possible_stops.Add(iSMA2[0]);
+								possible_stops.Add(new MyStop()
+								{
+									value = iSMA2[0],
+									is_static = false
+								});
+
 								shields_count += SMA2_Strength;
 							}
 							else if (SMA_distance <= current_stop)
@@ -3245,16 +3513,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 								shields_count += SMA2_Strength;
 							}
 						}
-                    }					
+					}
 				}
 				#endregion
 			}
-            #endregion
+			#endregion
 
-            #region Swings_Review
-            {
-                #region Swing1
-                {
+			#region Swings_Review
+			{
+				#region Swing1
+				{
+					#region swingHigh
 					{
 						//Determine the distance from the current Swing1High.
 						double swing_distance = trade_point - iSwing1.SwingHigh[0];
@@ -3265,29 +3534,39 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//If the swing is not in the stop evaluation range, save it only as a shield.
 
 						if (is_long)
-                        {
+						{
 							if (swing_distance > 0)
-                            {
+							{
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing1.SwingHigh[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing1.SwingHigh[0],
+										is_static = true
+									});
+
 									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
-                                {
+								{
 									shields_count += Swing1_Strength;
 								}
 							}
 						}
 						else
-                        {
+						{
 							if (swing_distance < 0)
 							{
 								swing_distance = Math.Abs(swing_distance);
 
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing1.SwingHigh[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing1.SwingHigh[0],
+										is_static = true
+									});
+
 									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3297,8 +3576,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+					#endregion
 
-                    {
+					#region swingLow
+					{
 						//Determine the distance from the current Swing1Low.
 						double swing_distance = trade_point - iSwing1.SwingLow[0];
 
@@ -3313,7 +3594,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing1.SwingLow[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing1.SwingLow[0],
+										is_static = true
+									});
+
 									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3330,7 +3616,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing1.SwingLow[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing1.SwingLow[0],
+										is_static = true
+									});
+
 									shields_count += Swing1_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3340,11 +3631,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
-                }
+					#endregion
+				}
 				#endregion
 
 				#region Swing2
 				{
+					#region swingHigh
 					{
 						//Determine the distance from the current Swing2High.
 						double swing_distance = trade_point - iSwing2.SwingHigh[0];
@@ -3360,7 +3653,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing2.SwingHigh[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing2.SwingHigh[0],
+										is_static = true
+									});
+
 									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3377,7 +3675,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing2.SwingHigh[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing2.SwingHigh[0],
+										is_static = true
+									});
+
 									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3387,7 +3690,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+					#endregion
 
+					#region swingLow
 					{
 						//Determine the distance from the current Swing2Low.
 						double swing_distance = trade_point - iSwing2.SwingLow[0];
@@ -3398,12 +3703,17 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//If the swing is not in the stop evaluation range, save it only as a shield.
 
 						if (is_long)
-                        {
+						{
 							if (swing_distance > 0)
 							{
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing2.SwingLow[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing2.SwingLow[0],
+										is_static = true
+									});
+
 									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3412,15 +3722,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 								}
 							}
 						}
-                        else
-                        {
+						else
+						{
 							if (swing_distance < 0)
 							{
 								swing_distance = Math.Abs(swing_distance);
 
 								if (swing_distance <= stop_evaluation_range)
 								{
-									possible_stops.Add(iSwing2.SwingLow[0]);
+									possible_stops.Add(new MyStop()
+									{
+										value = iSwing2.SwingLow[0],
+										is_static = true
+									});
+
 									shields_count += Swing2_Strength;
 								}
 								else if (swing_distance <= current_stop)
@@ -3430,48 +3745,59 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 						}
 					}
+					#endregion
 				}
-                #endregion
-            }
-            #endregion
+				#endregion
+			}
+			#endregion
 
-            #region Heat_Zones_Review
+			#region Heat_Zones_Review
 			//Determine wheter there are Heat Zones or not.			
 			if (heat_zones.Count > 0)
-            {
+			{
 				//Know if the Heat Zone is below or above the price (if it is a barrier or a possible stop).
 				//If it isn't a barrier, determine wheter it is in the stop range or not.
 				//If yes save it as a possible stop.
 				//If the Heat Zone is not in the stop evaluation range, save it only as a shield.
 
 				for (int i = 0; i < heat_zones.Count; i++)
-                {
+				{
 					double heat_zone_distance = trade_point - heat_zones[i].value;
 
 					if (is_long)
-                    {
+					{
 						if (heat_zone_distance > 0)
-                        {
+						{
 							if (heat_zone_distance <= stop_evaluation_range)
 							{
-								possible_stops.Add(heat_zones[i].value);
+								possible_stops.Add(new MyStop()
+								{
+									value = heat_zones[i].value,
+									is_static = true
+								});
+
 								shields_count += Heat_Zone_Stop_Strength;
 							}
 							else if (heat_zone_distance <= current_stop)
-                            {
+							{
 								shields_count += Heat_Zone_Stop_Strength;
 							}
 						}
 					}
-                    else
-                    {
+					else
+					{
 						if (heat_zone_distance < 0)
-                        {
+						{
 							heat_zone_distance = Math.Abs(heat_zone_distance);
 
 							if (heat_zone_distance <= stop_evaluation_range)
 							{
-								possible_stops.Add(heat_zones[i].value);
+								possible_stops.Add(new MyStop()
+								{
+									value = heat_zones[i].value,
+									is_static = true
+								});
+
 								shields_count += Heat_Zone_Stop_Strength;
 							}
 							else if (heat_zone_distance <= current_stop)
@@ -3479,34 +3805,56 @@ namespace NinjaTrader.NinjaScript.Strategies
 								shields_count += Heat_Zone_Stop_Strength;
 							}
 						}
-                    }
-                }
-            }
+					}
+				}
+			}
 			#endregion
 
 			//If there isn't a certain amount of shields in the stop range, 
 			//it means that a trade can't be executed.
-			if (shields_count < Stop_Strength || possible_stops.Count == 0) return new Tuple<double, double>(-1, 0);
+			if (shields_count < Stop_Strength || possible_stops.Count == 0)
+			{
+				stop.value = -1;
+				stop.is_static = false;
+
+				return new Tuple<MyStop, double>(stop, 0);
+			}
 
 			//The stop is always going to be the furthest possible stop.
 			if (is_long)
-            {
-				stop = possible_stops.Min() - iATR[0];
-            }
+			{
+				double min = 10000000000;
+				for (int i = 0; i < possible_stops.Count; i++)
+				{
+					if (possible_stops[i].value < min)
+					{
+						stop = possible_stops[i];
+						//stop.value -= iATR[0];
+					}
+				}
+			}
 			else
-            {
-				stop = possible_stops.Max() + iATR[0];
-            }
+			{
+				double max = 0;
+				for (int i = 0; i < possible_stops.Count; i++)
+				{
+					if (possible_stops[i].value > max)
+					{
+						stop = possible_stops[i];
+						//stop.value += iATR[0];
+					}
+				}
+			}
 
-			stop_distance = Math.Abs(trade_point - stop);
+			stop_distance = Math.Abs(trade_point - stop.value);
 
-			return new Tuple<double, double>(stop, stop_distance);
-        }
+			return new Tuple<MyStop, double>(stop, stop_distance);
+		}
 
-        ///<summary>
-        ///Finds the value in the sequence, equivalent to the Percentile given.
-        ///</summary>
-        public double Percentile(double[] sequence, double excelPercentile)
+		///<summary>
+		///Finds the value in the sequence, equivalent to the Percentile given.
+		///</summary>
+		public double Percentile(double[] sequence, double excelPercentile)
 		{
 			Array.Sort(sequence);
 			int N = sequence.Length;
@@ -3521,10 +3869,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return sequence[k - 1] + d * (sequence[k] - sequence[k - 1]);
 			}
 		}
-	#endregion
+		#endregion
 
 		public void MyPrint()
-        {
+		{
 			Print(Time[0]);
 			/*
 			Print("SwingHigh3");
@@ -3567,6 +3915,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 			foreach (MyHeatZone g in list)
 			{
 				Print(g.value);
+			}
+		}
+
+		public void Display(List<MyStop> list)
+		{
+			foreach (MyStop g in list)
+			{
+				Print(g.value);
+				Print(g.is_static);
 			}
 		}
 	}
