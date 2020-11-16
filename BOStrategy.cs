@@ -1492,35 +1492,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 			////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
 			///Stop Updating Process (by both trailing and SMA)
 			#region Long
-			///While Long	
-			if (!is_long &&
-				Position.MarketPosition == MarketPosition.Long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			//While Long
+			if (Position.MarketPosition == MarketPosition.Long)
 			{
-				is_long = true;
-				is_short = false;
-				fix_amount_long = amount_long;
-				fix_stop_price_long = stop_price_long;
-				fix_trigger_price_long = trigger_price_long;
-				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
-			}
-
-			if (Position.MarketPosition == MarketPosition.Long && is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
-			{
-				if (my_entry_order == null || my_entry_market == null)
+				if (!is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 				{
-					if (my_entry_market == null && my_entry_order.OrderState == OrderState.Filled)
+					is_long = true;
+					is_short = false;
+					fix_amount_long = amount_long;
+					fix_stop_price_long = stop_price_long;
+					fix_trigger_price_long = trigger_price_long;
+					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
+				}
+
+				if (is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+				{
+					#region Order
+					if (my_entry_order.OrderState == OrderState.Filled)
 					{
-						//						if (my_entry_order.OrderState == OrderState.Filled)
-						//						{
-						//							if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
-						//							{
-						//								Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
-						//							}
-						//							else
-						//							{
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-						//							}
-						//						}										
 						if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] + distance_to_BO)
 						{
 							bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1532,6 +1522,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 									break;
 								}
 							}
+
 							if (HighCrossEma50 == false)
 							{
 								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
@@ -1559,6 +1550,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								ExitLong(fix_amount_long, @"exit", @"entryOrder");
 							}
 						}
+
 						if (High[0] >= fix_trigger_price_long)
 						{
 							fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
@@ -1567,11 +1559,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
 						}
 					}
-					else if (my_entry_order == null && my_entry_market.OrderState == OrderState.Filled)
+					#endregion
+
+					#region Market
+					else if (my_entry_market.OrderState == OrderState.Filled)
 					{
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
-						//						}
-						//					}				
+						if (my_entry_order.OrderType == OrderType.StopMarket &&
+							my_entry_order.OrderState == OrderState.Working &&
+							my_entry_order.OrderAction == OrderAction.SellShort)
+						{
+							//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
+						}
+						else
+						{
+							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
+						}
+
 						if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + distance_to_BO)
 						{
 							bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1583,6 +1586,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 									break;
 								}
 							}
+
 							if (HighCrossEma50 == false)
 							{
 								if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
@@ -1610,6 +1614,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								ExitLong(fix_amount_long, @"exit", @"entryMarket");
 							}
 						}
+
 						if (High[0] >= fix_trigger_price_long)
 						{
 							fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
@@ -1618,158 +1623,31 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
 						}
 					}
-				}
-				else if (my_entry_order.OrderState == OrderState.Filled/* && my_entry_market.OrderState != OrderState.Filled*/)
-				{
-					//					if (my_entry_order.OrderState == OrderState.Filled && my_entry_market.OrderState != OrderState.Filled)
-					//					{
-					//						if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.SellShort)
-					//						{
-					//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
-					//						}
-					//						else
-					//						{
-					ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-					//						}
-					//					}				
-					if (High[BarsSinceEntryExecution(0, @"entryOrder", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] + distance_to_BO)
-					{
-						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
-						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
-						{
-							if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
-							{
-								HighCrossEma50 = true; //And saves that value in this variable
-								break;
-							}
-						}
-
-						if (HighCrossEma50 == false)
-						{
-							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
-								ExitLong(fix_amount_long, @"exit", @"entryOrder");
-							}
-						}
-						else
-						{
-							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
-								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
-								ExitLong(fix_amount_long, @"exit", @"entryOrder");
-							}
-						}
-					}
-					else
-					{
-						if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
-							Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
-						{
-							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
-							ExitLong(fix_amount_long, @"exit", @"entryOrder");
-						}
-					}
-
-					if (High[0] >= fix_trigger_price_long)
-					{
-						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
-						fix_trigger_price_long = High[0];
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
-					}
-				}
-				else if (my_entry_market.OrderState == OrderState.Filled/* && my_entry_order.OrderState != OrderState.Filled*/)
-				{
-					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
-					//					{
-					if (my_entry_order.OrderType == OrderType.StopMarket &&
-						my_entry_order.OrderState == OrderState.Working &&
-						my_entry_order.OrderAction == OrderAction.SellShort)
-					{
-						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
-					}
-					else
-					{
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
-					}
-					//					}	
-
-					if (High[BarsSinceEntryExecution(0, @"entryMarket", 0)] < iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] + distance_to_BO)
-					{
-						bool HighCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
-						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
-						{
-							if (High[i] >= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
-							{
-								HighCrossEma50 = true; //And saves that value in this variable
-								break;
-							}
-						}
-
-						if (HighCrossEma50 == false)
-						{
-							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
-								ExitLong(fix_amount_long, @"exit", @"entryMarket");
-							}
-						}
-						else
-						{
-							if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
-								Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
-								ExitLong(fix_amount_long, @"exit", @"entryMarket");
-							}
-						}
-					}
-					else
-					{
-						if (Close[0] < iSMA1[0] - (iATR[0] * (MagicNumber / 100)) ||
-							Close[0] < iSMA2[0] - (iATR[0] * (MagicNumber / 100)))
-						{
-							Draw.ArrowUp(this, @"SMAStopBar_GreenArrowUp" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Lime);
-							ExitLong(fix_amount_long, @"exit", @"entryMarket");
-						}
-					}
-
-					if (High[0] >= fix_trigger_price_long)
-					{
-						fix_stop_price_long = High[0] - current_stop * TrailingUnitsStop;
-						fix_trigger_price_long = High[0];
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
-						Draw.Diamond(this, @"TrailingStopBar_GreenDiamond" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Lime);
-					}
+					#endregion
 				}
 			}
 			#endregion
 
 			#region Short
-			///While Short	
-			if (!is_short &&
-				Position.MarketPosition == MarketPosition.Short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+			//While Short
+			if (Position.MarketPosition == MarketPosition.Short)
 			{
-				is_long = false;
-				is_short = true;
-				fix_amount_short = amount_short;
-				fix_stop_price_short = stop_price_short;
-				fix_trigger_price_short = trigger_price_short;
-				Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
-			}
-
-			if (is_short &&
-				Position.MarketPosition == MarketPosition.Short)
-			{
-				if (my_entry_order == null || my_entry_market == null)
+				if (!is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 				{
-					if (my_entry_market == null && my_entry_order.OrderState == OrderState.Filled)
+					is_long = false;
+					is_short = true;
+					fix_amount_short = amount_short;
+					fix_stop_price_short = stop_price_short;
+					fix_trigger_price_short = trigger_price_short;
+					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
+				}
+
+				if (is_short)
+				{
+					#region Order
+					if (my_entry_order.OrderState == OrderState.Filled)
 					{
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-						//						}
-						//					}
 						if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] - distance_to_BO)
 						{
 							bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1809,6 +1687,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 								ExitShort(fix_amount_short, @"exit", @"entryOrder");
 							}
 						}
+
 						if (Low[0] <= fix_trigger_price_short)
 						{
 							fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
@@ -1817,11 +1696,22 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
 						}
 					}
-					else if (my_entry_order == null && my_entry_market.OrderState == OrderState.Filled)
+					#endregion
+
+					#region Market
+					else if (my_entry_market.OrderState == OrderState.Filled)
 					{
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
-						//						}
-						//					}
+						if (my_entry_order.OrderType == OrderType.StopMarket &&
+							my_entry_order.OrderState == OrderState.Working &&
+							my_entry_order.OrderAction == OrderAction.Buy)
+						{
+							//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
+						}
+						else
+						{
+							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
+						}
+
 						if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - distance_to_BO)
 						{
 							bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
@@ -1870,130 +1760,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
 						}
 					}
-				}
-				else if (my_entry_order.OrderState == OrderState.Filled/* && my_entry_market.OrderState != OrderState.Filled*/)
-				{
-					//					if (my_entry_order.OrderState == OrderState.Filled && my_entry_market.OrderState != OrderState.Filled)
-					//					{
-					//						if (my_entry_order.OrderType == OrderType.StopMarket && my_entry_order.OrderState == OrderState.Working && my_entry_order.OrderAction == OrderAction.Buy)
-					//						{
-					//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_order.Quantity, Time[0]));
-					//						}
-					//						else
-					//						{
-					ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-					//						}
-					//					}
-					if (Low[BarsSinceEntryExecution(0, @"entryOrder", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryOrder", 0)] - distance_to_BO)
-					{
-						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
-						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryOrder", 0); i++) // Walks every bar of the potential HL4
-						{
-							if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
-							{
-								LowCrossEma50 = true; //And saves that value in this variable
-								break;
-							}
-						}
-
-						if (LowCrossEma50 == false)
-						{
-							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
-								ExitShort(fix_amount_short, @"exit", @"entryOrder");
-							}
-						}
-						else
-						{
-							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
-								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
-								ExitShort(fix_amount_short, @"exit", @"entryOrder");
-							}
-						}
-					}
-					else
-					{
-						if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
-							Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
-						{
-							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
-							ExitShort(fix_amount_short, @"exit", @"entryOrder");
-						}
-					}
-					if (Low[0] <= fix_trigger_price_short)
-					{
-						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
-						fix_trigger_price_short = Low[0];
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
-					}
-				}
-				else if (my_entry_market.OrderState == OrderState.Filled/* && my_entry_order.OrderState != OrderState.Filled*/)
-				{
-					//					if (my_entry_market.OrderState == OrderState.Filled && my_entry_order.OrderState != OrderState.Filled)
-					//					{
-					if (my_entry_order.OrderType == OrderType.StopMarket &&
-						my_entry_order.OrderState == OrderState.Working &&
-						my_entry_order.OrderAction == OrderAction.Buy)
-					{
-						//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
-					}
-					else
-					{
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
-					}
-					//					}
-
-					if (Low[BarsSinceEntryExecution(0, @"entryMarket", 0)] > iSMA2[BarsSinceEntryExecution(0, @"entryMarket", 0)] - distance_to_BO)
-					{
-						bool LowCrossEma50 = false; //initializing the variable that is going to keep the min close value of the swing, with the array firts value for comparison purposes
-						for (int i = 0; i <= BarsSinceEntryExecution(0, @"entryMarket", 0); i++) // Walks every bar of the potential HL4
-						{
-							if (Low[i] <= iSMA2[i]) //To determine the highest value (max close value of the swinglow4)
-							{
-								LowCrossEma50 = true; //And saves that value in this variable
-								break;
-							}
-						}
-
-						if (LowCrossEma50 == false)
-						{
-							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
-								ExitShort(fix_amount_short, @"exit", @"entryMarket");
-							}
-						}
-						else
-						{
-							if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
-								Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
-							{
-								Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
-								ExitShort(fix_amount_short, @"exit", @"entryMarket");
-							}
-						}
-					}
-					else
-					{
-						if (Close[0] > iSMA1[0] + (iATR[0] * (MagicNumber / 100)) ||
-							Close[0] > iSMA2[0] + (iATR[0] * (MagicNumber / 100)))
-						{
-							Draw.ArrowDown(this, @"SMAStopBar_RedArrowDown" + CurrentBar, true, 0, High[0] + 3 * distance_to_BO, Brushes.Red);
-							ExitShort(fix_amount_short, @"exit", @"entryMarket");
-						}
-					}
-
-					if (Low[0] <= fix_trigger_price_short)
-					{
-						fix_stop_price_short = Low[0] + current_stop * TrailingUnitsStop;
-						fix_trigger_price_short = Low[0];
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
-						Draw.Diamond(this, @"TrailingStopBar_RedDiamond" + CurrentBar, true, 0, Low[0] - 3 * distance_to_BO, Brushes.Red);
-					}
+					#endregion
 				}
 			}
 			#endregion
