@@ -1504,8 +1504,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					fix_trigger_price_long = trigger_price_long;
 					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
 				}
-
-				if (is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+				else //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 				{
 					#region Order
 					if (my_entry_order.OrderState == OrderState.Filled)
@@ -1641,8 +1640,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					fix_trigger_price_short = trigger_price_short;
 					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
 				}
-
-				if (is_short)
+				else
 				{
 					#region Order
 					if (my_entry_order.OrderState == OrderState.Filled)
@@ -3587,6 +3585,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return new Tuple<MyStop, double>(stop, 0);
 			}
 
+			Print(Time[0]);
+			Display(possible_stops);
+
 			//The stop is always going to be the furthest possible stop.
 			if (is_long)
 			{
@@ -3595,6 +3596,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					if (possible_stops[i].value < min)
 					{
+						min = possible_stops[i].value;
 						stop = possible_stops[i];
 						//stop.value -= iATR[0];
 					}
@@ -3607,6 +3609,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				{
 					if (possible_stops[i].value > max)
 					{
+						max = possible_stops[i].value;
 						stop = possible_stops[i];
 						//stop.value += iATR[0];
 					}
@@ -3689,8 +3692,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			foreach (MyStop g in list)
 			{
-				Print(g.value);
-				Print(g.is_static);
+				Print(string.Format("{0} // {1}", g.value, g.is_static));
 			}
 		}
 	}
