@@ -57,7 +57,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private Account myAccount;
 		private Order my_entry_order = null, my_entry_market = null, my_exit_order = null;
 		#endregion
-
+		//
 		protected override void OnStateChange()
 		{
 			if (State == State.SetDefaults)
