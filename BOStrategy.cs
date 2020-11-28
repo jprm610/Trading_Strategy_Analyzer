@@ -1518,7 +1518,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_long.is_static = false;
 
-								if (iSMA1[0] < iSMA2[0])
+								if (iSMA1[0] <= iSMA2[0])
 								{
 									stop_long.type = "SMA2";
 								}
@@ -1528,13 +1528,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								}
 
 								fix_stop_price_long = Stop_Review_After_Order(true);
-
-								ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 							}
 						}
 						else
 						{
-							if (iSMA1[0] < iSMA2[0])
+							if (iSMA1[0] <= iSMA2[0])
 							{
 								stop_long.type = "SMA2";
 							}
@@ -1543,10 +1541,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 								stop_long.type = "SMA1";
 							}
 
-							fix_stop_price_long = Stop_Review_After_Order(true);
-
-							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
+							fix_stop_price_long = Stop_Review_After_Order(true);							
 						}
+
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
 						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_long));
 					}
@@ -1572,7 +1570,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_long.is_static = false;
 
-								if (iSMA1[0] < iSMA2[0])
+								if (iSMA1[0] <= iSMA2[0])
 								{
 									stop_long.type = "SMA2";
 								}
@@ -1582,13 +1580,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								}
 
 								fix_stop_price_long = Stop_Review_After_Order(true);
-
-								ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 							}
 						}
 						else
 						{
-							if (iSMA1[0] < iSMA2[0])
+							if (iSMA1[0] <= iSMA2[0])
 							{
 								stop_long.type = "SMA2";
 							}
@@ -1598,9 +1594,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 
 							fix_stop_price_long = Stop_Review_After_Order(true);
-
-							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 						}
+
+						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
 						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_long));
 					}
@@ -1756,7 +1752,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_short.is_static = false;
 
-								if (iSMA1[0] > iSMA2[0])
+								if (iSMA1[0] >= iSMA2[0])
 								{
 									stop_short.type = "SMA2";
 								}
@@ -1766,13 +1762,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								}
 
 								fix_stop_price_short = Stop_Review_After_Order(false);
-
-								ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 							}
 						}
 						else
 						{
-							if (iSMA1[0] > iSMA2[0])
+							if (iSMA1[0] >= iSMA2[0])
 							{
 								stop_short.type = "SMA2";
 							}
@@ -1782,9 +1776,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 
 							fix_stop_price_short = Stop_Review_After_Order(false);
-
-							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 						}
+
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
 						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_short));
 					}
@@ -1810,7 +1804,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_short.is_static = false;
 
-								if (iSMA1[0] > iSMA2[0])
+								if (iSMA1[0] >= iSMA2[0])
 								{
 									stop_short.type = "SMA2";
 								}
@@ -1820,13 +1814,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								}
 
 								fix_stop_price_short = Stop_Review_After_Order(false);
-
-								ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 							}
 						}
 						else
 						{
-							if (iSMA1[0] > iSMA2[0])
+							if (iSMA1[0] >= iSMA2[0])
 							{
 								stop_short.type = "SMA2";
 							}
@@ -1836,9 +1828,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							}
 
 							fix_stop_price_short = Stop_Review_After_Order(false);
-
-							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 						}
+
+						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
 						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_short));
 					}
