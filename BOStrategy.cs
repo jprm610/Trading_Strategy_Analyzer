@@ -112,6 +112,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Swing1_Strength = 1;
 				Swing2_Strength = 2;
 				Heat_Zone_Stop_Strength = 3;
+				Trailling_Stop_Mode = -1;
 				Fluency_Range = 1;
 				Minimum_Liquidation_Points = 2;
 			}
@@ -1518,30 +1519,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_long.is_static = false;
 
-								if (iSMA1[0] <= iSMA2[0])
-								{
-									stop_long.type = "SMA2";
-								}
-								else
-								{
-									stop_long.type = "SMA1";
-								}
+								Trailling_Stop_Definition(true);
 
 								fix_stop_price_long = Stop_Review_After_Order(true);
 							}
 						}
 						else
 						{
-							if (iSMA1[0] <= iSMA2[0])
-							{
-								stop_long.type = "SMA2";
-							}
-							else
-							{
-								stop_long.type = "SMA1";
-							}
+							Trailling_Stop_Definition(true);
 
-							fix_stop_price_long = Stop_Review_After_Order(true);							
+							fix_stop_price_long = Stop_Review_After_Order(true);
 						}
 
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
@@ -1557,7 +1544,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							my_entry_order.OrderState == OrderState.Working &&
 							my_entry_order.OrderAction == OrderAction.SellShort)
                         {
-							Print("There is a near short order.");
+							Print("There is a near short stop order.");
                         }
 						else
 						{
@@ -1570,28 +1557,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_long.is_static = false;
 
-								if (iSMA1[0] <= iSMA2[0])
-								{
-									stop_long.type = "SMA2";
-								}
-								else
-								{
-									stop_long.type = "SMA1";
-								}
+								Trailling_Stop_Definition(true);
 
 								fix_stop_price_long = Stop_Review_After_Order(true);
 							}
 						}
 						else
 						{
-							if (iSMA1[0] <= iSMA2[0])
-							{
-								stop_long.type = "SMA2";
-							}
-							else
-							{
-								stop_long.type = "SMA1";
-							}
+							Trailling_Stop_Definition(true);
 
 							fix_stop_price_long = Stop_Review_After_Order(true);
 						}
@@ -1631,28 +1604,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_short.is_static = false;
 
-								if (iSMA1[0] >= iSMA2[0])
-								{
-									stop_short.type = "SMA2";
-								}
-								else
-								{
-									stop_short.type = "SMA1";
-								}
+								Trailling_Stop_Definition(false);
 
 								fix_stop_price_short = Stop_Review_After_Order(false);
 							}
 						}
 						else
 						{
-							if (iSMA1[0] >= iSMA2[0])
-							{
-								stop_short.type = "SMA2";
-							}
-							else
-							{
-								stop_short.type = "SMA1";
-							}
+							Trailling_Stop_Definition(false);
 
 							fix_stop_price_short = Stop_Review_After_Order(false);
 						}
@@ -1683,28 +1642,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 							{
 								stop_short.is_static = false;
 
-								if (iSMA1[0] >= iSMA2[0])
-								{
-									stop_short.type = "SMA2";
-								}
-								else
-								{
-									stop_short.type = "SMA1";
-								}
+								Trailling_Stop_Definition(false);
 
 								fix_stop_price_short = Stop_Review_After_Order(false);
 							}
 						}
 						else
 						{
-							if (iSMA1[0] >= iSMA2[0])
-							{
-								stop_short.type = "SMA2";
-							}
-							else
-							{
-								stop_short.type = "SMA1";
-							}
+							Trailling_Stop_Definition(false);
 
 							fix_stop_price_short = Stop_Review_After_Order(false);
 						}
@@ -1890,6 +1835,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 		[Range(0, int.MaxValue)]
 		[Display(Name = "Heat Zone", Order = 7, GroupName = "Stop")]
 		public int Heat_Zone_Stop_Strength
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(-1, 3)]
+		[Display(Name = "Trailling Stop Mode", Order = 8, GroupName = "Stop")]
+		public int Trailling_Stop_Mode
 		{ get; set; }
 		#endregion
 
@@ -3586,9 +3537,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			double stop;
 
-            #region Reference_Definition
-            if (is_long)
-            {
+			#region Reference_Definition
+			if (is_long)
+			{
 				switch (stop_long.type)
 				{
 					case "SMA1":
@@ -3606,7 +3557,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 			}
 			else
-            {
+			{
 				switch (stop_short.type)
 				{
 					case "SMA1":
@@ -3623,14 +3574,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 						return 0;
 				}
 			}
-            #endregion
+			#endregion
 
-            #region Close_Price_Levels_Check
+			#region Close_Price_Levels_Check
 			if (is_long)
-            {
-                #region SMAs
-                #region SMA1
-                {
+			{
+				#region SMAs
+				#region SMA1
+				{
 					double SMA_distance = stop - iSMA1[0];
 
 					if (SMA_distance > 0)
@@ -3685,11 +3636,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 					}
 				}
-                #endregion
+				#endregion
 
-                #region Swing2
-                {
-                    double swing_distance = stop - iSwing2.SwingLow[0];
+				#region Swing2
+				{
+					double swing_distance = stop - iSwing2.SwingLow[0];
 
 					if (swing_distance > 0)
 					{
@@ -3719,7 +3670,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				#region Heat_Zones
 				{
 					for (int i = 0; i < heat_zones.Count; i++)
-                    {
+					{
 						double heat_zone_distance = stop - heat_zones[i].value;
 
 						if (heat_zone_distance > 0)
@@ -3733,8 +3684,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				#endregion
 			}
-            else
-            {
+			else
+			{
 				#region SMAs
 				#region SMA1
 				{
@@ -3800,11 +3751,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 					}
 				}
-                #endregion
+				#endregion
 
-                #region Swing2
-                {
-                    double swing_distance = stop - iSwing2.SwingHigh[0];
+				#region Swing2
+				{
+					double swing_distance = stop - iSwing2.SwingHigh[0];
 
 					if (swing_distance < 0)
 					{
@@ -3856,9 +3807,136 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			#endregion
 
-			Print(string.Format("{0} // {1}", Time[0], stop));
-
 			return stop;
+		}
+
+		public void Trailling_Stop_Definition(bool is_long)
+        {
+			int SMA_type = 0;
+			List<double> SMAs = new List<double>();
+			SMAs.Add(iSMA1[0]);
+			SMAs.Add(iSMA2[0]);
+			SMAs.Add(iSMA3[0]);
+
+			#region SMA_Recognition
+			if (is_long)
+            {
+				switch (Trailling_Stop_Mode)
+				{
+					case -1:
+						double max = 0;
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] > max)
+							{
+								max = SMAs[i];
+								SMA_type = i + 1;
+							}
+						}						
+						break;
+					case 0:
+						double min = 10000000000;
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] < min)
+							{
+								min = SMAs[i];
+								SMA_type = i + 1;
+							}
+						}
+						break;
+					case 1:
+						SMA_type = 1;
+						break;
+					case 2:
+						SMA_type = 2;
+						break;
+					case 3:
+						SMA_type = 3;
+						break;
+					default:
+						return;
+				}
+			}
+            else
+            {
+				switch (Trailling_Stop_Mode)
+				{
+					case -1:
+						double min = 10000000000;
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] < min)
+							{
+								min = SMAs[i];
+								SMA_type = i + 1;
+							}
+						}
+						break;
+					case 0:
+						double max = 0;
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] > max)
+							{
+								max = SMAs[i];
+								SMA_type = i + 1;
+							}
+						}
+						break;
+					case 1:
+						SMA_type = 1;
+						break;
+					case 2:
+						SMA_type = 2;
+						break;
+					case 3:
+						SMA_type = 3;
+						break;
+					default:
+						return;
+				}
+			}
+            #endregion
+
+            #region Definition
+            if (is_long)
+			{
+				switch (SMA_type)
+				{
+					case 1:
+						stop_long.type = "SMA1";
+						break;
+					case 2:
+						stop_long.type = "SMA2";
+						break;
+					case 3:
+						stop_long.type = "SMA3";
+						break;
+					default:
+						return;
+				}
+			}
+            else
+            {
+				switch (SMA_type)
+				{
+					case 1:
+						stop_short.type = "SMA1";
+						break;
+					case 2:
+						stop_short.type = "SMA2";
+						break;
+					case 3:
+						stop_short.type = "SMA3";
+						break;
+					default:
+						return;
+				}
+			}
+			#endregion
+
+			return;
         }
 
         ///<summary>
