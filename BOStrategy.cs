@@ -1531,6 +1531,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 							fix_stop_price_long = Stop_Review_After_Order(true);
 						}
 
+						if (fix_stop_price_long < stop_long.lock_value)
+							fix_stop_price_long = stop_long.lock_value;
+
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
 						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_long));
@@ -1568,6 +1571,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 							fix_stop_price_long = Stop_Review_After_Order(true);
 						}
+
+						if (fix_stop_price_long < stop_long.lock_value)
+							fix_stop_price_long = stop_long.lock_value;
 
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
@@ -1615,6 +1621,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 							fix_stop_price_short = Stop_Review_After_Order(false);
 						}
+
+						if (fix_stop_price_short > stop_short.lock_value)
+							fix_stop_price_short = stop_short.lock_value;
 
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
@@ -1883,6 +1892,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		public class MyStop
 		{
 			public double value;
+			public double lock_value;
 			public string type;
 			public bool is_static;
 		}
@@ -3500,8 +3510,15 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return new Tuple<MyStop, double>(stop, 0);
 			}
 
-			//The stop is always going to be the furthest possible stop.
-			if (is_long)
+			#region Stop_Lock
+			if (is_long) 
+				stop.lock_value = trade_point - current_stop;
+			else 
+				stop.lock_value = trade_point + current_stop;
+            #endregion
+
+            //The stop is always going to be the furthest possible stop.
+            if (is_long)
 			{
 				double min = 10000000000;
 				for (int i = 0; i < possible_stops.Count; i++)
