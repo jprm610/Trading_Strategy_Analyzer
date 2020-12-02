@@ -3628,7 +3628,51 @@ namespace NinjaTrader.NinjaScript.Strategies
             #region Close_Price_Levels_Check
 			if (is_long)
             {
-                #region SwingsLow
+                #region SMAs
+                #region SMA1
+                {
+					double SMA_distance = stop - iSMA1[0];
+
+					if (SMA_distance > 0)
+					{
+						if (SMA_distance <= iATR[0])
+						{
+							stop = iSMA1[0];
+						}
+					}
+				}
+				#endregion
+
+				#region SMA2
+				{
+					double SMA_distance = stop - iSMA2[0];
+
+					if (SMA_distance > 0)
+					{
+						if (SMA_distance <= iATR[0])
+						{
+							stop = iSMA2[0];
+						}
+					}
+				}
+				#endregion
+
+				#region SMA3
+				{
+					double SMA_distance = stop - iSMA3[0];
+
+					if (SMA_distance > 0)
+					{
+						if (SMA_distance <= iATR[0])
+						{
+							stop = iSMA3[0];
+						}
+					}
+				}
+				#endregion
+				#endregion
+
+				#region SwingsLow
 				#region Swing1
 				{
 					double swing_distance = stop - iSwing1.SwingLow[0];
@@ -3671,9 +3715,76 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				#endregion
 				#endregion
+
+				#region Heat_Zones
+				{
+					for (int i = 0; i < heat_zones.Count; i++)
+                    {
+						double heat_zone_distance = stop - heat_zones[i].value;
+
+						if (heat_zone_distance > 0)
+						{
+							if (heat_zone_distance <= iATR[0])
+							{
+								stop = heat_zones[i].value;
+							}
+						}
+					}
+				}
+				#endregion
 			}
-			else
+            else
             {
+				#region SMAs
+				#region SMA1
+				{
+					double SMA_distance = stop - iSMA1[0];
+
+					if (SMA_distance < 0)
+					{
+						SMA_distance = Math.Abs(SMA_distance);
+
+						if (SMA_distance <= iATR[0])
+						{
+							stop = iSMA1[0];
+						}
+					}
+				}
+				#endregion
+
+				#region SMA2
+				{
+					double SMA_distance = stop - iSMA2[0];
+
+					if (SMA_distance < 0)
+					{
+						SMA_distance = Math.Abs(SMA_distance);
+
+						if (SMA_distance <= iATR[0])
+						{
+							stop = iSMA2[0];
+						}
+					}
+				}
+				#endregion
+
+				#region SMA3
+				{
+					double SMA_distance = stop - iSMA3[0];
+
+					if (SMA_distance < 0)
+					{
+						SMA_distance = Math.Abs(SMA_distance);
+
+						if (SMA_distance <= iATR[0])
+						{
+							stop = iSMA3[0];
+						}
+					}
+				}
+				#endregion
+				#endregion
+
 				#region SwingsHigh
 				#region Swing1
 				{
@@ -3722,6 +3833,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 				#endregion
+				#endregion
+
+				#region Heat_Zones
+				{
+					for (int i = 0; i < heat_zones.Count; i++)
+					{
+						double heat_zone_distance = stop - heat_zones[i].value;
+
+						if (heat_zone_distance < 0)
+						{
+							heat_zone_distance = Math.Abs(heat_zone_distance);
+
+							if (heat_zone_distance <= iATR[0])
+							{
+								stop = heat_zones[i].value;
+							}
+						}
+					}
+				}
 				#endregion
 			}
 			#endregion
