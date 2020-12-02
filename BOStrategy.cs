@@ -1556,9 +1556,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 						if (my_entry_order.OrderType == OrderType.StopMarket &&
 							my_entry_order.OrderState == OrderState.Working &&
 							my_entry_order.OrderAction == OrderAction.SellShort)
-						{
-							//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_long,  my_entry_market.Quantity, Time[0]));
-						}
+                        {
+							Print("There is a near short order.");
+                        }
 						else
 						{
 							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
@@ -1670,7 +1670,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							my_entry_order.OrderState == OrderState.Working &&
 							my_entry_order.OrderAction == OrderAction.Buy)
 						{
-							//							Print (String.Format("{0} // {1} // {2} // {3}", my_entry_order.StopPrice, fix_stop_price_short,  my_entry_market.Quantity, Time[0]));
+							Print("There is a near long order.");
 						}
 						else
 						{
@@ -3598,6 +3598,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					case "SMA2":
 						stop = iSMA2[0];
 						break;
+					case "SMA3":
+						stop = iSMA3[0];
+						break;
 					default:
 						return 0;
 				}
@@ -3613,6 +3616,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					case "SMA2":
 						stop = iSMA2[0];
 						break;
+					case "SMA3":
+						stop = iSMA3[0];
+						break;
 					default:
 						return 0;
 				}
@@ -3622,30 +3628,102 @@ namespace NinjaTrader.NinjaScript.Strategies
             #region Close_Price_Levels_Check
 			if (is_long)
             {
-				double swing_distance = stop - iSwing2.SwingHigh[0];
+                #region SwingsLow
+				#region Swing1
+				{
+					double swing_distance = stop - iSwing1.SwingLow[0];
 
-				if (swing_distance < 0)
+					if (swing_distance > 0)
+					{
+						if (swing_distance <= iATR[0])
+						{
+							stop = iSwing1.SwingLow[0];
+						}
+					}
+				}
+                #endregion
+
+                #region Swing2
                 {
-					swing_distance = Math.Abs(swing_distance);
-					
-					if(swing_distance <= iATR[0])
-                    {
-						stop = iSwing2.SwingHigh[0];
-                    }
-                }
-            }
+                    double swing_distance = stop - iSwing2.SwingLow[0];
+
+					if (swing_distance > 0)
+					{
+						if (swing_distance <= iATR[0])
+						{
+							stop = iSwing2.SwingLow[0];
+						}
+					}
+				}
+				#endregion
+
+				#region Swing3
+				{
+					double swing_distance = stop - iSwing3.SwingLow[0];
+
+					if (swing_distance > 0)
+					{
+						if (swing_distance <= iATR[0])
+						{
+							stop = iSwing3.SwingLow[0];
+						}
+					}
+				}
+				#endregion
+				#endregion
+			}
 			else
             {
-				double swing_distance = stop - iSwing2.SwingLow[0];
+				#region SwingsHigh
+				#region Swing1
+				{
+					double swing_distance = stop - iSwing1.SwingHigh[0];
 
-				if (swing_distance > 0)
+					if (swing_distance < 0)
+					{
+						swing_distance = Math.Abs(swing_distance);
+
+						if (swing_distance <= iATR[0])
+						{
+							stop = iSwing1.SwingHigh[0];
+						}
+					}
+				}
+                #endregion
+
+                #region Swing2
                 {
-					if (swing_distance <= iATR[0])
-                    {
-						stop = iSwing2.SwingLow[0];
-                    }
-                }
-            }
+                    double swing_distance = stop - iSwing2.SwingHigh[0];
+
+					if (swing_distance < 0)
+					{
+						swing_distance = Math.Abs(swing_distance);
+
+						if (swing_distance <= iATR[0])
+						{
+							stop = iSwing2.SwingHigh[0];
+						}
+					}
+				}
+				#endregion
+
+				#region Swing3
+				{
+					double swing_distance = stop - iSwing3.SwingHigh[0];
+
+					if (swing_distance < 0)
+					{
+						swing_distance = Math.Abs(swing_distance);
+
+						if (swing_distance <= iATR[0])
+						{
+							stop = iSwing3.SwingHigh[0];
+						}
+					}
+				}
+				#endregion
+				#endregion
+			}
 			#endregion
 
 			Print(string.Format("{0} // {1}", Time[0], stop));
