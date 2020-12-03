@@ -1536,7 +1536,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
-						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_long));
+						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
 					}
 					#endregion
 
@@ -1577,7 +1577,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
-						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_long));
+						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
 					}
 					#endregion
 				}
@@ -1627,7 +1627,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
-						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_short));
+						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
 					}
 					#endregion
 
@@ -1665,7 +1665,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
-						Print(string.Format("Trailling: {0} // {1}", Time[0], fix_stop_price_short));
+						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
 					}
 					#endregion
 				}
@@ -3510,13 +3510,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 				return new Tuple<MyStop, double>(stop, 0);
 			}
 
-			#region Stop_Lock
-			if (is_long) 
-				stop.lock_value = trade_point - current_stop;
-			else 
-				stop.lock_value = trade_point + current_stop;
-            #endregion
-
             //The stop is always going to be the furthest possible stop.
             if (is_long)
 			{
@@ -3527,6 +3520,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						min = possible_stops[i].value;
 						stop = possible_stops[i];
+						stop.lock_value = possible_stops[i].value;
 						//stop.value -= iATR[0];
 					}
 				}
@@ -3540,6 +3534,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						max = possible_stops[i].value;
 						stop = possible_stops[i];
+						stop.lock_value = possible_stops[i].value;
 						//stop.value += iATR[0];
 					}
 				}
@@ -3841,6 +3836,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 				switch (Trailling_Stop_Mode)
 				{
 					case -1:
+						for (int i = 0; i < SMAs.Count; i++)
+                        {
+							if (SMAs[i] > High[0])
+                            {
+								SMAs.RemoveAt(i);
+                            }
+                        }
+
 						double max = 0;
 						for (int i = 0; i < SMAs.Count; i++)
 						{
@@ -3852,6 +3855,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}						
 						break;
 					case 0:
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] > High[0])
+							{
+								SMAs.RemoveAt(i);
+							}
+						}
+
 						double min = 10000000000;
 						for (int i = 0; i < SMAs.Count; i++)
 						{
@@ -3880,6 +3891,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 				switch (Trailling_Stop_Mode)
 				{
 					case -1:
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] < Low[0])
+							{
+								SMAs.RemoveAt(i);
+							}
+						}
+
 						double min = 10000000000;
 						for (int i = 0; i < SMAs.Count; i++)
 						{
@@ -3891,6 +3910,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 						break;
 					case 0:
+						for (int i = 0; i < SMAs.Count; i++)
+						{
+							if (SMAs[i] < Low[0])
+							{
+								SMAs.RemoveAt(i);
+							}
+						}
+
 						double max = 0;
 						for (int i = 0; i < SMAs.Count; i++)
 						{
