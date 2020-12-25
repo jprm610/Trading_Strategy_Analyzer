@@ -56,7 +56,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		private bool cross_below_iSMA3_to_iSMA2, cross_above_iSMA3_to_iSMA2;
 		private Account myAccount;
-		private Order my_entry_order = null, my_entry_market = null, my_exit_order = null;
+		private Order my_entry_order, my_entry_market, my_exit_order;
 		#endregion
 		
 		protected override void OnStateChange()
@@ -118,7 +118,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (State == State.Configure)
 			{
-				AddDataSeries("GBPUSD", Data.BarsPeriodType.Minute, 60, Data.MarketDataType.Last);
 			}
 			else if (State == State.DataLoaded)
 			{
@@ -223,14 +222,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 		protected override void OnBarUpdate()
 		{
 			#region Chart_Initialization
-			if (BarsInProgress != 0)
-				return;
+			if (BarsInProgress != 0) return;
 
-			if (CurrentBars[0] < 0)
-				return;
+			if (CurrentBars[0] < 0) return;
 
-			if (CurrentBar < BarsRequiredToTrade || CurrentBar < max_indicator_bar_calculation)
-				return;
+			if (CurrentBar < BarsRequiredToTrade || CurrentBar < max_indicator_bar_calculation) return;
 
 			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
 			if (iSwing1.SwingHigh[0] == 0 || iSwing1.SwingLow[0] == 0 ||
@@ -243,11 +239,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//Review that the swings are charged to avoid later bugs. In other words, to check if the needed swing instances exist.
 			for (int i = 0; i <= (Days * 24); i++)
 			{
-				if (iSwing3.SwingHigh[i] == 0)
-					return;
+				if (iSwing3.SwingHigh[i] == 0) return;
 
-				if (iSwing3.SwingLow[i] == 0)
-					return;
+				if (iSwing3.SwingLow[i] == 0) return;
 			}
 			#endregion
 
@@ -1508,78 +1502,81 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				else //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 				{
-					#region Order
-					if (my_entry_order.OrderState == OrderState.Filled)
+					if (my_entry_order != null && my_entry_market != null)
 					{
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-
-						if (stop_long.is_static)
+						#region Order
+						if (my_entry_order.OrderState == OrderState.Filled)
 						{
-							if (High[0] > fix_trigger_price_long)
-							{
-								stop_long.is_static = false;
+							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
+							if (stop_long.is_static)
+							{
+								if (High[0] > fix_trigger_price_long)
+								{
+									stop_long.is_static = false;
+
+									Trailling_Stop_Definition(true);
+
+									fix_stop_price_long = Stop_Review_After_Order(true);
+								}
+							}
+							else
+							{
 								Trailling_Stop_Definition(true);
 
 								fix_stop_price_long = Stop_Review_After_Order(true);
 							}
+
+							if (fix_stop_price_long < stop_long.lock_value)
+								fix_stop_price_long = stop_long.lock_value;
+
+							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
+
+							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
 						}
-						else
+						#endregion
+
+						#region Market
+						if (my_entry_market.OrderState == OrderState.Filled)
 						{
-							Trailling_Stop_Definition(true);
-
-							fix_stop_price_long = Stop_Review_After_Order(true);
-						}
-
-						if (fix_stop_price_long < stop_long.lock_value)
-							fix_stop_price_long = stop_long.lock_value;
-
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-
-						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
-					}
-					#endregion
-
-					#region Market
-					else if (my_entry_market.OrderState == OrderState.Filled)
-					{
-						if (my_entry_order.OrderType == OrderType.StopMarket &&
-							my_entry_order.OrderState == OrderState.Working &&
-							my_entry_order.OrderAction == OrderAction.SellShort)
-                        {
-							Print("There is a near short stop order.");
-                        }
-						else
-						{
-							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
-						}
-
-						if (stop_long.is_static)
-						{
-							if (High[0] > fix_trigger_price_long)
+							if (my_entry_order.OrderType == OrderType.StopMarket &&
+								my_entry_order.OrderState == OrderState.Working &&
+								my_entry_order.OrderAction == OrderAction.SellShort)
 							{
-								stop_long.is_static = false;
+								Print("There is a near short stop order.");
+							}
+							else
+							{
+								ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
+							}
 
+							if (stop_long.is_static)
+							{
+								if (High[0] > fix_trigger_price_long)
+								{
+									stop_long.is_static = false;
+
+									Trailling_Stop_Definition(true);
+
+									fix_stop_price_long = Stop_Review_After_Order(true);
+								}
+							}
+							else
+							{
 								Trailling_Stop_Definition(true);
 
 								fix_stop_price_long = Stop_Review_After_Order(true);
 							}
+
+							if (fix_stop_price_long < stop_long.lock_value)
+								fix_stop_price_long = stop_long.lock_value;
+
+							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
+
+							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
 						}
-						else
-						{
-							Trailling_Stop_Definition(true);
-
-							fix_stop_price_long = Stop_Review_After_Order(true);
-						}
-
-						if (fix_stop_price_long < stop_long.lock_value)
-							fix_stop_price_long = stop_long.lock_value;
-
-						ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-
-						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
+						#endregion
 					}
-					#endregion
 				}
 			}
 			#endregion
@@ -1599,75 +1596,78 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				else
 				{
-					#region Order
-					if (my_entry_order.OrderState == OrderState.Filled)
+					if (my_entry_order != null && my_entry_market != null)
 					{
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-
-						if (stop_short.is_static)
+						#region Order
+						if (my_entry_order.OrderState == OrderState.Filled)
 						{
-							if (Low[0] < fix_trigger_price_short)
-							{
-								stop_short.is_static = false;
+							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
+							if (stop_short.is_static)
+							{
+								if (Low[0] < fix_trigger_price_short)
+								{
+									stop_short.is_static = false;
+
+									Trailling_Stop_Definition(false);
+
+									fix_stop_price_short = Stop_Review_After_Order(false);
+								}
+							}
+							else
+							{
 								Trailling_Stop_Definition(false);
 
 								fix_stop_price_short = Stop_Review_After_Order(false);
 							}
+
+							if (fix_stop_price_short > stop_short.lock_value)
+								fix_stop_price_short = stop_short.lock_value;
+
+							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
+
+							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
 						}
-						else
+						#endregion
+
+						#region Market
+						if (my_entry_market.OrderState == OrderState.Filled && my_entry_market != null)
 						{
-							Trailling_Stop_Definition(false);
-
-							fix_stop_price_short = Stop_Review_After_Order(false);
-						}
-
-						if (fix_stop_price_short > stop_short.lock_value)
-							fix_stop_price_short = stop_short.lock_value;
-
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-
-						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
-					}
-					#endregion
-
-					#region Market
-					else if (my_entry_market.OrderState == OrderState.Filled)
-					{
-						if (my_entry_order.OrderType == OrderType.StopMarket &&
-							my_entry_order.OrderState == OrderState.Working &&
-							my_entry_order.OrderAction == OrderAction.Buy)
-						{
-							Print("There is a near long order.");
-						}
-						else
-						{
-							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
-						}
-
-						if (stop_short.is_static)
-						{
-							if (Low[0] < fix_trigger_price_short)
+							if (my_entry_order.OrderType == OrderType.StopMarket &&
+								my_entry_order.OrderState == OrderState.Working &&
+								my_entry_order.OrderAction == OrderAction.Buy)
 							{
-								stop_short.is_static = false;
+								Print("There is a near long order.");
+							}
+							else
+							{
+								ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
+							}
 
+							if (stop_short.is_static)
+							{
+								if (Low[0] < fix_trigger_price_short)
+								{
+									stop_short.is_static = false;
+
+									Trailling_Stop_Definition(false);
+
+									fix_stop_price_short = Stop_Review_After_Order(false);
+								}
+							}
+							else
+							{
 								Trailling_Stop_Definition(false);
 
 								fix_stop_price_short = Stop_Review_After_Order(false);
 							}
+
+							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
+
+							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
 						}
-						else
-						{
-							Trailling_Stop_Definition(false);
-
-							fix_stop_price_short = Stop_Review_After_Order(false);
-						}
-
-						ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-
-						Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
+						#endregion
 					}
-					#endregion
 				}
 			}
 			#endregion
@@ -3521,7 +3521,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						min = possible_stops[i].value;
 						stop = possible_stops[i];
 						stop.lock_value = possible_stops[i].value;
-						//stop.value -= iATR[0];
+						stop.value -= iATR[0];
 					}
 				}
 			}
@@ -3535,7 +3535,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						max = possible_stops[i].value;
 						stop = possible_stops[i];
 						stop.lock_value = possible_stops[i].value;
-						//stop.value += iATR[0];
+						stop.value += iATR[0];
 					}
 				}
 			}
@@ -3818,6 +3818,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 				#endregion
 			}
 			#endregion
+
+			if (is_long)
+				stop -= iATR[0];
+			else
+				stop += iATR[0];
 
 			return stop;
 		}
