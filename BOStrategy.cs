@@ -1517,14 +1517,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 									Trailling_Stop_Definition(true);
 
-									fix_stop_price_long = Stop_Review_After_Order(true);
+									fix_stop_price_long = Trailling_Stop(true);
 								}
 							}
 							else
 							{
 								Trailling_Stop_Definition(true);
 
-								fix_stop_price_long = Stop_Review_After_Order(true);
+								fix_stop_price_long = Trailling_Stop(true);
 							}
 
 							if (fix_stop_price_long < stop_long.lock_value)
@@ -1558,14 +1558,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 									Trailling_Stop_Definition(true);
 
-									fix_stop_price_long = Stop_Review_After_Order(true);
+									fix_stop_price_long = Trailling_Stop(true);
 								}
 							}
 							else
 							{
 								Trailling_Stop_Definition(true);
 
-								fix_stop_price_long = Stop_Review_After_Order(true);
+								fix_stop_price_long = Trailling_Stop(true);
 							}
 
 							if (fix_stop_price_long < stop_long.lock_value)
@@ -1611,14 +1611,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 									Trailling_Stop_Definition(false);
 
-									fix_stop_price_short = Stop_Review_After_Order(false);
+									fix_stop_price_short = Trailling_Stop(false);
 								}
 							}
 							else
 							{
 								Trailling_Stop_Definition(false);
 
-								fix_stop_price_short = Stop_Review_After_Order(false);
+								fix_stop_price_short = Trailling_Stop(false);
 							}
 
 							if (fix_stop_price_short > stop_short.lock_value)
@@ -1652,14 +1652,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 									Trailling_Stop_Definition(false);
 
-									fix_stop_price_short = Stop_Review_After_Order(false);
+									fix_stop_price_short = Trailling_Stop(false);
 								}
 							}
 							else
 							{
 								Trailling_Stop_Definition(false);
 
-								fix_stop_price_short = Stop_Review_After_Order(false);
+								fix_stop_price_short = Trailling_Stop(false);
 							}
 
 							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
@@ -1995,7 +1995,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				Tuple<MyStop, double> Stop_Values = Stop_Review_Before_Order(Close[0], true);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(Close[0], true);
 
 				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, true).Item1) return false;
 
@@ -2013,7 +2013,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (order_type == "PendingOrder")
 			{
-				Tuple<MyStop, double> Stop_Values = Stop_Review_Before_Order(BO_level[0] + distance_to_BO, true);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(BO_level[0] + distance_to_BO, true);
 
 				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item1) return false;
 
@@ -2040,7 +2040,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{
 			if (order_type == "MarketOrder")
 			{
-				Tuple<MyStop, double> Stop_Values = Stop_Review_Before_Order(Close[0], false);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(Close[0], false);
 
 				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(Close[0], Stop_Values.Item2, false).Item1) return false;
 
@@ -2058,7 +2058,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			else if (order_type == "PendingOrder")
 			{
-				Tuple<MyStop, double> Stop_Values = Stop_Review_Before_Order(BO_level[0] - distance_to_BO, false);
+				Tuple<MyStop, double> Stop_Values = Stop_Review(BO_level[0] - distance_to_BO, false);
 
 				if (Stop_Values.Item1.value == -1 || !Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item1) return false;
 
@@ -3079,7 +3079,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		///If there is not enough protection shields the function returns -1 as the stop and 0 as the stop_distance.
 		///If there is a stop then it returns the stop value and the stop_distance.
 		///</summary>
-		public Tuple<MyStop, double> Stop_Review_Before_Order(double trade_point, bool is_long)
+		public Tuple<MyStop, double> Stop_Review(double trade_point, bool is_long)
 		{
 			//Create a list in where possible stops are going to be saved.
 			//Declare the variable stop which is going to be returned.
@@ -3545,7 +3545,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			return new Tuple<MyStop, double>(stop, stop_distance);
 		}
 
-		public double Stop_Review_After_Order(bool is_long)
+		public double Trailling_Stop(bool is_long)
 		{
 			double stop;
 
