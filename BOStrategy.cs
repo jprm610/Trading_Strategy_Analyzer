@@ -112,7 +112,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Swing1_Strength = 1;
 				Swing2_Strength = 2;
 				Heat_Zone_Stop_Strength = 3;
-				Trailling_Stop_Mode = -1;
+				Trailing_Stop_Mode = -1;
 				Fluency_Range = 1;
 				Minimum_Liquidation_Points = 2;
 			}
@@ -1485,95 +1485,133 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#endregion
 
 			#region Trade_Management
-			////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
-			///Stop Updating Process (by both trailing and SMA)
+			//TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)
+
 			#region Long
 			//While Long
 			if (Position.MarketPosition == MarketPosition.Long)
 			{
-				if (!is_long) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+				//If it is the first iteration after an order submitted:
+				if (!is_long)
 				{
+					//Set the is_long flag to true,
 					is_long = true;
 					is_short = false;
+
+					//set the amount, stop and trigger price levels,
 					fix_amount_long = amount_long;
 					fix_stop_price_long = stop_long.value;
 					fix_trigger_price_long = trigger_price_long;
+
+					//and draw the Fibonacci diagram on screen.
 					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
 				}
-				else //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+				//Or if it isn't
+				else
 				{
+					//Check that any of the entry orders (order or market) are "null", 
+					//this in order to avoid further bugs.
 					if (my_entry_order != null && my_entry_market != null)
 					{
 						#region Order
+						//And if the long order is filled:
 						if (my_entry_order.OrderState == OrderState.Filled)
 						{
-							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
-
+							//And if the current stop is static (referenced to a swing or solid structure):
 							if (stop_long.is_static)
 							{
+								//And if the fix trigger price long has been exceeded:
 								if (High[0] > fix_trigger_price_long)
 								{
+									//Set the is_static flag to false,
 									stop_long.is_static = false;
 
-									Trailling_Stop_Definition(true);
+									//define the trailing stop mode that is going to be,
+									//according to the Trailing_Stop_Mode parameter given from the user,
+									Trailing_Stop_Definition(true);
 
-									fix_stop_price_long = Trailling_Stop(true);
+									//and set the current trailing stop price level.
+									fix_stop_price_long = Trailing_Stop(true);
 								}
 							}
+							//Or if the current stop isn't static (referenced to a SMA):
 							else
 							{
-								Trailling_Stop_Definition(true);
+								//Define the trailing stop mode that is going to be,
+								//according to the Trailing_Stop_Mode parameter given from the user,
+								Trailing_Stop_Definition(true);
 
-								fix_stop_price_long = Trailling_Stop(true);
+								//and set the current trailing stop price level.
+								fix_stop_price_long = Trailing_Stop(true);
 							}
 
+							//If the stop_long is below the stop_long.lock_value:
+							//Set the stop_long value at the same level as its lock value.
 							if (fix_stop_price_long < stop_long.lock_value)
 								fix_stop_price_long = stop_long.lock_value;
 
+							//After all calculations, submit the stop_long order,
 							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
-							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
+							Print(string.Format("Trailing: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
 						}
 						#endregion
 
 						#region Market
+						//And if the long market order is filled:
 						if (my_entry_market.OrderState == OrderState.Filled)
 						{
+							//And if it is a near short order 
+							//(opposite direction order that can act as a stop order):
 							if (my_entry_order.OrderType == OrderType.StopMarket &&
 								my_entry_order.OrderState == OrderState.Working &&
 								my_entry_order.OrderAction == OrderAction.SellShort)
 							{
 								Print("There is a near short stop order.");
 							}
+							//If not submit the stop_long order.
 							else
 							{
 								ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryMarket");
 							}
 
+							//And if the current stop is static (referenced to a swing or solid structure):
 							if (stop_long.is_static)
 							{
+								//And if the fix trigger price long has been exceeded:
 								if (High[0] > fix_trigger_price_long)
 								{
+									//Set the is_static flag to false,
 									stop_long.is_static = false;
 
-									Trailling_Stop_Definition(true);
+									//define the trailing stop mode that is going to be,
+									//according to the Trailing_Stop_Mode parameter given from the user,
+									Trailing_Stop_Definition(true);
 
-									fix_stop_price_long = Trailling_Stop(true);
+									//and set the current trailing stop price level.
+									fix_stop_price_long = Trailing_Stop(true);
 								}
 							}
+							//Or if the current stop isn't static (referenced to a SMA):
 							else
 							{
-								Trailling_Stop_Definition(true);
+								//Define the trailing stop mode that is going to be,
+								//according to the Trailing_Stop_Mode parameter given from the user,
+								Trailing_Stop_Definition(true);
 
-								fix_stop_price_long = Trailling_Stop(true);
+								//and set the current trailing stop price level.
+								fix_stop_price_long = Trailing_Stop(true);
 							}
 
+							//If the stop_long is below the stop_long.lock_value:
+							//Set the stop_long value at the same level as its lock value.
 							if (fix_stop_price_long < stop_long.lock_value)
 								fix_stop_price_long = stop_long.lock_value;
 
+							//After all calculations, submit the stop_long order,
 							ExitLongStopMarket(fix_amount_long, fix_stop_price_long, @"exit", @"entryOrder");
 
-							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
+							Print(string.Format("Trailing: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_long, stop_long.lock_value));
 						}
 						#endregion
 					}
@@ -1585,86 +1623,122 @@ namespace NinjaTrader.NinjaScript.Strategies
 			//While Short
 			if (Position.MarketPosition == MarketPosition.Short)
 			{
-				if (!is_short) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+				//If it is the first iteration after an order submitted:
+				if (!is_short)
 				{
+					//Set the is_short flag to true,
 					is_long = false;
 					is_short = true;
+
+					//set the amount, stop and trigger price levels,
 					fix_amount_short = amount_short;
 					fix_stop_price_short = stop_short.value;
 					fix_trigger_price_short = trigger_price_short;
+
+					//and draw the Fibonacci diagram on screen.
 					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
 				}
+				//Or if it isn't
 				else
 				{
+					//Check that any of the entry orders (order or market) are "null", 
+					//this in order to avoid further bugs.
 					if (my_entry_order != null && my_entry_market != null)
 					{
 						#region Order
+						//And if the short order is filled:
 						if (my_entry_order.OrderState == OrderState.Filled)
 						{
-							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
-
+							//And if the current stop is static (referenced to a swing or solid structure):
 							if (stop_short.is_static)
 							{
+								//And if the fix trigger price long has been exceeded:
 								if (Low[0] < fix_trigger_price_short)
 								{
+									//Set the is_static flag to false,
 									stop_short.is_static = false;
 
-									Trailling_Stop_Definition(false);
+									//define the trailing stop mode that is going to be,
+									//according to the Trailing_Stop_Mode parameter given from the user,
+									Trailing_Stop_Definition(false);
 
-									fix_stop_price_short = Trailling_Stop(false);
+									//and set the current trailing stop price level.
+									fix_stop_price_short = Trailing_Stop(false);
 								}
 							}
+							//Or if the current stop isn't static (referenced to a SMA):
 							else
 							{
-								Trailling_Stop_Definition(false);
+								//Define the trailing stop mode that is going to be,
+								//according to the Trailing_Stop_Mode parameter given from the user,
+								Trailing_Stop_Definition(false);
 
-								fix_stop_price_short = Trailling_Stop(false);
+								//and set the current trailing stop price level.
+								fix_stop_price_short = Trailing_Stop(false);
 							}
 
+							//If the stop_short is above the stop_short.lock_value:
+							//Set the stop_short value at the same level as its lock value.
 							if (fix_stop_price_short > stop_short.lock_value)
 								fix_stop_price_short = stop_short.lock_value;
 
+							//After all calculations, submit the stop_short order,
 							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
-							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
+							Print(string.Format("Trailing: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
 						}
 						#endregion
 
 						#region Market
+						//And if the short market order is filled:
 						if (my_entry_market.OrderState == OrderState.Filled && my_entry_market != null)
 						{
+							//And if it is a near long order 
+							//(opposite direction order that can act as a stop order):
 							if (my_entry_order.OrderType == OrderType.StopMarket &&
 								my_entry_order.OrderState == OrderState.Working &&
 								my_entry_order.OrderAction == OrderAction.Buy)
 							{
 								Print("There is a near long order.");
 							}
+							//If not submit the stop_long order.
 							else
 							{
 								ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryMarket");
 							}
 
+							//And if the current stop is static (referenced to a swing or solid structure):
 							if (stop_short.is_static)
 							{
+								//And if the fix trigger price long has been exceeded:
 								if (Low[0] < fix_trigger_price_short)
 								{
+									//Set the is_static flag to false,
 									stop_short.is_static = false;
 
-									Trailling_Stop_Definition(false);
+									//define the trailing stop mode that is going to be,
+									//according to the Trailing_Stop_Mode parameter given from the user,
+									Trailing_Stop_Definition(false);
 
-									fix_stop_price_short = Trailling_Stop(false);
+									//and set the current trailing stop price level.
+									fix_stop_price_short = Trailing_Stop(false);
 								}
 							}
+							//Or if the current stop isn't static (referenced to a SMA):
 							else
 							{
-								Trailling_Stop_Definition(false);
+								//Define the trailing stop mode that is going to be,
+								//according to the Trailing_Stop_Mode parameter given from the user,
+								Trailing_Stop_Definition(false);
 
-								fix_stop_price_short = Trailling_Stop(false);
+								//and set the current trailing stop price level.
+								fix_stop_price_short = Trailing_Stop(false);
 							}
 
+							//After all calculations, submit the stop_short order,
 							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
 
-							Print(string.Format("Trailling: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
+							Print(string.Format("Trailing: {0} // {1} // Lock: {2}", Time[0], fix_stop_price_short, stop_short.lock_value));
 						}
 						#endregion
 					}
@@ -1848,8 +1922,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 		[NinjaScriptProperty]
 		[Range(-1, 3)]
-		[Display(Name = "Trailling Stop Mode", Order = 8, GroupName = "Stop")]
-		public int Trailling_Stop_Mode
+		[Display(Name = "Trailing Stop Mode", Order = 8, GroupName = "Stop")]
+		public int Trailing_Stop_Mode
 		{ get; set; }
 		#endregion
 
@@ -3545,7 +3619,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			return new Tuple<MyStop, double>(stop, stop_distance);
 		}
 
-		public double Trailling_Stop(bool is_long)
+		public double Trailing_Stop(bool is_long)
 		{
 			double stop;
 
@@ -3827,7 +3901,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			return stop;
 		}
 
-		public void Trailling_Stop_Definition(bool is_long)
+		public void Trailing_Stop_Definition(bool is_long)
         {
 			int SMA_type = 0;
 			List<double> SMAs = new List<double>();
@@ -3838,7 +3912,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			#region SMA_Recognition
 			if (is_long)
             {
-				switch (Trailling_Stop_Mode)
+				switch (Trailing_Stop_Mode)
 				{
 					case -1:
 						for (int i = 0; i < SMAs.Count; i++)
@@ -3893,7 +3967,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
             else
             {
-				switch (Trailling_Stop_Mode)
+				switch (Trailing_Stop_Mode)
 				{
 					case -1:
 						for (int i = 0; i < SMAs.Count; i++)
