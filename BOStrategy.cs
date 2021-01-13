@@ -1561,7 +1561,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//And if the long market order is filled:
 						if (my_entry_market.OrderState == OrderState.Filled)
 						{
-							//And if it is a near short order 
+							//And if there is a near short order 
 							//(opposite direction order that can act as a stop order):
 							if (my_entry_order.OrderType == OrderType.StopMarket &&
 								my_entry_order.OrderState == OrderState.Working &&
@@ -1693,7 +1693,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						//And if the short market order is filled:
 						if (my_entry_market.OrderState == OrderState.Filled && my_entry_market != null)
 						{
-							//And if it is a near long order 
+							//And if there is a near long order 
 							//(opposite direction order that can act as a stop order):
 							if (my_entry_order.OrderType == OrderType.StopMarket &&
 								my_entry_order.OrderState == OrderState.Working &&
