@@ -6,8 +6,14 @@ class holder :
 
 #Simple Moving Average (SMA)
 def SMA(prices, periods) :
-    
+
     results = holder()
 
-    for i in range(0, len(periods)) :
-        if (i <= periods) :
+    moving_avg = {}
+
+    moving_avg = prices.close.rolling(center=False, window=periods)
+
+    results = moving_avg
+    
+    return results
+

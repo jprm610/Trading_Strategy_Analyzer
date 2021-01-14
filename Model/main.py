@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from indicators import *
 
 #Read historical exchange rate file (extracted from dukascopy.com)
 df = pd.read_csv("EURUSD.csv")
@@ -11,4 +12,4 @@ df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
 
 df.set_index(df.date)
 
-print(df.head())
+SMA = SMA(df, 50)
