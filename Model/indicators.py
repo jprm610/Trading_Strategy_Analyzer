@@ -53,3 +53,28 @@ def ATR(prices, period) :
             ATRs.append(sum / period)
 
     return ATRs
+
+#Exponential Moving Average (EMA)
+def EMA(prices, period, smoothing_factor = 2) :
+
+    #Declare the constants so that the operation doesn't turn long and difficult to read.
+    constant_1 = smoothing_factor / (1 + period)
+    constant_2 = 1 - (smoothing_factor / (1 + period))
+
+    #For every row:
+    EMAs = []
+    for i in range(0, len(prices)) :
+        #If there isn't enough data to calculate,
+        #set the current average to 0.
+        if i < period :
+            EMAs.append(0)
+        #If it is the first calculation:
+        elif i == period :
+            #Use the current SMA as the last EMA in the formula.
+            SMAs = SMA(prices, period)
+            EMAs.append((prices.close[i] * constant_1) + (SMAs[period] * constant_2))
+        else :
+            #Operate the formula normally using the last EMA.
+            EMAs.append((prices.close[i] * constant_1) + (EMAs[i - 1] * constant_2))
+
+    return EMAs
