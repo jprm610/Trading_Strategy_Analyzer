@@ -29,15 +29,19 @@ df = df.drop_duplicates(keep = 'last')
 SMA20  = SMA(df, 20)
 SMA50  = SMA(df, 50)
 SMA200 = SMA(df, 200)
-ATR = ATR(df, 100)
-EMA = EMA(df, 20)
+ATR    = ATR(df, 100)
+EMA12  = EMA(df, 12)
+EMA26  = EMA(df, 26)
+MACD   = MACD(df) 
 
 #Attach those lists to columns
 df['SMA20']  = np.array(SMA20)
 df['SMA50']  = np.array(SMA50)
 df['SMA200'] = np.array(SMA200)
 df['ATR100'] = np.array(ATR)
-df['EMA'] =    np.array(EMA)
+df['EMA12']  = np.array(EMA12)
+df['EMA26']  = np.array(EMA26)
+df['MACD']   = np.array(MACD)
 
 #print(df.head(20))
 

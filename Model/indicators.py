@@ -78,3 +78,27 @@ def EMA(prices, period, smoothing_factor = 2) :
             EMAs.append((prices.close[i] * constant_1) + (EMAs[i - 1] * constant_2))
 
     return EMAs
+
+#Moving Average Convergence Divergence (MACD)
+def MACD(prices, EMA1_period = 12, EMA2_period = 26) :
+
+    #Check function parameters.
+    if (EMA1_period >= EMA2_period) :
+        print("ERROR: Wrong parameters. Usage: EMA1_period < EMA2_period")
+        return
+
+    #Create lists to store values for later calculation.
+    MACDs = []
+    EMAs_1 = EMA(prices, EMA1_period) 
+    EMAs_2 = EMA(prices, EMA2_period)
+
+    #For each row:
+    for i in range(0, len(prices)) :
+        #If the EMAs hasn't charged yet, set MACD to false.
+        if i < EMA1_period or i < EMA2_period :
+            MACDs.append(0)
+        #If all is ready apply the formula.
+        else :
+            MACDs.append(EMAs_1[i] - EMAs_2[i])
+    
+    return MACDs
