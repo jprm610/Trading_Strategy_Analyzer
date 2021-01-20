@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import statistics
 
 class holder :
     1
@@ -159,3 +160,28 @@ def Swing(prices, period) :
     
     #Return the 2 lists as a tupple.
     return swing_Highs, swing_Lows
+
+def Bollinger_Bands(prices, period, standard_deviations = 2) :
+
+    #Get the SMAs values.
+    SMAs = SMA(prices, period)
+
+    #Create the lists in where the bollinger bands are going to be saved.
+    Upper = []
+    Lower = []
+
+    #For each candle:
+    for i in range(0, len(prices)) :
+        #If there isn't enough data, 
+        #set the current bollinger bands values to 0.
+        if i < period :
+            Upper.append(0)
+            Lower.append(0)
+        else :
+            #Calculate the bollinger bands.
+            #The standard deviation is calculated with the last n closes (n = period).
+            Upper.append(SMAs[i] + (standard_deviations * statistics.stdev(prices.close[i-20:i])))
+            Lower.append(SMAs[i] - (standard_deviations * statistics.stdev(prices.close[i-20:i])))
+
+    #Return the 2 lists as a tupple.
+    return Upper, Lower
