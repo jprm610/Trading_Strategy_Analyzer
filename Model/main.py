@@ -5,6 +5,7 @@ from plotly import tools
 import plotly.graph_objs as go
 from indicators import *
 
+#-----------------------------------------DATA CLEANING-------------------------------------------------
 #Read historical exchange rate file (extracted from dukascopy.com)
 df = pd.read_csv("EURUSD.csv")
 
@@ -23,8 +24,7 @@ del df['date']
 #Drop duplicates leaving only the first value
 df = df.drop_duplicates(keep = 'last')
 
-#print(df.head())
-
+#---------------------------------------INDICATOR CALCULATIONS-------------------------------------------
 #Get all indicator lists
 SMA20  = SMA(df, 20)
 SMA50  = SMA(df, 50)
@@ -32,8 +32,10 @@ SMA200 = SMA(df, 200)
 ATR    = ATR(df, 100)
 EMA12  = EMA(df, 12)
 EMA26  = EMA(df, 26)
-MACD   = MACD(df) 
+MACD   = MACD(df)
+swingHigh, swingLow = Swing(df, 4)
 
+#-------------------------------------------BUILD NEW DATASET---------------------------------------------
 #Attach those lists to columns
 df['SMA20']  = np.array(SMA20)
 df['SMA50']  = np.array(SMA50)
@@ -42,8 +44,8 @@ df['ATR100'] = np.array(ATR)
 df['EMA12']  = np.array(EMA12)
 df['EMA26']  = np.array(EMA26)
 df['MACD']   = np.array(MACD)
-
-#print(df.head(20))
+df['SwingHigh'] = np.array(swingHigh)
+df['SwingLow'] = np.array(swingLow)
 
 """
 candles = go.Ohlc(x = df.index, open = df.open, high = df.high, low = df.low, close = df.close, name = "Data series")
