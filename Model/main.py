@@ -26,7 +26,7 @@ df = df.drop_duplicates(keep = 'last')
 
 #---------------------------------------INDICATOR CALCULATIONS-------------------------------------------
 #Get all indicator lists
-
+"""
 SMA20  = SMA(df, 20)
 SMA50  = SMA(df, 50)
 SMA200 = SMA(df, 200)
@@ -34,10 +34,12 @@ ATR    = ATR(df, 100)
 MACD   = MACD(df)
 swingHigh, swingLow = Swing(df, 4)
 BB_Upper, BB_Lower = Bollinger_Bands(df, 20)
+"""
 
+RSI = RSI(df, 14)
 #-------------------------------------------BUILD NEW DATASET---------------------------------------------
 #Attach those lists to columns
-
+"""
 df['SMA20']  = np.array(SMA20)
 df['SMA50']  = np.array(SMA50)
 df['SMA200'] = np.array(SMA200)
@@ -47,6 +49,8 @@ df['SwingHigh'] = np.array(swingHigh)
 df['SwingLow'] = np.array(swingLow)
 df["BB_Upper"] = np.array(BB_Upper)
 df["BB_Lower"] = np.array(BB_Lower)
+"""
+df["RSI"] = np.array(RSI)
 
 """
 candles = go.Ohlc(x = df.index, open = df.open, high = df.high, low = df.low, close = df.close, name = "Data series")

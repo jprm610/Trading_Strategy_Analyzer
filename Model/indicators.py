@@ -185,3 +185,51 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
 
     #Return the 2 lists as a tupple.
     return Upper, Lower
+
+def RSI(prices, period) :
+    
+    #Create a list in which the RSI values are going to be saved.
+    RSIs = []
+
+    #For each candle:
+    for i in range(0, len(prices)) :
+        #If there isn't enough data, 
+        #set the current RSI value to 0.
+        if i < period :
+            RSIs.append(0)
+        else :
+            #Create 2 lists in which the positive and negative candles are going to be saved. 
+            gains = []
+            loses = []
+
+            #Revies the last n candles (n == period).
+            for j in range(0, period + 1) :
+                #Find the type of candle (gain or lose) and save it in the 2 lists.
+                c = prices.close[i - j]
+                o = prices.open[i - j]
+                difference = prices.close[i - j] - prices.open[i - j]
+                if difference >= 0 :
+                    gains.append(difference)
+                else :
+                    loses.append(difference)
+            
+            #Check the corner cases in which there isn't gains or loses, 
+            #so arbitrary values are set to avoid indeterminations 
+            #in the RS and RSI formulas calculations.
+            if len(gains) == 0 :
+                gain_avg = 0
+            else :
+                gain_avg = sum(gains) / len(gains)
+
+            if len(loses) == 0 :
+                lose_avg = 1
+            else :
+                lose_avg = abs(sum(loses) / len(loses))
+
+            #Calculate the Relative Strength.
+            RS = gain_avg / lose_avg
+            
+            #And finally calculate the current RSI value in a range between 0 and 100 inclusive.
+            RSIs.append(100 - (100 / (1 + RS)))
+
+    return RSIs
