@@ -186,6 +186,7 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
     #Return the 2 lists as a tupple.
     return Upper, Lower
 
+#Relative Strength Index (RSI)
 def RSI(prices, period) :
     
     #Create a list in which the RSI values are going to be saved.
@@ -233,3 +234,30 @@ def RSI(prices, period) :
             RSIs.append(100 - (100 / (1 + RS)))
 
     return RSIs
+
+#On-Balance Volume (OBV)
+def OBV (prices, period) :
+
+    #Create a list in which the OBV values are going to be saved.
+    OBVs = []
+
+    #For each candle:
+    for i in range(0 , len(prices)) :
+        #If there isn't enough data, 
+        #set the current OBV value to 0.
+        if i < period :
+            volume = 0
+        else :
+            #Calculate the accumulated volume of the last n candles (n == period),
+            #adding the green candles volume and substracting the red candles volume.
+            volume = 0
+            for j in range(0, period) :
+                if (prices.close[i - j] >= prices.open[i - j]) :
+                    volume += prices.volume[i - j]
+                else :
+                    volume -= prices.volume[i - j]
+        
+        #Add the current volume as the current OBV.
+        OBVs.append(volume)
+
+    return OBVs
