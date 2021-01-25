@@ -12,7 +12,7 @@ def SMA(prices, period) :
     moving_avg = []
 
     #For each candle:
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         #If there isn't enough data to calculate,
         #set the current average to 0.
         if i < period :
@@ -34,12 +34,12 @@ def ATR(prices, period) :
     #Calculate all the ranges (high - close)
     #and save it in the ranges list.
     ranges = []
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         ranges.append(prices.high[i] - prices.low[i])
 
     #For each candle:
     ATRs = []
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         #If there isn't enough data to calculate,
         #set the current average to 0.
         if i < period :
@@ -64,7 +64,7 @@ def EMA(prices, period, smoothing_factor = 2) :
 
     #For each candle:
     EMAs = []
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         #If there isn't enough data to calculate,
         #set the current average to 0.
         if i < period :
@@ -94,7 +94,7 @@ def MACD(prices, EMA1_period = 12, EMA2_period = 26) :
     EMAs_2 = EMA(prices, EMA2_period)
 
     #For each candle:
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         #If the EMAs hasn't charged yet, set MACD to false.
         if i < EMA1_period or i < EMA2_period :
             MACDs.append(0)
@@ -114,7 +114,7 @@ def Swing(prices, period) :
     swing_Lows = []
 
     #For each candle:
-    for i in range (0, len(prices)) :
+    for i in range (len(prices)) :
         #If there isn't enough data, 
         #set the current swing values to 0.
         if i < window_constant :
@@ -130,7 +130,7 @@ def Swing(prices, period) :
 
             #SwingHigh review.
             #Review the last n (n = window_consant) candles:
-            for j in range (0, window_constant + 1) :
+            for j in range (window_constant + 1) :
                 #If there is a high over the current_high 
                 #means that there isn't any chance of swing formation, 
                 #so the current swing is the same as the last and the loop is finished.
@@ -145,7 +145,7 @@ def Swing(prices, period) :
             
             #SwingLow review.
             #Review the last n (n = window_consant) candles:
-            for j in range (0, window_constant + 1) :
+            for j in range (window_constant + 1) :
                 #If there is a low under the current_low 
                 #means that there isn't any chance of swing formation, 
                 #so the current swing is the same as the last and the loop is finished.
@@ -161,6 +161,31 @@ def Swing(prices, period) :
     #Return the 2 lists as a tupple.
     return swing_Highs, swing_Lows
 
+def Swing_Bar(swing_list, instance) :
+
+    #In the first iteration return -1 in order to avoid bugs 
+    #when trying to access a value in a list without values.
+    if len(swing_list) == 0 :
+        return -1
+
+    #Create a list in which the function values are going to be saved.
+    bars_ago = []
+
+    #For each candle, always keeping in track the changes of swing, 
+    #compute the number of candles ago (bars_ago) when the swing last changed.
+    last_swing = swing_list[-1]
+    for i in reversed(range(len(swing_list))) :
+        if swing_list[i] != last_swing :
+            bars_ago.append(len(swing_list) - i - 1)
+            last_swing = swing_list[i]
+
+    #If there isn't enoug swings charged, return -1
+    if len(bars_ago) < instance :
+        return -1
+
+    #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
+    return bars_ago[instance - 1]
+
 def Bollinger_Bands(prices, period, standard_deviations = 2) :
 
     #Get the SMAs values.
@@ -171,7 +196,7 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
     Lower = []
 
     #For each candle:
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         #If there isn't enough data, 
         #set the current bollinger bands values to 0.
         if i < period :
@@ -193,7 +218,7 @@ def RSI(prices, period) :
     RSIs = []
 
     #For each candle:
-    for i in range(0, len(prices)) :
+    for i in range(len(prices)) :
         #If there isn't enough data, 
         #set the current RSI value to 0.
         if i < period :
@@ -203,8 +228,8 @@ def RSI(prices, period) :
             gains = []
             loses = []
 
-            #Revies the last n candles (n == period).
-            for j in range(0, period + 1) :
+            #Reviews the last n candles (n == period).
+            for j in range(period + 1) :
                 #Find the type of candle (gain or lose) and save it in the 2 lists.
                 c = prices.close[i - j]
                 o = prices.open[i - j]
@@ -242,7 +267,7 @@ def OBV (prices, period) :
     OBVs = []
 
     #For each candle:
-    for i in range(0 , len(prices)) :
+    for i in range(len(prices)) :
         #If there isn't enough data, 
         #set the current OBV value to 0.
         if i < period :
@@ -251,7 +276,7 @@ def OBV (prices, period) :
             #Calculate the accumulated volume of the last n candles (n == period),
             #adding the green candles volume and substracting the red candles volume.
             volume = 0
-            for j in range(0, period) :
+            for j in range(period) :
                 if (prices.close[i - j] >= prices.open[i - j]) :
                     volume += prices.volume[i - j]
                 else :
