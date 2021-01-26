@@ -161,7 +161,7 @@ def Swing(prices, period) :
     #Return the 2 lists as a tupple.
     return swing_Highs, swing_Lows
 
-def Swing_Bar(swing_list, instance) :
+def Swing_Bar(swing_list, instance, strength) :
 
     #In the first iteration return -1 in order to avoid bugs 
     #when trying to access a value in a list without values.
@@ -173,10 +173,12 @@ def Swing_Bar(swing_list, instance) :
 
     #For each candle, always keeping in track the changes of swing, 
     #compute the number of candles ago (bars_ago) when the swing last changed.
+    #The candles are walked backwards.
+    #Always add the strength keeping in track the real point in where a swing comes up. 
     last_swing = swing_list[-1]
     for i in reversed(range(len(swing_list))) :
         if swing_list[i] != last_swing :
-            bars_ago.append(len(swing_list) - i - 1)
+            bars_ago.append(len(swing_list) + strength - i - 1)
             last_swing = swing_list[i]
 
     #If there isn't enoug swings charged, return -1

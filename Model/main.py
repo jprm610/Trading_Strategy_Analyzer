@@ -62,7 +62,7 @@ distance_to_BO = 0.0001
 swing_bars = []
 
 for i in range(len(df)) :	
-	swing_bars.append(Swing_Bar(swingLow[0:i], 1))
+	swing_bars.append(Swing_Bar(swingLow[0:i], 2, 4))
 
 df["swingBar"] = np.array(swing_bars)
 
