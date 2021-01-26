@@ -288,3 +288,31 @@ def OBV (prices, period) :
         OBVs.append(volume)
 
     return OBVs
+
+def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
+
+	if len(prices) == 0 :
+		return False
+
+	is_potential_swing = True
+
+	if is_swingHigh :
+		for i in reversed(range(1, reference_swing_bar + 1)) :
+			if prices.close[i] < opposite_swing[i - 1] + distance_to_BO :
+				is_potential_swing = False
+				break
+
+			if prices.close[i] < opposite_swing[reference_swing_bar - i] + distance_to_BO :
+				is_potential_swing = False
+				break
+	else :
+		for i in reversed(range(1, reference_swing_bar)) :
+			if prices.close[i] < opposite_swing[i - 1] - distance_to_BO :
+				is_potential_swing = False
+				break
+
+			if prices.close[i] < opposite_swing[reference_swing_bar - i] - distance_to_BO :
+				is_potential_swing = False
+				break
+	
+	return is_potential_swing

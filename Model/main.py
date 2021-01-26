@@ -59,20 +59,32 @@ df["OBV"] = np.array(OBV)
 #--------------------------------------------TRADE_EMULATION---------------------------------------------------------
 distance_to_BO = 0.0001
 
-swing_bars = []
-
-for i in range(len(df)) :	
-	swing_bars.append(Swing_Bar(swingLow[0:i], 2, 4))
-
-df["swingBar"] = np.array(swing_bars)
-
-"""
 dates = []
-price_levels = []
+trade_type = []
+#price_levels = []
 
 for i in range(len(df)) :
-	is_BO = Swing_Found(df[0:i], swingHigh, )
-"""
+
+	if i == 0 : continue
+	if swingHigh[i] == 0 or swingLow[i] == 0 : continue
+	if Swing_Bar(swingHigh[0:i], 1, 4) == -1 or Swing_Bar(swingLow[0:i], 1, 4) == -1 : continue
+
+	is_BO_long = Swing_Found(df[0:i], swingLow[0:i], Swing_Bar(swingHigh[0:i], 1, 4), True, distance_to_BO)
+	if is_BO_long :
+		dates.append(df.index[i])
+		trade_type.append("Long")
+		#print("Long")
+
+	is_BO_short = Swing_Found(df[0:i], swingHigh[0:i], Swing_Bar(swingLow[0:i], 1, 4), False, distance_to_BO)
+	if is_BO_short :
+		dates.append(df.index[i])
+		trade_type.append("Short")
+		#print("Short")
+
+trades = pd.DataFrame()
+
+trades['dates'] = np.array(dates)
+trades['type']  = np.array(trade_type)
 
 """
 candles = go.Ohlc(x = df.index, open = df.open, high = df.high, low = df.low, close = df.close, name = "Data series")
@@ -90,30 +102,5 @@ py.offline.plot(fig, filename = "main.html")
 """
 
 #Save the edited dataframe as a new .csv file
-df.to_csv('Final_frame.csv') 
-
-#----------------------------------------------------Functions-------------------------------------------------------
-def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = distance_to_BO) :
-
-	is_potential_swing = True
-
-	if is_swingHigh :
-		for i in reversed(range(reference_swing_bar + 1)) :
-			if prices.close[i] < opposite_swing[i - 1] + distance_to_BO :
-				is_potential_swing = False
-				break
-
-			if prices.close[i] < opposite_swing[reference_swing_bar - i] + distance_to_BO :
-				is_potential_swing = False
-				break
-	else :
-		for i in reversed(range(0, reference_swing_bar)) :
-			if prices.close[i] < opposite_swing[i - 1] - distance_to_BO :
-				is_potential_swing = False
-				break
-
-			if prices.close[i] < opposite_swing[reference_swing_bar - i] - distance_to_BO :
-				is_potential_swing = False
-				break
-	
-	return is_potential_swing
+df.to_csv('Final_frame.csv')
+trades.to_csv('trades.csv')
