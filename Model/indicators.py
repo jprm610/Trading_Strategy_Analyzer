@@ -207,8 +207,8 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
         else :
             #Calculate the bollinger bands.
             #The standard deviation is calculated with the last n closes (n = period).
-            Upper.append(SMAs[i] + (standard_deviations * statistics.stdev(prices.close[i-20:i])))
-            Lower.append(SMAs[i] - (standard_deviations * statistics.stdev(prices.close[i-20:i])))
+            Upper.append(SMAs[i] + (standard_deviations * statistics.stdev(prices.close[i-period:i])))
+            Lower.append(SMAs[i] - (standard_deviations * statistics.stdev(prices.close[i-period:i])))
 
     #Return the 2 lists as a tupple.
     return Upper, Lower
@@ -263,7 +263,7 @@ def RSI(prices, period) :
     return RSIs
 
 #On-Balance Volume (OBV)
-def OBV (prices, period) :
+def OBV(prices, period) :
 
     #Create a list in which the OBV values are going to be saved.
     OBVs = []
@@ -290,7 +290,7 @@ def OBV (prices, period) :
     return OBVs
 
 #Range Index
-def RI (prices, period, is_long) :
+def RI(prices, period, is_long) :
 
     #Calculate all the ranges (high - close)
     #and save it in the ranges list.
@@ -339,9 +339,9 @@ def RI (prices, period, is_long) :
     return RIs
 
 #Volume Index
-def VI (prices, period, is_long) :
+def VI(prices, period, is_long) :
 
-    #Create a list in which the RI values are going to be saved.
+    #Create a list in which the VI values are going to be saved.
     VIs = []
 
     #For each candle:
@@ -380,6 +380,51 @@ def VI (prices, period, is_long) :
                 VIs.append(1 / VI)
 
     return VIs
+
+#Tails index
+def TI(prices, period, is_long) :
+
+    #Create 2 lists in where the tails are going to be saved.
+    upper_tails = []
+    lower_tails = []
+
+    #For each candle:
+    #Check the direction of the candle to take its tails.
+    for i in range(len(prices)) :
+        if prices.close[i] >= prices.open[i] :
+            upper_tails.append(prices.high[i] - prices.close[i])
+            lower_tails.append(prices.open[i] - prices.low[i])
+        else :
+            upper_tails.append(prices.high[i] - prices.open[i])
+            lower_tails.append(prices.close[i] - prices.low[i])
+
+    #Create a list in which the TI values are going to be saved.
+    TIs = []
+
+    #For each candle:
+    for i in range(len(prices)) :
+        #If there isn't enough data, 
+        #set the current TI value to -1.
+        if i < period - 1 :
+            TIs.append(-1)
+        else :
+            #If the calculation will truncate, 
+            #set the current value to 0 and pass to the next candle.
+            if sum(upper_tails[i-period:i]) == 0 or sum(lower_tails[i-period:i]) == 0 :
+                TIs.append(0)
+                continue
+                
+            #Calculate the tails index
+            TI = sum(upper_tails[i-period:i]) / sum(lower_tails[i-period:i])
+
+            #The tail index is calculated in regard to the positive candles initially (long),
+            #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
+            if is_long :
+                TIs.append(TI)
+            else :
+                TIs.append(1 / TI)
+
+    return TIs
 
 #----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :

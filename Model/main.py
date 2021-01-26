@@ -26,6 +26,8 @@ df = df.drop_duplicates(keep = 'last')
 
 #---------------------------------------INDICATOR CALCULATIONS-------------------------------------------------------
 #Get all indicator lists
+TIH = TI(df, 10, True)
+TIL = TI(df, 10, False)
 RIH = RI(df, 10, True)
 RIL = RI(df, 10, False)
 VIH = VI(df, 10, True)
@@ -42,6 +44,8 @@ OBV = OBV(df, 10)
 
 #-------------------------------------------BUILD NEW DATASET--------------------------------------------------------
 #Attach those lists to columns
+df['TIH'] = np.array(TIH)
+df['TIL'] = np.array(TIL)
 df['RIH'] = np.array(RIH)
 df['RIL'] = np.array(RIL)
 df['VIH'] = np.array(VIH)
