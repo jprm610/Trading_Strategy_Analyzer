@@ -14,16 +14,16 @@ def SMA(prices, period) :
     #For each candle:
     for i in range(len(prices)) :
         #If there isn't enough data to calculate,
-        #set the current average to 0.
-        if i < period :
-            moving_avg.append(0)
+        #set the current average to -1.
+        if i < period - 1 :
+            moving_avg.append(-1)
         #If there is:
         else :
             #Add all the last (period) closes and average them,
             #then save it in the averages list.
             sum = 0
             for j in range(0, period) :
-                sum += prices.close[i - j - 1]
+                sum += prices.close[i - j]
             moving_avg.append(sum / period)
 
     return moving_avg
@@ -41,9 +41,9 @@ def ATR(prices, period) :
     ATRs = []
     for i in range(len(prices)) :
         #If there isn't enough data to calculate,
-        #set the current average to 0.
-        if i < period :
-            ATRs.append(0)
+        #set the current average to -1.
+        if i < period - 1 :
+            ATRs.append(-1)
         #If there is:
         else :
             #Add all the last (period) ranges and average them,
@@ -66,11 +66,11 @@ def EMA(prices, period, smoothing_factor = 2) :
     EMAs = []
     for i in range(len(prices)) :
         #If there isn't enough data to calculate,
-        #set the current average to 0.
-        if i < period :
-            EMAs.append(0)
+        #set the current average to -1.
+        if i < period - 1 :
+            EMAs.append(-1)
         #If it is the first calculation:
-        elif i == period :
+        elif i == period - 1:
             #Use the current SMA as the last EMA in the formula.
             SMAs = SMA(prices, period)
             EMAs.append((prices.close[i] * constant_1) + (SMAs[period] * constant_2))
@@ -95,9 +95,9 @@ def MACD(prices, EMA1_period = 12, EMA2_period = 26) :
 
     #For each candle:
     for i in range(len(prices)) :
-        #If the EMAs hasn't charged yet, set MACD to false.
+        #If the EMAs hasn't charged yet, set MACD to -1.
         if i < EMA1_period or i < EMA2_period :
-            MACDs.append(0)
+            MACDs.append(-1)
         #If all is ready apply the formula.
         else :
             MACDs.append(EMAs_1[i] - EMAs_2[i])
@@ -200,10 +200,10 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
     #For each candle:
     for i in range(len(prices)) :
         #If there isn't enough data, 
-        #set the current bollinger bands values to 0.
+        #set the current bollinger bands values to -1.
         if i < period :
-            Upper.append(0)
-            Lower.append(0)
+            Upper.append(-1)
+            Lower.append(-1)
         else :
             #Calculate the bollinger bands.
             #The standard deviation is calculated with the last n closes (n = period).
@@ -222,9 +222,9 @@ def RSI(prices, period) :
     #For each candle:
     for i in range(len(prices)) :
         #If there isn't enough data, 
-        #set the current RSI value to 0.
-        if i < period :
-            RSIs.append(0)
+        #set the current RSI value to -1.
+        if i < period - 1 :
+            RSIs.append(-1)
         else :
             #Create 2 lists in which the positive and negative candles are going to be saved. 
             gains = []
@@ -271,9 +271,9 @@ def OBV (prices, period) :
     #For each candle:
     for i in range(len(prices)) :
         #If there isn't enough data, 
-        #set the current OBV value to 0.
-        if i < period :
-            volume = 0
+        #set the current OBV value to -1.
+        if i < period - 1:
+            volume = -1
         else :
             #Calculate the accumulated volume of the last n candles (n == period),
             #adding the green candles volume and substracting the red candles volume.
@@ -289,15 +289,109 @@ def OBV (prices, period) :
 
     return OBVs
 
+#Range Index
+def RI (prices, period, is_long) :
+
+    #Calculate all the ranges (high - close)
+    #and save it in the ranges list.
+    ranges = []
+    for i in range(len(prices)) :
+        ranges.append(prices.high[i] - prices.low[i])
+
+    #Create a list in which the RI values are going to be saved.
+    RIs = []
+
+    #For each candle:
+    for i in range(len(prices)) :
+        #If there isn't enough data, 
+        #set the current RI value to -1.
+        if i < period - 1 :
+            RIs.append(-1)
+        else :
+            #Create 2 lists in which the positive and negative candle ranges are going to be saved.
+            gains = []
+            loses = []
+
+            #For the last n candles (n == period)
+            #filter the positive and negative ranges according to the open and close of each candle.
+            for j in range(period) :
+                if prices.close[i - j] >= prices.open[i - j] :
+                    gains.append(ranges[i - j])
+                else :
+                    loses.append(ranges[i - j])
+
+            #If the calculation will truncate, 
+            #set the current value to 0 and pass to the next candle.
+            if sum(gains) == 0 or sum(loses) == 0 :
+                RIs.append(0)
+                continue
+            
+            #Calculate the range index.
+            RI = sum(gains) / sum(loses)
+
+            #The range index is calculated in regard to the positive candles initially (long),
+            #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
+            if is_long :
+                RIs.append(RI)
+            else :
+                RIs.append(1 / RI)
+
+    return RIs
+
+#Volume Index
+def VI (prices, period, is_long) :
+
+    #Create a list in which the RI values are going to be saved.
+    VIs = []
+
+    #For each candle:
+    for i in range(len(prices)) :
+        #If there isn't enough data, 
+        #set the current VI value to -1.
+        if i < period - 1 :
+            VIs.append(-1)
+        else :
+            #Create 2 lists in which the positive and negative candle volumes are going to be saved.
+            gains = []
+            loses = []
+
+            #For the last n candles (n == period)
+            #filter the positive and negative volumes according to the open and close of each candle.
+            for j in range(period) :
+                if prices.close[i - j] >= prices.open[i - j] :
+                    gains.append(prices.volume[i - j])
+                else :
+                    loses.append(prices.volume[i - j])
+
+            #If the calculation will truncate, 
+            #set the current value to 0 and pass to the next candle.
+            if sum(gains) == 0 or sum(loses) == 0 :
+                VIs.append(0)
+                continue
+                
+            #Calculate the volume index
+            VI = sum(gains) / sum(loses)
+
+            #The volume index is calculated in regard to the positive candles initially (long),
+            #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
+            if is_long :
+                VIs.append(VI)
+            else :
+                VIs.append(1 / VI)
+
+    return VIs
+
+#----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
 
+    #If there isn't enough data, return False.
 	if len(prices) == 0 :
 		return False
 
 	is_potential_swing = True
 
 	if is_swingHigh :
-		for i in reversed(range(1, reference_swing_bar + 1)) :
+		for i in reversed(range(reference_swing_bar + 1)) :
 			if prices.close[i] < opposite_swing[i - 1] + distance_to_BO :
 				is_potential_swing = False
 				break
@@ -306,7 +400,7 @@ def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, dista
 				is_potential_swing = False
 				break
 	else :
-		for i in reversed(range(1, reference_swing_bar)) :
+		for i in reversed(range(reference_swing_bar + 1)) :
 			if prices.close[i] < opposite_swing[i - 1] - distance_to_BO :
 				is_potential_swing = False
 				break

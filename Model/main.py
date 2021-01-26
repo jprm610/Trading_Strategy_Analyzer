@@ -26,9 +26,11 @@ df = df.drop_duplicates(keep = 'last')
 
 #---------------------------------------INDICATOR CALCULATIONS-------------------------------------------------------
 #Get all indicator lists
+RIH = RI(df, 10, True)
+RIL = RI(df, 10, False)
+VIH = VI(df, 10, True)
+VIL = VI(df, 10, False)
 swingHigh, swingLow = Swing(df, 4)
-
-"""
 SMA20  = SMA(df, 20)
 SMA50  = SMA(df, 50)
 SMA200 = SMA(df, 200)
@@ -37,14 +39,15 @@ MACD   = MACD(df)
 BB_Upper, BB_Lower = Bollinger_Bands(df, 20)
 RSI = RSI(df, 14)
 OBV = OBV(df, 10)
-"""
 
 #-------------------------------------------BUILD NEW DATASET--------------------------------------------------------
 #Attach those lists to columns
+df['RIH'] = np.array(RIH)
+df['RIL'] = np.array(RIL)
+df['VIH'] = np.array(VIH)
+df['VIL'] = np.array(VIL)
 df['SwingHigh'] = np.array(swingHigh)
 df['SwingLow'] = np.array(swingLow)
-
-"""
 df["RSI"] = np.array(RSI)
 df['SMA20']  = np.array(SMA20)
 df['SMA50']  = np.array(SMA50)
@@ -54,14 +57,15 @@ df['MACD']   = np.array(MACD)
 df["BB_Upper"] = np.array(BB_Upper)
 df["BB_Lower"] = np.array(BB_Lower)
 df["OBV"] = np.array(OBV)
-"""
 
 #--------------------------------------------TRADE_EMULATION---------------------------------------------------------
+"""
 distance_to_BO = 0.0001
 
 dates = []
 trade_type = []
 #price_levels = []
+
 
 for i in range(len(df)) :
 
@@ -85,6 +89,7 @@ trades = pd.DataFrame()
 
 trades['dates'] = np.array(dates)
 trades['type']  = np.array(trade_type)
+"""
 
 """
 candles = go.Ohlc(x = df.index, open = df.open, high = df.high, low = df.low, close = df.close, name = "Data series")
@@ -103,4 +108,4 @@ py.offline.plot(fig, filename = "main.html")
 
 #Save the edited dataframe as a new .csv file
 df.to_csv('Final_frame.csv')
-trades.to_csv('trades.csv')
+#trades.to_csv('trades.csv')
