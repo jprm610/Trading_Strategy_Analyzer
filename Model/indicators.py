@@ -2,8 +2,96 @@ import pandas as pd
 import numpy as np
 import statistics
 
-class holder :
-    1
+class MySwing :
+    def __init__(self, strength, high_list, low_list):
+        self.list = list
+        self.strength = strength
+        self.high_list = high_list 
+        self.low_list = low_list
+
+    def Swing(self, prices, period) :
+
+        #Define the mobile swing review window.
+        window_constant = (2 * period)
+
+        #Create the lists in where the swings are going to be saved.
+        swing_Highs = []
+        swing_Lows = []
+
+        #For each candle:
+        for i in range (len(prices)) :
+            #If there isn't enough data, 
+            #set the current swing values to 0.
+            if i < window_constant :
+                swing_Highs.append(0)
+                swing_Lows.append(0)
+                last_swing_high = 0
+                last_swing_low  = 0
+            else :
+                #Define the high and the low values 
+                #that are going to be evaluated in order to recognize swings.
+                current_high = prices.high[i - period]
+                current_low  = prices.low[i - period]
+
+                #SwingHigh review.
+                #Review the last n (n = window_consant) candles:
+                for j in range (window_constant + 1) :
+                    #If there is a high over the current_high 
+                    #means that there isn't any chance of swing formation, 
+                    #so the current swing is the same as the last and the loop is finished.
+                    if prices.high[i - j] > current_high :
+                        swing_Highs.append(last_swing_high)
+                        break
+                    #If any of the highs overpassed the current high, 
+                    #it means that there's a swing formation. 
+                    elif j == window_constant:
+                        swing_Highs.append(current_high)
+                        last_swing_high = current_high
+                
+                #SwingLow review.
+                #Review the last n (n = window_consant) candles:
+                for j in range (window_constant + 1) :
+                    #If there is a low under the current_low 
+                    #means that there isn't any chance of swing formation, 
+                    #so the current swing is the same as the last and the loop is finished.
+                    if prices.low[i - j] < current_low :
+                        swing_Lows.append(last_swing_low)
+                        break
+                    #If any of the highs overpassed the current high, 
+                    #it means that there's a swing formation.
+                    elif j == window_constant:
+                        swing_Lows.append(current_low)
+                        last_swing_low = current_low
+        
+        #Return the 2 lists as a tupple.
+        return swing_Highs, swing_Lows
+
+    def Swing_Bar(self, swing_list, instance, strength) :
+
+        #In the first iteration return -1 in order to avoid bugs 
+        #when trying to access a value in a list without values.
+        if len(swing_list) == 0 :
+            return -1
+
+        #Create a list in which the function values are going to be saved.
+        bars_ago = []
+
+        #For each candle, always keeping in track the changes of swing, 
+        #compute the number of candles ago (bars_ago) when the swing last changed.
+        #The candles are walked backwards.
+        #Always add the strength keeping in track the real point in where a swing comes up. 
+        last_swing = swing_list[-1]
+        for i in reversed(range(len(swing_list))) :
+            if swing_list[i] != last_swing :
+                bars_ago.append(len(swing_list) + strength - i - 1)
+                last_swing = swing_list[i]
+
+        #If there isn't enoug swings charged, return -1
+        if len(bars_ago) < instance :
+            return -1
+
+        #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
+        return bars_ago[instance - 1]
 
 #Simple Moving Average (SMA)
 def SMA(prices, period) :
@@ -103,90 +191,6 @@ def MACD(prices, EMA1_period = 12, EMA2_period = 26) :
             MACDs.append(EMAs_1[i] - EMAs_2[i])
     
     return MACDs
-
-def Swing(prices, period) :
-
-    #Define the mobile swing review window.
-    window_constant = (2 * period)
-
-    #Create the lists in where the swings are going to be saved.
-    swing_Highs = []
-    swing_Lows = []
-
-    #For each candle:
-    for i in range (len(prices)) :
-        #If there isn't enough data, 
-        #set the current swing values to 0.
-        if i < window_constant :
-            swing_Highs.append(0)
-            swing_Lows.append(0)
-            last_swing_high = 0
-            last_swing_low  = 0
-        else :
-            #Define the high and the low values 
-            #that are going to be evaluated in order to recognize swings.
-            current_high = prices.high[i - period]
-            current_low  = prices.low[i - period]
-
-            #SwingHigh review.
-            #Review the last n (n = window_consant) candles:
-            for j in range (window_constant + 1) :
-                #If there is a high over the current_high 
-                #means that there isn't any chance of swing formation, 
-                #so the current swing is the same as the last and the loop is finished.
-                if prices.high[i - j] > current_high :
-                    swing_Highs.append(last_swing_high)
-                    break
-                #If any of the highs overpassed the current high, 
-                #it means that there's a swing formation. 
-                elif j == window_constant:
-                    swing_Highs.append(current_high)
-                    last_swing_high = current_high
-            
-            #SwingLow review.
-            #Review the last n (n = window_consant) candles:
-            for j in range (window_constant + 1) :
-                #If there is a low under the current_low 
-                #means that there isn't any chance of swing formation, 
-                #so the current swing is the same as the last and the loop is finished.
-                if prices.low[i - j] < current_low :
-                    swing_Lows.append(last_swing_low)
-                    break
-                #If any of the highs overpassed the current high, 
-                #it means that there's a swing formation.
-                elif j == window_constant:
-                    swing_Lows.append(current_low)
-                    last_swing_low = current_low
-    
-    #Return the 2 lists as a tupple.
-    return swing_Highs, swing_Lows
-
-def Swing_Bar(swing_list, instance, strength) :
-
-    #In the first iteration return -1 in order to avoid bugs 
-    #when trying to access a value in a list without values.
-    if len(swing_list) == 0 :
-        return -1
-
-    #Create a list in which the function values are going to be saved.
-    bars_ago = []
-
-    #For each candle, always keeping in track the changes of swing, 
-    #compute the number of candles ago (bars_ago) when the swing last changed.
-    #The candles are walked backwards.
-    #Always add the strength keeping in track the real point in where a swing comes up. 
-    last_swing = swing_list[-1]
-    for i in reversed(range(len(swing_list))) :
-        if swing_list[i] != last_swing :
-            bars_ago.append(len(swing_list) + strength - i - 1)
-            last_swing = swing_list[i]
-
-    #If there isn't enoug swings charged, return -1
-    if len(bars_ago) < instance :
-        return -1
-
-    #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
-    return bars_ago[instance - 1]
 
 def Bollinger_Bands(prices, period, standard_deviations = 2) :
 
@@ -436,21 +440,21 @@ def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, dista
 	is_potential_swing = True
 
 	if is_swingHigh :
-		for i in reversed(range(reference_swing_bar + 1)) :
+		for i in range(reference_swing_bar + 1) :
 			if prices.close[i] < opposite_swing[i - 1] + distance_to_BO :
 				is_potential_swing = False
 				break
 
-			if prices.close[i] < opposite_swing[reference_swing_bar - i] + distance_to_BO :
+			if prices.close[i] < opposite_swing[reference_swing_bar - 1] + distance_to_BO :
 				is_potential_swing = False
 				break
 	else :
-		for i in reversed(range(reference_swing_bar + 1)) :
+		for i in range(reference_swing_bar + 1) :
 			if prices.close[i] < opposite_swing[i - 1] - distance_to_BO :
 				is_potential_swing = False
 				break
 
-			if prices.close[i] < opposite_swing[reference_swing_bar - i] - distance_to_BO :
+			if prices.close[i] < opposite_swing[reference_swing_bar - 1] - distance_to_BO :
 				is_potential_swing = False
 				break
 	
