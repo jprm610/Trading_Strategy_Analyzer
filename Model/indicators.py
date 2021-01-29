@@ -2,12 +2,15 @@ import pandas as pd
 import numpy as np
 import statistics
 
-class MySwing :
-    def __init__(self, strength, high_list, low_list):
-        self.list = list
+#Define the MySwing object:
+class MySwing(object) :
+    #The lists in which the swingLows and swingHighs are going to be saved.
+    highs = []
+    lows = []
+
+    #Define the swing turn on function.
+    def __init__(self, strength):
         self.strength = strength
-        self.high_list = high_list 
-        self.low_list = low_list
 
     def Swing(self, prices, period) :
 

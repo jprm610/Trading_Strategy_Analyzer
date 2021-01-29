@@ -26,16 +26,14 @@ df = df.drop_duplicates(keep = 'last')
 
 #---------------------------------------INDICATOR CALCULATIONS-------------------------------------------------------
 #Get all indicator lists
-highs = []
-lows = []
-swing4 = MySwing(4, highs, lows)
-swing4.high_list, swing4.low_list = MySwing.Swing(MySwing, df, swing4.strength)
+swing4 = MySwing(4)
+swing4.highs, swing4.lows = MySwing.Swing(MySwing, df, swing4.strength)
 
 swingHighBar = []
 swingLowBar = []
 for i in range(len(df)) :
-	swingHighBar.append(swing4.Swing_Bar(swing4.high_list[0:i], 1, swing4.strength))
-	swingLowBar.append(swing4.Swing_Bar(swing4.low_list[0:i], 1, swing4.strength))
+	swingHighBar.append(swing4.Swing_Bar(swing4.highs[0:i], 1, swing4.strength))
+	swingLowBar.append(swing4.Swing_Bar(swing4.lows[0:i], 1, swing4.strength))
 
 """
 TIH = TI(df, 10, True)
@@ -56,8 +54,8 @@ OBV = OBV(df, 10)
 
 #-------------------------------------------BUILD NEW DATASET--------------------------------------------------------
 #Attach those lists to columns
-df['SwingHigh'] = np.array(swing4.high_list)
-df['SwingLow'] = np.array(swing4.low_list)
+df['SwingHigh'] = np.array(swing4.highs)
+df['SwingLow'] = np.array(swing4.lows)
 df['SwingHighBar'] = np.array(swingHighBar)
 df['SwingLowBar'] = np.array(swingLowBar)
 
