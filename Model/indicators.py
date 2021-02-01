@@ -106,7 +106,7 @@ def SMA(prices, period) :
     for i in range(len(prices)) :
         #If there isn't enough data to calculate,
         #set the current average to -1.
-        if i < period - 1 :
+        if i < period :
             moving_avg.append(-1)
         #If there is:
         else :
@@ -133,7 +133,7 @@ def ATR(prices, period) :
     for i in range(len(prices)) :
         #If there isn't enough data to calculate,
         #set the current average to -1.
-        if i < period - 1 :
+        if i < period :
             ATRs.append(-1)
         #If there is:
         else :
@@ -436,6 +436,7 @@ def TI(prices, period, is_long) :
 #----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
 
+
     #If there isn't enough data, return False.
 	if len(prices) == 0 :
 		return False
@@ -462,3 +463,24 @@ def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, dista
 				break
 	
 	return is_potential_swing
+
+def Cross(is_above, indicator_that_crosses, indicator_base) :
+    
+    #If the SMAs aren't completely charged return False.
+    if indicator_that_crosses[-2] == -1 or indicator_base[-2] == -1 :
+        return False
+
+    if is_above :
+        #If the indicator_that_crosses crosses above, 
+        #it means that it was less or equal than the indicator_base 
+        #and then it became greater than the indicator_base.
+        if indicator_that_crosses[-2] <= indicator_base[-2] and indicator_that_crosses[-1] > indicator_base[-1] :
+            return True
+    else:
+        #If the indicator_that_crosses crosses below, 
+        #it means that it was greater or equal than the indicator_base 
+        #and then it became less than the indicator_base.
+        if indicator_that_crosses[-2] >= indicator_base[-2] and indicator_that_crosses[-1] < indicator_base[-1] :
+            return True
+
+    return False
