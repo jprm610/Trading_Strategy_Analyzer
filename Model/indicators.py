@@ -5,8 +5,8 @@ import statistics
 #Define the MySwing object:
 class MySwing(object) :
     #The lists in which the swingLows and swingHighs are going to be saved.
-    highs = []
-    lows = []
+    swingHigh = []
+    swingLow = []
 
     #Define the swing turn on function.
     def __init__(self, strength):
@@ -435,34 +435,45 @@ def TI(prices, period, is_long) :
 
 #----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
-
-
+    
     #If there isn't enough data, return False.
-	if len(prices) == 0 :
-		return False
+    if len(prices) == 0 :
+        return False
 
-	is_potential_swing = True
+    is_potential_swing = True
 
-	if is_swingHigh :
-		for i in range(reference_swing_bar + 1) :
-			if prices.close[i] < opposite_swing[i - 1] + distance_to_BO :
-				is_potential_swing = False
-				break
+    if is_swingHigh :
+        for i in range(reference_swing_bar + 1) :
 
-			if prices.close[i] < opposite_swing[reference_swing_bar - 1] + distance_to_BO :
-				is_potential_swing = False
-				break
-	else :
-		for i in range(reference_swing_bar + 1) :
-			if prices.close[i] < opposite_swing[i - 1] - distance_to_BO :
-				is_potential_swing = False
-				break
+            close = prices.close[-(i + 1)]
+            swing = opposite_swing[-(i + 1)]
 
-			if prices.close[i] < opposite_swing[reference_swing_bar - 1] - distance_to_BO :
-				is_potential_swing = False
-				break
-	
-	return is_potential_swing
+            if prices.close[-(i + 1)] < opposite_swing[-(i + 1)] + distance_to_BO :
+                is_potential_swing = False
+                break
+
+            swing = opposite_swing[-(reference_swing_bar + 2)]
+
+            if prices.close[-(i + 1)] < opposite_swing[-(reference_swing_bar + 2)] + distance_to_BO :
+                is_potential_swing = False
+                break
+    else :
+        for i in range(reference_swing_bar + 1) :
+
+            close = prices.close[-(i + 1)]
+            swing = opposite_swing[-(i + 1)]
+
+            if prices.close[-(i + 1)] > opposite_swing[-(i + 1)] - distance_to_BO :
+                is_potential_swing = False
+                break
+            
+            swing = opposite_swing[-(reference_swing_bar + 2)]
+
+            if prices.close[-(i + 1)] > opposite_swing[-(reference_swing_bar + 2)] - distance_to_BO :
+                is_potential_swing = False
+                break
+
+    return is_potential_swing
 
 def Cross(is_above, indicator_that_crosses, indicator_base) :
     

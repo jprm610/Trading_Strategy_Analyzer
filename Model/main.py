@@ -27,28 +27,178 @@ df = df.drop_duplicates(keep = 'last')
 
 # region PARAMETERS
 IncipientTrendFactor = 3
+distance_to_BO = 0.0001
 # endregion
 
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
-iswing4 = MySwing(4)
-iswing4.highs, iswing4.lows = MySwing.Swing(MySwing, df, iswing4.strength)
+iSwing4 = MySwing(4)
+iSwing4.swingHigh, iSwing4.swingLow = MySwing.Swing(MySwing, df, iSwing4.strength)
 iSMA20  = SMA(df, 20)
 iSMA50  = SMA(df, 50)
 iSMA200 = SMA(df, 200)
 iATR100 = ATR(df, 100)
+iMACD_12_26 = MACD(df)
+iBB_Upper_20, iBB_Lower_20 = Bollinger_Bands(df, 20)
 
 """
-TIH = TI(df, 10, True)
-TIL = TI(df, 10, False)
-RIH = RI(df, 10, True)
-RIL = RI(df, 10, False)
-VIH = VI(df, 10, True)
-VIL = VI(df, 10, False)
-MACD   = MACD(df)
-BB_Upper, BB_Lower = Bollinger_Bands(df, 20)
+iTIH = TI(df, 10, True)
+iTIL = TI(df, 10, False)
+iRIH = RI(df, 10, True)
+iRIL = RI(df, 10, False)
+iVIH = VI(df, 10, True)
+iVIL = VI(df, 10, False)
+iOBV = OBV(df, 10)
+
 RSI = RSI(df, 14)
-OBV = OBV(df, 10)
+"""
+# endregion
+
+# region TRADE_EMULATION
+
+dates = []
+trade_type = []
+iSMA20_ot = []
+iSMA50_ot = [] 
+iSMA200_ot = [] 
+iATR100_ot = []
+iMACD_12_26_ot = []
+iBB_Upper_20_ot = []
+iBB_Lower_20_ot = []
+y = []
+y2 = []
+y_index = []
+
+
+is_upward = False
+is_downward = False
+on_trade = False
+trade_point_long = -1
+trade_point_short = -1
+
+for i in range(len(df)) :
+
+	if i == 0 : continue
+
+	if iSwing4.swingHigh[i] == 0 or iSwing4.swingLow[i] == 0 : continue
+
+	if iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength) == -1 or iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength) == -1 : continue
+
+	if iSMA200[i] == -1 or iSMA50[i] == -1 or iSMA20[i] == -1 or iATR100[i] == -1 : continue
+
+	current_stop = iATR100[i] * 3
+	
+	if not on_trade :
+
+		if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
+			trade_point_long = iSwing4.swingHigh[i] + distance_to_BO
+
+		if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
+			trade_point_short = iSwing4.swingLow[i] - distance_to_BO
+
+		if trade_point_long != -1 :
+			if df.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
+				if abs(df.close[i] - iSMA50[i]) <= current_stop : #cambiar trade point
+					on_trade = True
+					entry_close = df.close[i]
+					max_income = df.high[i]
+
+					dates.append(df.index[i])
+					trade_type.append("Long")
+					iSMA20_ot.append(iSMA20[i - 1])
+					iSMA50_ot.append(iSMA50[i - 1])
+					iSMA200_ot.append(iSMA200[i - 1])
+					iATR100_ot.append(iATR100[i - 1])
+					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
+					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
+					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
+		
+		if trade_point_short != -1 :
+			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
+				if abs(df.close[i] - iSMA50[i]) <= current_stop :
+					on_trade = True
+					entry_close = df.close[i]
+					max_income = df.low[i]
+
+					dates.append(df.index[i])
+					trade_type.append("Short")
+					iSMA20_ot.append(iSMA20[i - 1])
+					iSMA50_ot.append(iSMA50[i - 1])
+					iSMA200_ot.append(iSMA200[i - 1])
+					iATR100_ot.append(iATR100[i - 1])
+					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
+					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
+					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
+	else :
+		if len(trade_type) == 0 : continue
+
+		if trade_type[-1] == "Long" :
+			if df.high[i] > max_income :
+				max_income = df.high[i]
+			
+			if df.close[i] <= iSMA50[i] :
+				on_trade = False
+				outcome = df.close[i] - entry_close
+				trade_point_long = -1
+				trade_point_short = -1
+
+				y.append(outcome)
+				y_index.append(df.index[i])
+				y2.append(max_income - entry_close)
+		else :
+			if df.low[i] < max_income :
+				max_income = df.low[i]
+
+			if df.close[i] >= iSMA50[i] :
+				on_trade = False
+				outcome = df.close[i] - entry_close
+				trade_point_long = -1
+				trade_point_short = -1
+
+				if outcome >= 0 :
+					y.append(-outcome)
+				else :
+					y.append(abs(outcome))
+				y_index.append(df.index[i])
+				y2.append(abs(max_income - entry_close))
+	
+	if i == len(df) - 1 and on_trade :
+		y.append(-1)
+		y_index.append(df.index[i])
+
+	"""
+	trade_point_long = -1
+	trade_point_short = -1
+
+	if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
+		trade_point_long = iSwing4.swingHigh[i] + distance_to_BO
+
+	if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
+		trade_point_short = iSwing4.swingLow[i] - distance_to_BO
+
+	dates.append(df.index[i])
+	tradepl.append(trade_point_long)
+	tradeps.append(trade_point_short)
+	"""
+
+trades = pd.DataFrame()
+
+trades['entry_date'] = np.array(dates)
+trades['trade_type']  = np.array(trade_type)
+trades['iSMA20']  = np.array(iSMA20_ot)
+trades['iSMA50']  = np.array(iSMA50_ot)
+trades['iSMA200']  = np.array(iSMA200_ot)
+trades['iATR100']  = np.array(iSMA200_ot)
+trades['iMACD_12_26']  = np.array(iMACD_12_26_ot)
+trades['iBB_Lower_20']  = np.array(iBB_Lower_20_ot)
+trades['iBB_Upper_20']  = np.array(iBB_Upper_20_ot)
+trades['y']  = np.array(y)
+trades['y2'] = np.array(y2)
+trades['exit_date'] = np.array(y_index)
+
+"""
+trades['tradesh'] = np.array(tradeps)
+trades['tradelo'] = np.array(tradepl)
 """
 # endregion
 
@@ -58,6 +208,8 @@ df['SMA20']  = np.array(iSMA20)
 df['SMA50']  = np.array(iSMA50)
 df['SMA200'] = np.array(iSMA200)
 df['ATR100'] = np.array(iATR100)
+df['swing4high'] = np.array(iSwing4.swingHigh)
+df['swing4low'] = np.array(iSwing4.swingLow)
 
 """
 df['TIH'] = np.array(TIH)
@@ -72,79 +224,6 @@ df["BB_Upper"] = np.array(BB_Upper)
 df["BB_Lower"] = np.array(BB_Lower)
 df["OBV"] = np.array(OBV)
 """
-# endregion
-
-# region TRADE_EMULATION
-
-distance_to_BO = 0.0001
-
-dates = []
-incipient_type = []
-
-is_upward = False
-is_downward = False
-
-for i in range(len(df)) :
-
-	if i == 0 : continue
-
-	if iSMA200[i] == -1 or iSMA50[i] == -1 or iSMA20[i] == -1 or iATR100[i] == -1 : continue
-
-	SMA_dis = abs(iSMA200[i] - iSMA50[i])
-
-	# region OVERALL MARKET MOVEMENT
-	#If the second biggest SMA crosses above the biggest SMA it means the market is going upwards.
-	#The ATR value is saved immediately, the is_upward flag is set to true while its opposite flag (is_downward) 
-	#is set to false.
-	#Finally the CurrentBar of the event is saved for later calculations.
-	if Cross(True, iSMA50[0:i], iSMA200[0:i]) :
-		ATR_crossing_value = iATR100[i]
-		is_upward = True
-		is_downward = False
-		cross_above_bar = i
-
-	#If the second biggest SMA crosses below the biggest SMA it means the market is going downwards.
-	#The ATR value is saved immediately, the is_downward flag is set to true while its opposite flag (is_upward) 
-	#is set to false.
-	#Finally the CurrentBar of the event is saved for later calculations.
-	if Cross(False, iSMA50[0:i], iSMA200[0:i]) :
-		ATR_crossing_value = iATR100[i]
-		is_downward = True
-		is_upward = False
-		cross_below_bar = i
-	# endregion
-
-	# region INCIPIENT TREND IDENTIFICATION
-	#IncipientTrend: There has been a crossing event with the 2 biggest SMAs and
-	#the distance between them is greater or equal to the ATR value at the SMAs crossing event multiplied by the 
-	#IncipientTrendFactor parameter.
-
-	#If the overall market movement is going upwards and the Incipient Trend is confirmed, 
-	#the is_incipient_up_trend flag is set to true
-	#while its opposite (is_incipient_down_trend) is set to false and the gray_ellipse_short flag is set to false.
-	if is_upward and SMA_dis >= IncipientTrendFactor * ATR_crossing_value :
-		is_incipient_up_trend = True
-		is_incipient_down_trend = False
-		gray_ellipse_short = False
-		dates.append(df.index[i])
-		incipient_type.append("Upwards")
-
-	#If the overall market movement is going downwards and the Incipient Trend is confirmed, 
-	#the is_incipient_down_trend flag is set to true
-	#while its opposite (is_incipient_up_trend) is set to false and the gray_ellipse_long flag is set to false.		
-	if is_downward and SMA_dis >= IncipientTrendFactor * ATR_crossing_value :
-		is_incipient_down_trend = True
-		is_incipient_up_trend = False
-		gray_ellipse_long = False
-		dates.append(df.index[i])
-		incipient_type.append("Downwards")
-	# endregion
-
-
-trades = pd.DataFrame()
-
-trades['dates'] = np.array(dates)
-trades['cross_type']  = np.array(incipient_type)
 # endregion
 
 """
@@ -173,15 +252,22 @@ fig.append_trace(SMA1, 1, 1)
 fig.append_trace(SMA2, 1, 1)
 
 py.offline.plot(fig, filename = "main.html")
-"""
 
+"""
 fig = go.Figure(data=[go.Candlestick(x=df.index[201:],
                                      open=df.open[201:], 
                                      high=df.high[201:],
                                      low=df.low[201:],
                                      close=df.close[201:]), 
-                      go.Scatter(x=df.index[201:], y=df.SMA200[201:], line=dict(color='yellow', width=1)),
-                      go.Scatter(x=df.index[201:], y=df.SMA50[201:], line=dict(color='red', width=1))])
+					  go.Scatter(x=df.index[201:], y=df.swing4high[201:], line=dict(color='orange', width=1)),
+					  go.Scatter(x=df.index[201:], y=df.swing4low[201:], line=dict(color='blue', width=1)),
+                      go.Scatter(x=df.index[201:], y=df.SMA200[201:], line=dict(color='red', width=1)),
+                      go.Scatter(x=df.index[201:], y=df.SMA50[201:], line=dict(color='yellow', width=1))],
+					  layout = Layout(
+    						plot_bgcolor='rgba(0,0,0)',
+							paper_bgcolor='rgba(0,0,0)'
+					  ))
+
 
 py.offline.plot(fig, filename = "main.html")
 
