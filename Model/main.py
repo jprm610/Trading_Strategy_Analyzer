@@ -23,8 +23,6 @@ del df['date']
 
 #Drop duplicates leaving only the first value
 df = df.drop_duplicates(keep = 'last')
-
-df2 = df[0:1500].copy()
 # endregion
 
 # region PARAMETERS
@@ -35,13 +33,13 @@ distance_to_BO = 0.0001
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
 iSwing4 = MySwing(4)
-iSwing4.swingHigh, iSwing4.swingLow = MySwing.Swing(MySwing, df2, iSwing4.strength)
-iSMA20  = SMA(df2, 20)
-iSMA50  = SMA(df2, 50)
-iSMA200 = SMA(df2, 200)
-iATR100 = ATR(df2, 100)
-iMACD_12_26 = MACD(df2)
-iBB_Upper_20, iBB_Lower_20 = Bollinger_Bands(df2, 20)
+iSwing4.swingHigh, iSwing4.swingLow = MySwing.Swing(MySwing, df, iSwing4.strength)
+iSMA20  = SMA(df, 20)
+iSMA50  = SMA(df, 50)
+iSMA200 = SMA(df, 200)
+iATR100 = ATR(df, 100)
+iMACD_12_26 = MACD(df)
+iBB_Upper_20, iBB_Lower_20 = Bollinger_Bands(df, 20)
 
 """
 iTIH = TI(df, 10, True)
@@ -68,12 +66,9 @@ iMACD_12_26_ot = []
 iBB_Upper_20_ot = []
 iBB_Lower_20_ot = []
 y = []
+y2 = []
 y_index = []
 
-"""
-tradeps = []
-tradepl = []
-"""
 
 is_upward = False
 is_downward = False
@@ -81,7 +76,7 @@ on_trade = False
 trade_point_long = -1
 trade_point_short = -1
 
-for i in range(len(df2)) :
+for i in range(len(df)) :
 
 	if i == 0 : continue
 
@@ -95,19 +90,20 @@ for i in range(len(df2)) :
 	
 	if not on_trade :
 
-		if Swing_Found(df2[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
+		if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
 			trade_point_long = iSwing4.swingHigh[i] + distance_to_BO
 
-		if Swing_Found(df2[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
+		if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
 			trade_point_short = iSwing4.swingLow[i] - distance_to_BO
 
 		if trade_point_long != -1 :
-			if df2.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
-				if abs(df2.close[i] - iSMA50[i]) <= current_stop : #cambiar trade point
+			if df.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
+				if abs(df.close[i] - iSMA50[i]) <= current_stop : #cambiar trade point
 					on_trade = True
-					entry_close = df2.close[i]
+					entry_close = df.close[i]
+					max_income = df.high[i]
 
-					dates.append(df2.index[i])
+					dates.append(df.index[i])
 					trade_type.append("Long")
 					iSMA20_ot.append(iSMA20[i - 1])
 					iSMA50_ot.append(iSMA50[i - 1])
@@ -118,12 +114,13 @@ for i in range(len(df2)) :
 					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
 		
 		if trade_point_short != -1 :
-			if df2.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
-				if abs(df2.close[i] - iSMA50[i]) <= current_stop :
+			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
+				if abs(df.close[i] - iSMA50[i]) <= current_stop :
 					on_trade = True
-					entry_close = df2.close[i]
+					entry_close = df.close[i]
+					max_income = df.low[i]
 
-					dates.append(df2.index[i])
+					dates.append(df.index[i])
 					trade_type.append("Short")
 					iSMA20_ot.append(iSMA20[i - 1])
 					iSMA50_ot.append(iSMA50[i - 1])
@@ -136,18 +133,25 @@ for i in range(len(df2)) :
 		if len(trade_type) == 0 : continue
 
 		if trade_type[-1] == "Long" :
-			if df2.close[i] <= iSMA50[i] :
+			if df.high[i] > max_income :
+				max_income = df.high[i]
+			
+			if df.close[i] <= iSMA50[i] :
 				on_trade = False
-				outcome = df2.close[i] - entry_close
+				outcome = df.close[i] - entry_close
 				trade_point_long = -1
 				trade_point_short = -1
 
 				y.append(outcome)
-				y_index.append(df2.index[i])
+				y_index.append(df.index[i])
+				y2.append(max_income - entry_close)
 		else :
-			if df2.close[i] >= iSMA50[i] :
+			if df.low[i] < max_income :
+				max_income = df.low[i]
+
+			if df.close[i] >= iSMA50[i] :
 				on_trade = False
-				outcome = df2.close[i] - entry_close
+				outcome = df.close[i] - entry_close
 				trade_point_long = -1
 				trade_point_short = -1
 
@@ -155,28 +159,27 @@ for i in range(len(df2)) :
 					y.append(-outcome)
 				else :
 					y.append(abs(outcome))
-				y_index.append(df2.index[i])
+				y_index.append(df.index[i])
+				y2.append(abs(max_income - entry_close))
 	
-	if i == len(df2) - 1 and on_trade :
+	if i == len(df) - 1 and on_trade :
 		y.append(-1)
-		y_index.append(df2.index[i])
+		y_index.append(df.index[i])
 
 	"""
 	trade_point_long = -1
 	trade_point_short = -1
 
-	if Swing_Found(df2[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
+	if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
 		trade_point_long = iSwing4.swingHigh[i] + distance_to_BO
 
-	if Swing_Found(df2[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
+	if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
 		trade_point_short = iSwing4.swingLow[i] - distance_to_BO
 
-	dates.append(df2.index[i])
+	dates.append(df.index[i])
 	tradepl.append(trade_point_long)
 	tradeps.append(trade_point_short)
 	"""
-	
-
 
 trades = pd.DataFrame()
 
@@ -190,7 +193,8 @@ trades['iMACD_12_26']  = np.array(iMACD_12_26_ot)
 trades['iBB_Lower_20']  = np.array(iBB_Lower_20_ot)
 trades['iBB_Upper_20']  = np.array(iBB_Upper_20_ot)
 trades['y']  = np.array(y)
-trades['exit_date'] = np.array(y_index) 
+trades['y2'] = np.array(y2)
+trades['exit_date'] = np.array(y_index)
 
 """
 trades['tradesh'] = np.array(tradeps)
@@ -200,12 +204,12 @@ trades['tradelo'] = np.array(tradepl)
 
 # region BUILD NEW DATASET
 #Attach those lists to columns
-df2['SMA20']  = np.array(iSMA20)
-df2['SMA50']  = np.array(iSMA50)
-df2['SMA200'] = np.array(iSMA200)
-df2['ATR100'] = np.array(iATR100)
-df2['swing4high'] = np.array(iSwing4.swingHigh)
-df2['swing4low'] = np.array(iSwing4.swingLow)
+df['SMA20']  = np.array(iSMA20)
+df['SMA50']  = np.array(iSMA50)
+df['SMA200'] = np.array(iSMA200)
+df['ATR100'] = np.array(iATR100)
+df['swing4high'] = np.array(iSwing4.swingHigh)
+df['swing4low'] = np.array(iSwing4.swingLow)
 
 """
 df['TIH'] = np.array(TIH)
@@ -250,15 +254,15 @@ fig.append_trace(SMA2, 1, 1)
 py.offline.plot(fig, filename = "main.html")
 
 """
-fig = go.Figure(data=[go.Candlestick(x=df2.index[201:],
-                                     open=df2.open[201:], 
-                                     high=df2.high[201:],
-                                     low=df2.low[201:],
-                                     close=df2.close[201:]), 
-					  go.Scatter(x=df2.index[201:], y=df2.swing4high[201:], line=dict(color='orange', width=1)),
-					  go.Scatter(x=df2.index[201:], y=df2.swing4low[201:], line=dict(color='blue', width=1)),
-                      go.Scatter(x=df2.index[201:], y=df2.SMA200[201:], line=dict(color='red', width=1)),
-                      go.Scatter(x=df2.index[201:], y=df2.SMA50[201:], line=dict(color='yellow', width=1))],
+fig = go.Figure(data=[go.Candlestick(x=df.index[201:],
+                                     open=df.open[201:], 
+                                     high=df.high[201:],
+                                     low=df.low[201:],
+                                     close=df.close[201:]), 
+					  go.Scatter(x=df.index[201:], y=df.swing4high[201:], line=dict(color='orange', width=1)),
+					  go.Scatter(x=df.index[201:], y=df.swing4low[201:], line=dict(color='blue', width=1)),
+                      go.Scatter(x=df.index[201:], y=df.SMA200[201:], line=dict(color='red', width=1)),
+                      go.Scatter(x=df.index[201:], y=df.SMA50[201:], line=dict(color='yellow', width=1))],
 					  layout = Layout(
     						plot_bgcolor='rgba(0,0,0)',
 							paper_bgcolor='rgba(0,0,0)'
@@ -268,5 +272,5 @@ fig = go.Figure(data=[go.Candlestick(x=df2.index[201:],
 py.offline.plot(fig, filename = "main.html")
 
 #Save the edited dataframe as a new .csv file
-df2.to_csv('Final_frame.csv')
+df.to_csv('Final_frame.csv')
 trades.to_csv('trades.csv')
