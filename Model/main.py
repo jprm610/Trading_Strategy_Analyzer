@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import plotly as py
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from plotly.graph_objs import *
 from indicators import *
@@ -40,6 +41,7 @@ iSMA200 = SMA(df, 200)
 iATR100 = ATR(df, 100)
 iMACD_12_26 = MACD(df)
 iBB_Upper_20, iBB_Lower_20 = Bollinger_Bands(df, 20)
+iROC100 = ROC(df, 100)
 
 """
 iTIH = TI(df, 10, True)
@@ -55,7 +57,6 @@ RSI = RSI(df, 14)
 # endregion
 
 # region TRADE_EMULATION
-
 dates = []
 trade_type = []
 iSMA20_ot = []
@@ -65,6 +66,7 @@ iATR100_ot = []
 iMACD_12_26_ot = []
 iBB_Upper_20_ot = []
 iBB_Lower_20_ot = []
+iROC100_ot = []
 y = []
 y2 = []
 y_index = []
@@ -112,6 +114,7 @@ for i in range(len(df)) :
 					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
 					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
 					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
+					iROC100_ot.append(iROC100[i - 1])
 		
 		if trade_point_short != -1 :
 			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
@@ -129,6 +132,7 @@ for i in range(len(df)) :
 					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
 					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
 					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
+					iROC100_ot.append(iROC100[i - 1])
 	else :
 		if len(trade_type) == 0 : continue
 
@@ -166,21 +170,6 @@ for i in range(len(df)) :
 		y.append(-1)
 		y_index.append(df.index[i])
 
-	"""
-	trade_point_long = -1
-	trade_point_short = -1
-
-	if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
-		trade_point_long = iSwing4.swingHigh[i] + distance_to_BO
-
-	if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
-		trade_point_short = iSwing4.swingLow[i] - distance_to_BO
-
-	dates.append(df.index[i])
-	tradepl.append(trade_point_long)
-	tradeps.append(trade_point_short)
-	"""
-
 trades = pd.DataFrame()
 
 trades['entry_date'] = np.array(dates)
@@ -192,15 +181,12 @@ trades['iATR100']  = np.array(iSMA200_ot)
 trades['iMACD_12_26']  = np.array(iMACD_12_26_ot)
 trades['iBB_Lower_20']  = np.array(iBB_Lower_20_ot)
 trades['iBB_Upper_20']  = np.array(iBB_Upper_20_ot)
+trades['iROC_100'] = np.array(iROC100_ot)
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
 trades['exit_date'] = np.array(y_index)
-
-"""
-trades['tradesh'] = np.array(tradeps)
-trades['tradelo'] = np.array(tradepl)
-"""
 # endregion
+
 
 # region BUILD NEW DATASET
 #Attach those lists to columns
@@ -208,6 +194,10 @@ df['SMA20']  = np.array(iSMA20)
 df['SMA50']  = np.array(iSMA50)
 df['SMA200'] = np.array(iSMA200)
 df['ATR100'] = np.array(iATR100)
+df['ROC100'] = np.array(iROC100)
+df['MACD1226'] = np.array(iMACD_12_26)
+df['BBLower20'] = np.array(iBB_Lower_20)
+df['BBUpper20'] = np.array(iBB_Upper_20)
 df['swing4high'] = np.array(iSwing4.swingHigh)
 df['swing4low'] = np.array(iSwing4.swingLow)
 
@@ -226,50 +216,47 @@ df["OBV"] = np.array(OBV)
 """
 # endregion
 
-"""
-candles = go.Ohlc(x = df.index[201:], open = df.open[201:], high = df.high[201:], low = df.low[201:], close = df.close[201:], name = "Data series")
-SMA1 = go.Scatter(x = df.index[201:], y = df.SMA200[201:], name = 'SMA1')
-SMA2 = go.Scatter(x = df.index[201:], y = df.SMA50[201:], name = 'SMA2')
-#SMA3 = go.Scatter(x = df.index, y = df.SMA20, name = 'SMA3')
+# region PLOT CANDLES
+fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
 
-fig = py.subplots.make_subplots(rows=2, cols=1, shared_xaxes=True)
-fig.append_trace(candles, 1, 1)
-fig.append_trace(SMA1, 1, 1)
-fig.append_trace(SMA2, 1, 1)
-#fig.append_trace(SMA3, 1, 1)
+fig.add_trace(
+	go.Candlestick(x=df.index[201:],
+                   	open=df.open[201:], 
+                   	high=df.high[201:],
+                   	low=df.low[201:],
+                    close=df.close[201:]), 
+	row=1, col=1
+)
 
-fig = go.Figure(data=[go.Candlestick(x=df.index,
-                open=df.open[201:],
-                high=df.high[201:],
-                low=df.low[201:],
-                close=df.close[201:])])
+fig.add_trace(
+	go.Scatter(x=df.index[201:], y=df.swing4high[201:], line=dict(color='orange', width=1)),
+	row=1, col=1
+)
 
-SMA1 = go.Scatter(x = df.index[201:], y = df.SMA200[201:], name = 'SMA1')
-SMA2 = go.Scatter(x = df.index[201:], y = df.SMA50[201:], name = 'SMA2')
+fig.add_trace(
+	go.Scatter(x=df.index[201:], y=df.swing4low[201:], line=dict(color='blue', width=1)),
+	row=1, col=1
+)
 
-fig = py.subplots.make_subplots(rows=2, cols=1, shared_xaxes=True)
-fig.append_trace(SMA1, 1, 1)
-fig.append_trace(SMA2, 1, 1)
+fig.add_trace(
+    go.Scatter(x=df.index[201:], y=df.SMA200[201:], line=dict(color='red', width=1)),
+	row=1, col=1
+)
 
-py.offline.plot(fig, filename = "main.html")
+fig.add_trace(
+    go.Scatter(x=df.index[201:], y=df.SMA50[201:], line=dict(color='yellow', width=1)),
+	row=1, col=1
+)
 
-"""
-fig = go.Figure(data=[go.Candlestick(x=df.index[201:],
-                                     open=df.open[201:], 
-                                     high=df.high[201:],
-                                     low=df.low[201:],
-                                     close=df.close[201:]), 
-					  go.Scatter(x=df.index[201:], y=df.swing4high[201:], line=dict(color='orange', width=1)),
-					  go.Scatter(x=df.index[201:], y=df.swing4low[201:], line=dict(color='blue', width=1)),
-                      go.Scatter(x=df.index[201:], y=df.SMA200[201:], line=dict(color='red', width=1)),
-                      go.Scatter(x=df.index[201:], y=df.SMA50[201:], line=dict(color='yellow', width=1))],
-					  layout = Layout(
-    						plot_bgcolor='rgba(0,0,0)',
-							paper_bgcolor='rgba(0,0,0)'
-					  ))
+fig.add_trace(
+    go.Scatter(x=df.index[201:], y=df.ROC100[201:], line=dict(color='white', width=1)),
+	row=2, col=1
+)
 
+fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
 py.offline.plot(fig, filename = "main.html")
+# endregion
 
 #Save the edited dataframe as a new .csv file
 df.to_csv('Final_frame.csv')

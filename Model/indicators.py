@@ -96,6 +96,29 @@ class MySwing(object) :
         #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
         return bars_ago[instance - 1]
 
+#Price Rate of Change (ROC)
+def ROC(prices, period) :
+
+    #Create the list of ROCs results
+    ROCs = []
+
+    #For each candle:
+    for i in range(len(prices)) :
+        #If there isn't enough data to calculate,
+        #set the current average to -1.
+        if i < period :
+            ROCs.append(-1)
+        #If there is:
+        else :
+            #Calculate the current ROC. Formula:
+            #     ROC = 100 * Closing_Price[i] - Closing_Price[i - period]
+            #                   Closing_Price[i - period]
+
+            current_ROC = 100 * ((prices.close[i] - prices.close[i - period]) / prices.close[i - period])
+            ROCs.append(current_ROC)
+
+    return ROCs
+
 #Simple Moving Average (SMA)
 def SMA(prices, period) :
 
@@ -444,31 +467,19 @@ def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, dista
 
     if is_swingHigh :
         for i in range(reference_swing_bar + 1) :
-
-            close = prices.close[-(i + 1)]
-            swing = opposite_swing[-(i + 1)]
-
             if prices.close[-(i + 1)] < opposite_swing[-(i + 1)] + distance_to_BO :
                 is_potential_swing = False
                 break
-
-            swing = opposite_swing[-(reference_swing_bar + 2)]
 
             if prices.close[-(i + 1)] < opposite_swing[-(reference_swing_bar + 2)] + distance_to_BO :
                 is_potential_swing = False
                 break
     else :
         for i in range(reference_swing_bar + 1) :
-
-            close = prices.close[-(i + 1)]
-            swing = opposite_swing[-(i + 1)]
-
             if prices.close[-(i + 1)] > opposite_swing[-(i + 1)] - distance_to_BO :
                 is_potential_swing = False
                 break
             
-            swing = opposite_swing[-(reference_swing_bar + 2)]
-
             if prices.close[-(i + 1)] > opposite_swing[-(reference_swing_bar + 2)] - distance_to_BO :
                 is_potential_swing = False
                 break
