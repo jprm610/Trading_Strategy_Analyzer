@@ -35,15 +35,21 @@ distance_to_BO = 0.0001
 #Get all indicator lists
 iSwing4 = MySwing(4)
 iSwing4.swingHigh, iSwing4.swingLow = MySwing.Swing(MySwing, df, iSwing4.strength)
+
 iATR100 = ATR(df, 100)
+
 iSMA20  = SMA(df, 20)
 iSMA50  = SMA(df, 50)
 iSMA200 = SMA(df, 200)
+
 iEMA20  = EMA(df, 20)
 iEMA50  = EMA(df, 50)
 iEMA200 = EMA(df, 200)
+
 iMACD_12_26 = MACD(df)
+
 iBB_Upper_20, iBB_Lower_20 = Bollinger_Bands(df, 20)
+
 iROC20 = ROC(df, 20)
 iROC50 = ROC(df, 50)
 iROC200 = ROC(df, 200)
@@ -78,11 +84,12 @@ iEMA20_ot = []
 iEMA50_ot = []
 iEMA200_ot = []
 
+iRI_ot = []
 iOBV_ot = []
+
 y = []
 y2 = []
 y_index = []
-
 
 is_upward = False
 is_downward = False
@@ -99,6 +106,9 @@ for i in range(len(df)) :
 	if iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength) == -1 or iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength) == -1 : continue
 
 	if iSMA200[i] == -1 or iSMA50[i] == -1 or iSMA20[i] == -1 or iATR100[i] == -1 : continue
+
+	trade_point_short = -1
+	trade_point_long = -1
 
 	current_stop = iATR100[i] * 3
 	
@@ -133,6 +143,7 @@ for i in range(len(df)) :
 					iEMA50_ot.append(iEMA50[i - 1])
 					iEMA200_ot.append(iEMA200[i - 1])
 					iOBV_ot.append(OBV(df[0:i], 10))
+					iRI_ot.append(RI(df[0:i], 10, True))
 		
 		if trade_point_short != -1 :
 			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
@@ -157,6 +168,7 @@ for i in range(len(df)) :
 					iEMA50_ot.append(iEMA50[i - 1])
 					iEMA200_ot.append(iEMA200[i - 1])
 					iOBV_ot.append(OBV(df[0:i], 10))
+					iRI_ot.append(RI(df[0:i], 10, False))
 	else :
 		if len(trade_type) == 0 : continue
 
@@ -221,6 +233,7 @@ trades['iBBLower20'] = np.array(iBB_Lower_20_ot)
 trades['iMACD1226'] = np.array(iMACD_12_26_ot)
 
 trades['iOBV'] = np.array(iOBV_ot)
+trades['iRI'] = np.array(iRI_ot)
 
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
@@ -267,7 +280,6 @@ df["OBV"] = np.array(OBV)
 # endregion
 
 # region PLOT CANDLES
-"""
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
 
 fig.add_trace(
@@ -307,7 +319,6 @@ fig.add_trace(
 fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
 py.offline.plot(fig, filename = "main.html")
-"""
 # endregion
 
 #Save the edited dataframe as a new .csv file

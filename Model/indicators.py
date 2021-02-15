@@ -313,48 +313,36 @@ def RI(prices, period, is_long) :
     #Calculate all the ranges (high - close)
     #and save it in the ranges list.
     ranges = []
-    for i in range(len(prices)) :
-        ranges.append(prices.high[i] - prices.low[i])
+    for i in range(period) :
+        high = prices.high[-(i + 1)]
+        low = prices.low[-(i + 1)]
+        ranges.append(prices.high[-(i + 1)] - prices.low[-(i + 1)])
 
-    #Create a list in which the RI values are going to be saved.
-    RIs = []
+    #Create 2 lists in which the positive and negative candle ranges are going to be saved.
+    gains = []
+    loses = []
 
-    #For each candle:
-    for i in range(len(prices)) :
-        #If there isn't enough data, 
-        #set the current RI value to -1.
-        if i < period - 1 :
-            RIs.append(-1)
+    #For the last n candles (n == period)
+    #filter the positive and negative ranges according to the open and close of each candle.
+    for i in range(period) :
+        if prices.close[-(i + 1)] >= prices.open[-(i + 1)] :
+            gains.append(ranges[-(i + 1)])
         else :
-            #Create 2 lists in which the positive and negative candle ranges are going to be saved.
-            gains = []
-            loses = []
+            loses.append(ranges[-(i + 1)])
 
-            #For the last n candles (n == period)
-            #filter the positive and negative ranges according to the open and close of each candle.
-            for j in range(period) :
-                if prices.close[i - j] >= prices.open[i - j] :
-                    gains.append(ranges[i - j])
-                else :
-                    loses.append(ranges[i - j])
+    #If the calculation will truncate, 
+    #set the current value to 0 and pass to the next candle.
+    if sum(gains) == 0 or sum(loses) == 0 : return 0
+    
+    #Calculate the range index.
+    RI = sum(gains) / sum(loses)
 
-            #If the calculation will truncate, 
-            #set the current value to 0 and pass to the next candle.
-            if sum(gains) == 0 or sum(loses) == 0 :
-                RIs.append(0)
-                continue
-            
-            #Calculate the range index.
-            RI = sum(gains) / sum(loses)
+    #The range index is calculated in regard to the positive candles initially (long),
+    #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
+    if not is_long :
+        RI = 1 / RI
 
-            #The range index is calculated in regard to the positive candles initially (long),
-            #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
-            if is_long :
-                RIs.append(RI)
-            else :
-                RIs.append(1 / RI)
-
-    return RIs
+    return RI
 
 #Volume Index
 def VI(prices, period, is_long) :
