@@ -331,61 +331,47 @@ def RI(prices, period, is_long) :
             loses.append(ranges[-(i + 1)])
 
     #If the calculation will truncate, 
-    #set the current value to 0 and pass to the next candle.
+    #set the current value to 0.
     if sum(gains) == 0 or sum(loses) == 0 : return 0
     
     #Calculate the range index.
-    RI = sum(gains) / sum(loses)
+    range_index = sum(gains) / sum(loses)
 
     #The range index is calculated in regard to the positive candles initially (long),
     #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
     if not is_long :
-        RI = 1 / RI
+        range_index = 1 / range_index
 
-    return RI
+    return range_index
 
 #Volume Index
 def VI(prices, period, is_long) :
+    
+    #Create 2 lists in which the positive and negative candle volumes are going to be saved.
+    gains = []
+    loses = []
 
-    #Create a list in which the VI values are going to be saved.
-    VIs = []
-
-    #For each candle:
-    for i in range(len(prices)) :
-        #If there isn't enough data, 
-        #set the current VI value to -1.
-        if i < period - 1 :
-            VIs.append(-1)
+    #For the last n candles (n == period)
+    #filter the positive and negative volumes according to the open and close of each candle.
+    for i in range(period) :
+        if prices.close[-(i + 1)] >= prices.open[-(i + 1)] :
+            gains.append(prices.volume[-(i + 1)])
         else :
-            #Create 2 lists in which the positive and negative candle volumes are going to be saved.
-            gains = []
-            loses = []
+            loses.append(prices.volume[-(i + 1)])
 
-            #For the last n candles (n == period)
-            #filter the positive and negative volumes according to the open and close of each candle.
-            for j in range(period) :
-                if prices.close[i - j] >= prices.open[i - j] :
-                    gains.append(prices.volume[i - j])
-                else :
-                    loses.append(prices.volume[i - j])
+    #If the calculation will truncate, 
+    #set the current value to 0.
+    if sum(gains) == 0 or sum(loses) == 0 : return 0
+        
+    #Calculate the volume index
+    volume_index = sum(gains) / sum(loses)
 
-            #If the calculation will truncate, 
-            #set the current value to 0 and pass to the next candle.
-            if sum(gains) == 0 or sum(loses) == 0 :
-                VIs.append(0)
-                continue
-                
-            #Calculate the volume index
-            VI = sum(gains) / sum(loses)
+    #The volume index is calculated in regard to the positive candles initially (long),
+    #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
+    if not is_long :
+        volume_index = 1 / volume_index
 
-            #The volume index is calculated in regard to the positive candles initially (long),
-            #so in case it is regarding to negative candles (short), apply the multiplicative inverse.
-            if is_long :
-                VIs.append(VI)
-            else :
-                VIs.append(1 / VI)
-
-    return VIs
+    return volume_index
 
 #Tails index
 def TI(prices, period, is_long) :

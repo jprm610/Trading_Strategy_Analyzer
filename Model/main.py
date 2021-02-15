@@ -31,6 +31,8 @@ IncipientTrendFactor = 3
 distance_to_BO = 0.0001
 # endregion
 
+#vi = VI(df[0:260], 10, False)
+
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
 iSwing4 = MySwing(4)
@@ -70,20 +72,27 @@ RSI = RSI(df, 14)
 # region TRADE_EMULATION
 dates = []
 trade_type = []
+
 iSMA20_ot = []
 iSMA50_ot = [] 
-iSMA200_ot = [] 
+iSMA200_ot = []
+
 iATR100_ot = []
+
 iMACD_12_26_ot = []
+
 iBB_Upper_20_ot = []
 iBB_Lower_20_ot = []
+
 iROC20_ot = []
 iROC50_ot = []
 iROC200_ot = []
+
 iEMA20_ot = []
 iEMA50_ot = []
 iEMA200_ot = []
 
+iVI_ot = []
 iRI_ot = []
 iOBV_ot = []
 
@@ -120,6 +129,7 @@ for i in range(len(df)) :
 		if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
 			trade_point_short = iSwing4.swingLow[i] - distance_to_BO
 
+		# region ENTRY_MARKET_LONG
 		if trade_point_long != -1 :
 			if df.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
@@ -144,7 +154,10 @@ for i in range(len(df)) :
 					iEMA200_ot.append(iEMA200[i - 1])
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, True))
-		
+					iVI_ot.append(VI(df[0:i], 10 ,True))
+		# endregion
+
+		# region ENTRY_MARKET_SHORT
 		if trade_point_short != -1 :
 			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
@@ -169,6 +182,8 @@ for i in range(len(df)) :
 					iEMA200_ot.append(iEMA200[i - 1])
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, False))
+					iVI_ot.append(VI(df[0:i], 10 ,False))
+		# endregion
 	else :
 		if len(trade_type) == 0 : continue
 
@@ -234,6 +249,7 @@ trades['iMACD1226'] = np.array(iMACD_12_26_ot)
 
 trades['iOBV'] = np.array(iOBV_ot)
 trades['iRI'] = np.array(iRI_ot)
+trades['iVI'] = np.array(iVI_ot)
 
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
