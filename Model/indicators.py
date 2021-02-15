@@ -181,10 +181,10 @@ def EMA(prices, period, smoothing_factor = 2) :
     for i in range(len(prices)) :
         #If there isn't enough data to calculate,
         #set the current average to -1.
-        if i < period - 1 :
+        if i < period :
             EMAs.append(-1)
         #If it is the first calculation:
-        elif i == period - 1:
+        elif i == period :
             #Use the current SMA as the last EMA in the formula.
             SMAs = SMA(prices, period)
             EMAs.append((prices.close[i] * constant_1) + (SMAs[period] * constant_2))
@@ -295,29 +295,17 @@ def RSI(prices, period) :
 #On-Balance Volume (OBV)
 def OBV(prices, period) :
 
-    #Create a list in which the OBV values are going to be saved.
-    OBVs = []
-
-    #For each candle:
-    for i in range(len(prices)) :
-        #If there isn't enough data, 
-        #set the current OBV value to -1.
-        if i < period - 1:
-            volume = -1
+    #Calculate the net volume, adding positive candles and substracting negative candles volumes.
+    net_volume = 0
+    for i in range(period) :
+        if (prices.close[-(i + 1)] >= prices.open[-(i + 1)]) :
+            volume = prices.volume[-(i + 1)]
+            net_volume += prices.volume[-(i + 1)]
         else :
-            #Calculate the accumulated volume of the last n candles (n == period),
-            #adding the green candles volume and substracting the red candles volume.
-            volume = 0
-            for j in range(period) :
-                if (prices.close[i - j] >= prices.open[i - j]) :
-                    volume += prices.volume[i - j]
-                else :
-                    volume -= prices.volume[i - j]
-        
-        #Add the current volume as the current OBV.
-        OBVs.append(volume)
+            volume = prices.volume[-(i + 1)]
+            net_volume -= prices.volume[-(i + 1)]
 
-    return OBVs
+    return net_volume
 
 #Range Index
 def RI(prices, period, is_long) :
