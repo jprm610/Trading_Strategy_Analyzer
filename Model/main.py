@@ -31,17 +31,30 @@ IncipientTrendFactor = 3
 distance_to_BO = 0.0001
 # endregion
 
+#ti = TI(df[0:260], 10, False)
+
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
 iSwing4 = MySwing(4)
 iSwing4.swingHigh, iSwing4.swingLow = MySwing.Swing(MySwing, df, iSwing4.strength)
+
+iATR100 = ATR(df, 100)
+
 iSMA20  = SMA(df, 20)
 iSMA50  = SMA(df, 50)
 iSMA200 = SMA(df, 200)
-iATR100 = ATR(df, 100)
+
+iEMA20  = EMA(df, 20)
+iEMA50  = EMA(df, 50)
+iEMA200 = EMA(df, 200)
+
 iMACD_12_26 = MACD(df)
+
 iBB_Upper_20, iBB_Lower_20 = Bollinger_Bands(df, 20)
-iROC100 = ROC(df, 100)
+
+iROC20 = ROC(df, 20)
+iROC50 = ROC(df, 50)
+iROC200 = ROC(df, 200)
 
 """
 iTIH = TI(df, 10, True)
@@ -59,18 +72,34 @@ RSI = RSI(df, 14)
 # region TRADE_EMULATION
 dates = []
 trade_type = []
+
 iSMA20_ot = []
 iSMA50_ot = [] 
-iSMA200_ot = [] 
+iSMA200_ot = []
+
 iATR100_ot = []
+
 iMACD_12_26_ot = []
+
 iBB_Upper_20_ot = []
 iBB_Lower_20_ot = []
-iROC100_ot = []
+
+iROC20_ot = []
+iROC50_ot = []
+iROC200_ot = []
+
+iEMA20_ot = []
+iEMA50_ot = []
+iEMA200_ot = []
+
+iTI_ot = []
+iVI_ot = []
+iRI_ot = []
+iOBV_ot = []
+
 y = []
 y2 = []
 y_index = []
-
 
 is_upward = False
 is_downward = False
@@ -88,6 +117,9 @@ for i in range(len(df)) :
 
 	if iSMA200[i] == -1 or iSMA50[i] == -1 or iSMA20[i] == -1 or iATR100[i] == -1 : continue
 
+	trade_point_short = -1
+	trade_point_long = -1
+
 	current_stop = iATR100[i] * 3
 	
 	if not on_trade :
@@ -98,9 +130,10 @@ for i in range(len(df)) :
 		if Swing_Found(df[0:i], iSwing4.swingHigh[0:i], iSwing4.Swing_Bar(iSwing4.swingLow[0:i], 1, iSwing4.strength), False, distance_to_BO) :
 			trade_point_short = iSwing4.swingLow[i] - distance_to_BO
 
+		# region ENTRY_MARKET_LONG
 		if trade_point_long != -1 :
 			if df.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
-				if abs(df.close[i] - iSMA50[i]) <= current_stop : #cambiar trade point
+				if abs(df.close[i] - iSMA50[i]) <= current_stop :
 					on_trade = True
 					entry_close = df.close[i]
 					max_income = df.high[i]
@@ -114,8 +147,19 @@ for i in range(len(df)) :
 					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
 					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
 					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
-					iROC100_ot.append(iROC100[i - 1])
-		
+					iROC20_ot.append(iROC20[i - 1])
+					iROC50_ot.append(iROC50[i - 1])
+					iROC200_ot.append(iROC200[i - 1])
+					iEMA20_ot.append(iEMA20[i - 1])
+					iEMA50_ot.append(iEMA50[i - 1])
+					iEMA200_ot.append(iEMA200[i - 1])
+					iOBV_ot.append(OBV(df[0:i], 10))
+					iRI_ot.append(RI(df[0:i], 10, True))
+					iVI_ot.append(VI(df[0:i], 10 ,True))
+					iTI_ot.append(TI(df[0:i], 10, True))
+		# endregion
+
+		# region ENTRY_MARKET_SHORT
 		if trade_point_short != -1 :
 			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
@@ -132,7 +176,17 @@ for i in range(len(df)) :
 					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
 					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
 					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
-					iROC100_ot.append(iROC100[i - 1])
+					iROC20_ot.append(iROC20[i - 1])
+					iROC50_ot.append(iROC50[i - 1])
+					iROC200_ot.append(iROC200[i - 1])
+					iEMA20_ot.append(iEMA20[i - 1])
+					iEMA50_ot.append(iEMA50[i - 1])
+					iEMA200_ot.append(iEMA200[i - 1])
+					iOBV_ot.append(OBV(df[0:i], 10))
+					iRI_ot.append(RI(df[0:i], 10, False))
+					iVI_ot.append(VI(df[0:i], 10 ,False))
+					iTI_ot.append(TI(df[0:i], 10, False))
+		# endregion
 	else :
 		if len(trade_type) == 0 : continue
 
@@ -169,35 +223,64 @@ for i in range(len(df)) :
 	if i == len(df) - 1 and on_trade :
 		y.append(-1)
 		y_index.append(df.index[i])
+# endregion
 
+# region TRADES_DF
 trades = pd.DataFrame()
 
 trades['entry_date'] = np.array(dates)
 trades['trade_type']  = np.array(trade_type)
+
+trades['iATR100']  = np.array(iATR100_ot)
+
 trades['iSMA20']  = np.array(iSMA20_ot)
 trades['iSMA50']  = np.array(iSMA50_ot)
 trades['iSMA200']  = np.array(iSMA200_ot)
-trades['iATR100']  = np.array(iSMA200_ot)
-trades['iMACD_12_26']  = np.array(iMACD_12_26_ot)
-trades['iBB_Lower_20']  = np.array(iBB_Lower_20_ot)
-trades['iBB_Upper_20']  = np.array(iBB_Upper_20_ot)
-trades['iROC_100'] = np.array(iROC100_ot)
+
+trades['iROC20'] = np.array(iROC20_ot)
+trades['iROC50'] = np.array(iROC50_ot)
+trades['iROC200'] = np.array(iROC200_ot)
+
+trades['iEMA20'] = np.array(iEMA20_ot)
+trades['iEMA50'] = np.array(iEMA50_ot)
+trades['iEMA200'] = np.array(iEMA200_ot)
+
+trades['iBBUpper20'] = np.array(iBB_Upper_20_ot)
+trades['iBBLower20'] = np.array(iBB_Lower_20_ot)
+
+trades['iMACD1226'] = np.array(iMACD_12_26_ot)
+
+trades['iOBV'] = np.array(iOBV_ot)
+trades['iRI'] = np.array(iRI_ot)
+trades['iVI'] = np.array(iVI_ot)
+trades['iTI'] = np.array(iTI_ot)
+
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
 trades['exit_date'] = np.array(y_index)
 # endregion
 
-
 # region BUILD NEW DATASET
 #Attach those lists to columns
+df['ATR100'] = np.array(iATR100)
+
 df['SMA20']  = np.array(iSMA20)
 df['SMA50']  = np.array(iSMA50)
 df['SMA200'] = np.array(iSMA200)
-df['ATR100'] = np.array(iATR100)
-df['ROC100'] = np.array(iROC100)
+
+df['ROC20'] = np.array(iROC20)
+df['ROC50'] = np.array(iROC50)
+df['ROC200'] = np.array(iROC200)
+
+df['EMA20'] = np.array(iEMA20)
+df['EMA50'] = np.array(iEMA50)
+df['EMA200'] = np.array(iEMA200)
+
 df['MACD1226'] = np.array(iMACD_12_26)
+
 df['BBLower20'] = np.array(iBB_Lower_20)
 df['BBUpper20'] = np.array(iBB_Upper_20)
+
 df['swing4high'] = np.array(iSwing4.swingHigh)
 df['swing4low'] = np.array(iSwing4.swingLow)
 
@@ -220,36 +303,36 @@ df["OBV"] = np.array(OBV)
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
 
 fig.add_trace(
-	go.Candlestick(x=df.index[201:],
-                   	open=df.open[201:], 
-                   	high=df.high[201:],
-                   	low=df.low[201:],
-                    close=df.close[201:]), 
+	go.Candlestick(x=df.index[201:1000],
+                   	open=df.open[201:1000], 
+                   	high=df.high[201:1000],
+                   	low=df.low[201:1000],
+                    close=df.close[201:1000]), 
 	row=1, col=1
 )
 
 fig.add_trace(
-	go.Scatter(x=df.index[201:], y=df.swing4high[201:], line=dict(color='orange', width=1)),
+	go.Scatter(x=df.index[201:1000], y=df.swing4high[201:1000], line=dict(color='orange', width=1)),
 	row=1, col=1
 )
 
 fig.add_trace(
-	go.Scatter(x=df.index[201:], y=df.swing4low[201:], line=dict(color='blue', width=1)),
+	go.Scatter(x=df.index[201:1000], y=df.swing4low[201:1000], line=dict(color='blue', width=1)),
 	row=1, col=1
 )
 
 fig.add_trace(
-    go.Scatter(x=df.index[201:], y=df.SMA200[201:], line=dict(color='red', width=1)),
+    go.Scatter(x=df.index[201:1000], y=df.SMA200[201:1000], line=dict(color='red', width=1)),
 	row=1, col=1
 )
 
 fig.add_trace(
-    go.Scatter(x=df.index[201:], y=df.SMA50[201:], line=dict(color='yellow', width=1)),
+    go.Scatter(x=df.index[201:1000], y=df.SMA50[201:1000], line=dict(color='yellow', width=1)),
 	row=1, col=1
 )
 
 fig.add_trace(
-    go.Scatter(x=df.index[201:], y=df.ROC100[201:], line=dict(color='white', width=1)),
+    go.Scatter(x=df.index[201:1000], y=df.ROC200[201:1000], line=dict(color='white', width=1)),
 	row=2, col=1
 )
 
