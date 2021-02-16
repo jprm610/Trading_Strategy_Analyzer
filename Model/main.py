@@ -31,7 +31,7 @@ IncipientTrendFactor = 3
 distance_to_BO = 0.0001
 # endregion
 
-#vi = VI(df[0:260], 10, False)
+#ti = TI(df[0:260], 10, False)
 
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
@@ -92,6 +92,7 @@ iEMA20_ot = []
 iEMA50_ot = []
 iEMA200_ot = []
 
+iTI_ot = []
 iVI_ot = []
 iRI_ot = []
 iOBV_ot = []
@@ -155,6 +156,7 @@ for i in range(len(df)) :
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, True))
 					iVI_ot.append(VI(df[0:i], 10 ,True))
+					iTI_ot.append(TI(df[0:i], 10, True))
 		# endregion
 
 		# region ENTRY_MARKET_SHORT
@@ -183,6 +185,7 @@ for i in range(len(df)) :
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, False))
 					iVI_ot.append(VI(df[0:i], 10 ,False))
+					iTI_ot.append(TI(df[0:i], 10, False))
 		# endregion
 	else :
 		if len(trade_type) == 0 : continue
@@ -250,6 +253,7 @@ trades['iMACD1226'] = np.array(iMACD_12_26_ot)
 trades['iOBV'] = np.array(iOBV_ot)
 trades['iRI'] = np.array(iRI_ot)
 trades['iVI'] = np.array(iVI_ot)
+trades['iTI'] = np.array(iTI_ot)
 
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
