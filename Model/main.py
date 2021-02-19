@@ -23,15 +23,14 @@ df = df.set_index(df.date)
 del df['date']
 
 #Drop duplicates leaving only the first value
-df = df.drop_duplicates(keep = 'last')
+df = df.drop_duplicates(keep=False)
+
 # endregion
 
 # region PARAMETERS
 IncipientTrendFactor = 3
 distance_to_BO = 0.0001
 # endregion
-
-#ti = TI(df[0:260], 10, False)
 
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
@@ -122,6 +121,7 @@ for i in range(len(df)) :
 
 	current_stop = iATR100[i] * 3
 	
+	# region TRADE CALCULATION
 	if not on_trade :
 
 		if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
@@ -187,6 +187,9 @@ for i in range(len(df)) :
 					iVI_ot.append(VI(df[0:i], 10 ,False))
 					iTI_ot.append(TI(df[0:i], 10, False))
 		# endregion
+	# endregion
+	
+	# region TRADE MANAGEMENT
 	else :
 		if len(trade_type) == 0 : continue
 
@@ -223,6 +226,7 @@ for i in range(len(df)) :
 	if i == len(df) - 1 and on_trade :
 		y.append(-1)
 		y_index.append(df.index[i])
+	# endregion
 # endregion
 
 # region TRADES_DF
@@ -300,7 +304,7 @@ df["OBV"] = np.array(OBV)
 # endregion
 
 # region PLOT CANDLES
-fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
+fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
 
 fig.add_trace(
 	go.Candlestick(x=df.index[201:1000],
@@ -329,11 +333,6 @@ fig.add_trace(
 fig.add_trace(
     go.Scatter(x=df.index[201:1000], y=df.SMA50[201:1000], line=dict(color='yellow', width=1)),
 	row=1, col=1
-)
-
-fig.add_trace(
-    go.Scatter(x=df.index[201:1000], y=df.ROC200[201:1000], line=dict(color='white', width=1)),
-	row=2, col=1
 )
 
 fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')

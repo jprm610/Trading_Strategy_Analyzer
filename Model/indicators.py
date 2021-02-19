@@ -96,6 +96,35 @@ class MySwing(object) :
         #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
         return bars_ago[instance - 1]
 
+    """
+    def Swing_Bar_by_Value(self, swing_list, instance, strength) :
+
+        #In the first iteration return -1 in order to avoid bugs 
+        #when trying to access a value in a list without values.
+        if len(swing_list) == 0 :
+            return -1
+
+        #Create a list in which the function values are going to be saved.
+        bars_ago = {}
+
+        #For each candle, always keeping in track the changes of swing, 
+        #compute the number of candles ago (bars_ago) when the swing last changed.
+        #The candles are walked backwards.
+        #Always add the strength keeping in track the real point in where a swing comes up. 
+        last_swing = swing_list[-1]
+        for i in reversed(range(len(swing_list))) :
+            if swing_list[i] != last_swing :
+                bars_ago[swing_list[i]] = len(swing_list) + strength - i - 1
+                last_swing = swing_list[i]
+
+        #If there isn't enoug swings charged, return -1
+        if bars_ago[j] < instance :
+            return -1
+
+        #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
+        return bars_ago[instance - 1]
+    """
+
 #Price Rate of Change (ROC)
 def ROC(prices, period) :
     """
@@ -421,6 +450,7 @@ def RI(prices, period, is_long) :
 
     NOTE:
     If the period isn't coherent with the DF portion given, -1 is set in the list.
+    If there is an indetermination returns -2.
     """
 
     #If the period parameter isn't coherent, return -1.
@@ -447,8 +477,8 @@ def RI(prices, period, is_long) :
             loses.append(ranges[-(i + 1)])
 
     #If the calculation will truncate, 
-    #set the current value to 0.
-    if sum(gains) == 0 or sum(loses) == 0 : return 0
+    #set the current value to -2.
+    if sum(gains) == 0 or sum(loses) == 0 : return -2
     
     #Calculate the range index.
     range_index = sum(gains) / sum(loses)
@@ -475,6 +505,7 @@ def VI(prices, period, is_long) :
 
     NOTE:
     If the period isn't coherent with the DF portion given, -1 is set in the list.
+    If there is an indetermination returns -2.
     """
 
     #If the period parameter isn't coherent, return -1.
@@ -493,8 +524,8 @@ def VI(prices, period, is_long) :
             loses.append(prices.volume[-(i + 1)])
 
     #If the calculation will truncate, 
-    #set the current value to 0.
-    if sum(gains) == 0 or sum(loses) == 0 : return 0
+    #set the current value to -2.
+    if sum(gains) == 0 or sum(loses) == 0 : return -2
         
     #Calculate the volume index
     volume_index = sum(gains) / sum(loses)
@@ -521,6 +552,7 @@ def TI(prices, period, is_long) :
 
     NOTE:
     If the period isn't coherent with the DF portion given, -1 is set in the list.
+    If there is an indetermination returns -2.
     """
 
     #If the period parameter isn't coherent, return -1.
@@ -542,7 +574,7 @@ def TI(prices, period, is_long) :
 
     #If the calculation will truncate, 
     #set the current value to 0.
-    if sum(upper_tails) == 0 or sum(lower_tails) == 0 : return 0
+    if sum(upper_tails) == 0 or sum(lower_tails) == 0 : return -2
         
     #Calculate the tails index
     tail_index = sum(upper_tails) / sum(lower_tails)
@@ -553,6 +585,18 @@ def TI(prices, period, is_long) :
         tail_index = 1 / tail_index
 
     return tail_index
+
+"""
+def Swing_Dimensions(prices, reference_swings_list, opposite_swings_list, swing_strength) :
+
+    dimensions = {}
+
+    #Limits Range (Y)
+    range = abs(reference_swings_list[-1] - opposite_swings_list[-(MySwing.Swing_Bar(reference_swings_list, 1, swing_strength) + 2)]
+    length = MySwing.Swing_Bar(opposite_swings_list, )
+
+    #Length (X)
+"""
 
 #----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
