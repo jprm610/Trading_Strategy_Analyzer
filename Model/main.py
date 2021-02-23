@@ -25,6 +25,8 @@ del df['date']
 #Drop duplicates leaving only the first value
 df = df.drop_duplicates(keep=False)
 
+df = df[:2000].copy()
+
 # endregion
 
 # region PARAMETERS
@@ -91,6 +93,10 @@ iEMA20_ot = []
 iEMA50_ot = []
 iEMA200_ot = []
 
+#Dimensions
+recoil_x = []
+init_x = []
+
 iTI_ot = []
 iVI_ot = []
 iRI_ot = []
@@ -140,23 +146,29 @@ for i in range(len(df)) :
 
 					dates.append(df.index[i])
 					trade_type.append("Long")
-					iSMA20_ot.append(iSMA20[i - 1])
-					iSMA50_ot.append(iSMA50[i - 1])
-					iSMA200_ot.append(iSMA200[i - 1])
-					iATR100_ot.append(iATR100[i - 1])
-					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
-					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
-					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
-					iROC20_ot.append(iROC20[i - 1])
-					iROC50_ot.append(iROC50[i - 1])
-					iROC200_ot.append(iROC200[i - 1])
-					iEMA20_ot.append(iEMA20[i - 1])
-					iEMA50_ot.append(iEMA50[i - 1])
-					iEMA200_ot.append(iEMA200[i - 1])
+					iSMA20_ot.append(iSMA20[i])
+					iSMA50_ot.append(iSMA50[i])
+					iSMA200_ot.append(iSMA200[i])
+					iATR100_ot.append(iATR100[i])
+					iMACD_12_26_ot.append(iMACD_12_26[i])
+					iBB_Upper_20_ot.append(iBB_Upper_20[i])
+					iBB_Lower_20_ot.append(iBB_Lower_20[i])
+					iROC20_ot.append(iROC20[i])
+					iROC50_ot.append(iROC50[i])
+					iROC200_ot.append(iROC200[i])
+					iEMA20_ot.append(iEMA20[i])
+					iEMA50_ot.append(iEMA50[i])
+					iEMA200_ot.append(iEMA200[i])
+
+					dimensions = Swing_Dimensions(df[0:i], iSwing4.swingHigh[0:i], iSwing4.swingLow[0:i], iSwing4.strength)
+					recoil_x.append(dimensions["pullback_x"])
+					init_x.append(dimensions["init_x"])
+
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, True))
 					iVI_ot.append(VI(df[0:i], 10 ,True))
 					iTI_ot.append(TI(df[0:i], 10, True))
+
 		# endregion
 
 		# region ENTRY_MARKET_SHORT
@@ -169,19 +181,24 @@ for i in range(len(df)) :
 
 					dates.append(df.index[i])
 					trade_type.append("Short")
-					iSMA20_ot.append(iSMA20[i - 1])
-					iSMA50_ot.append(iSMA50[i - 1])
-					iSMA200_ot.append(iSMA200[i - 1])
-					iATR100_ot.append(iATR100[i - 1])
-					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
-					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
-					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
-					iROC20_ot.append(iROC20[i - 1])
-					iROC50_ot.append(iROC50[i - 1])
-					iROC200_ot.append(iROC200[i - 1])
-					iEMA20_ot.append(iEMA20[i - 1])
-					iEMA50_ot.append(iEMA50[i - 1])
-					iEMA200_ot.append(iEMA200[i - 1])
+					iSMA20_ot.append(iSMA20[i])
+					iSMA50_ot.append(iSMA50[i])
+					iSMA200_ot.append(iSMA200[i])
+					iATR100_ot.append(iATR100[i])
+					iMACD_12_26_ot.append(iMACD_12_26[i])
+					iBB_Upper_20_ot.append(iBB_Upper_20[i])
+					iBB_Lower_20_ot.append(iBB_Lower_20[i])
+					iROC20_ot.append(iROC20[i])
+					iROC50_ot.append(iROC50[i])
+					iROC200_ot.append(iROC200[i])
+					iEMA20_ot.append(iEMA20[i])
+					iEMA50_ot.append(iEMA50[i])
+					iEMA200_ot.append(iEMA200[i])
+
+					dimensions = Swing_Dimensions(df[0:i], iSwing4.swingLow[0:i], iSwing4.swingHigh[0:i], iSwing4.strength)
+					recoil_x.append(dimensions["pullback_x"])
+					init_x.append(dimensions["init_x"])
+
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, False))
 					iVI_ot.append(VI(df[0:i], 10 ,False))
@@ -253,6 +270,9 @@ trades['iBBUpper20'] = np.array(iBB_Upper_20_ot)
 trades['iBBLower20'] = np.array(iBB_Lower_20_ot)
 
 trades['iMACD1226'] = np.array(iMACD_12_26_ot)
+
+trades['recoil_x'] = np.array(recoil_x)
+trades['init_x'] = np.array(init_x)
 
 trades['iOBV'] = np.array(iOBV_ot)
 trades['iRI'] = np.array(iRI_ot)
@@ -341,5 +361,5 @@ py.offline.plot(fig, filename = "main.html")
 # endregion
 
 #Save the edited dataframe as a new .csv file
-df.to_csv('Final_frame.csv')
+#df.to_csv('Final_frame.csv')
 trades.to_csv('trades.csv')

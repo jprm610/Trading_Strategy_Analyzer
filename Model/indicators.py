@@ -586,17 +586,23 @@ def TI(prices, period, is_long) :
 
     return tail_index
 
-"""
 def Swing_Dimensions(prices, reference_swings_list, opposite_swings_list, swing_strength) :
 
     dimensions = {}
 
+    # X variables
+    pullback_movement_x = MySwing.Swing_Bar(MySwing, reference_swings_list, 1, swing_strength) - 1
+    dimensions["pullback_x"] = pullback_movement_x
+
+    init_movement_x = MySwing.Swing_Bar(MySwing, opposite_swings_list[:-(pullback_movement_x + 2)], 1, swing_strength) + 1
+    dimensions["init_x"] = init_movement_x
+
     #Limits Range (Y)
-    range = abs(reference_swings_list[-1] - opposite_swings_list[-(MySwing.Swing_Bar(reference_swings_list, 1, swing_strength) + 2)]
-    length = MySwing.Swing_Bar(opposite_swings_list, )
+    #range = abs(reference_swings_list[-1] - opposite_swings_list[-(MySwing.Swing_Bar(reference_swings_list, 1, swing_strength) + 2)]
 
     #Length (X)
-"""
+
+    return dimensions
 
 #----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
