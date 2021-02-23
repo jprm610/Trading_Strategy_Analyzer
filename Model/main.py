@@ -74,6 +74,9 @@ RSI = RSI(df, 14)
 dates = []
 trade_type = []
 
+entry_close = []
+reference_swing_entry = []
+
 iSMA20_ot = []
 iSMA50_ot = [] 
 iSMA200_ot = []
@@ -141,11 +144,12 @@ for i in range(len(df)) :
 			if df.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
 					on_trade = True
-					entry_close = df.close[i]
 					max_income = df.high[i]
 
 					dates.append(df.index[i])
 					trade_type.append("Long")
+					entry_close.append(df.close[i])
+					reference_swing_entry.append(iSwing4.swingHigh[i])
 					iSMA20_ot.append(iSMA20[i])
 					iSMA50_ot.append(iSMA50[i])
 					iSMA200_ot.append(iSMA200[i])
@@ -176,11 +180,12 @@ for i in range(len(df)) :
 			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
 					on_trade = True
-					entry_close = df.close[i]
 					max_income = df.low[i]
 
 					dates.append(df.index[i])
 					trade_type.append("Short")
+					entry_close.append(df.close[i])
+					reference_swing_entry.append(iSwing4.swingLow[i])
 					iSMA20_ot.append(iSMA20[i])
 					iSMA50_ot.append(iSMA50[i])
 					iSMA200_ot.append(iSMA200[i])
@@ -216,20 +221,20 @@ for i in range(len(df)) :
 			
 			if df.close[i] <= iSMA50[i] :
 				on_trade = False
-				outcome = df.close[i] - entry_close
+				outcome = df.close[i] - entry_close[-1]
 				trade_point_long = -1
 				trade_point_short = -1
 
 				y.append(outcome)
 				y_index.append(df.index[i])
-				y2.append(max_income - entry_close)
+				y2.append(max_income - entry_close[-1])
 		else :
 			if df.low[i] < max_income :
 				max_income = df.low[i]
 
 			if df.close[i] >= iSMA50[i] :
 				on_trade = False
-				outcome = df.close[i] - entry_close
+				outcome = df.close[i] - entry_close[-1]
 				trade_point_long = -1
 				trade_point_short = -1
 
@@ -238,7 +243,7 @@ for i in range(len(df)) :
 				else :
 					y.append(abs(outcome))
 				y_index.append(df.index[i])
-				y2.append(abs(max_income - entry_close))
+				y2.append(abs(max_income - entry_close[-1]))
 	
 	if i == len(df) - 1 and on_trade :
 		y.append(-1)
@@ -248,9 +253,13 @@ for i in range(len(df)) :
 
 # region TRADES_DF
 trades = pd.DataFrame()
-
+#Añadir reference swing y close de entrada
 trades['entry_date'] = np.array(dates)
+trades['exit_date'] = np.array(y_index)
 trades['trade_type']  = np.array(trade_type)
+
+trades['entry_close'] = np.array(entry_close)
+trades['reference_swing'] = np.array(reference_swing_entry)
 
 trades['iATR100']  = np.array(iATR100_ot)
 
@@ -281,7 +290,6 @@ trades['iTI'] = np.array(iTI_ot)
 
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
-trades['exit_date'] = np.array(y_index)
 # endregion
 
 # region BUILD NEW DATASET

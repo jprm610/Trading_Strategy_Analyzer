@@ -591,10 +591,10 @@ def Swing_Dimensions(prices, reference_swings_list, opposite_swings_list, swing_
     dimensions = {}
 
     # X variables
-    pullback_movement_x = MySwing.Swing_Bar(MySwing, reference_swings_list, 1, swing_strength) - 1
+    pullback_movement_x = MySwing.Swing_Bar(MySwing, reference_swings_list, 1, swing_strength)
     dimensions["pullback_x"] = pullback_movement_x
 
-    init_movement_x = MySwing.Swing_Bar(MySwing, opposite_swings_list[:-(pullback_movement_x + 2)], 1, swing_strength) + 1
+    init_movement_x = MySwing.Swing_Bar(MySwing, opposite_swings_list[:-(pullback_movement_x + 2)], 1, swing_strength) + 2
     dimensions["init_x"] = init_movement_x
 
     #Limits Range (Y)
