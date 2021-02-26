@@ -411,6 +411,107 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			#endregion
 
+			#region Momentum_Process	
+			{
+				List<MyRanges> ranges = new List<MyRanges>();
+
+				#region Save_Ranges	
+				{
+					//Save the last n ranges (n = Look_back_candles) using its class.	
+					//Saving its value, the bar when it happened, is high and low, 	
+					//and wheter it happened in a green or red candle (is_up).	
+					for (int i = 0; i < Look_back_candles; i++)
+					{
+						if (Close[i] >= Open[i])
+						{
+							ranges.Add(new MyRanges()
+							{
+								value = iRange[i],
+								high = High[i],
+								low = Low[i],
+								bars_ago = i,
+								is_up = true
+							});
+						}
+						else
+						{
+							ranges.Add(new MyRanges()
+							{
+								value = iRange[i],
+								high = High[i],
+								low = Low[i],
+								bars_ago = i,
+								is_up = false
+							});
+						}
+					}
+				}
+				#endregion
+
+				#region Copy_Ranges_Values	
+				//Traspass the ranges values to an array of double (ranges_values)	
+				//in order to input the values in the Percentile function 	
+				//which will appear in the next region.	
+				double[] ranges_values = new double[ranges.Count];
+				for (int i = 0; i < ranges.Count; i++)
+				{
+					ranges_values[i] = ranges[i].value;
+				}
+				#endregion
+
+				#region Calculate_and_Evaluate_Percentiles	
+				{
+					//Find the value equivalent to the Percentile parameter.	
+					double ranges_percentile = Percentile(ranges_values, Percentile_v);
+
+					//Filter the ranges that are over the Percentile 	
+					//and save them in another list which is going to be printed in the next region.  	
+					for (int i = 0; i < Look_back_candles; i++)
+					{
+						if (ranges[i].value >= ranges_percentile)
+						{
+							ranges_over_percentile.Add(new MyRanges()
+							{
+								value = ranges[i].value,
+								high = ranges[i].high,
+								low = ranges[i].low,
+								bars_ago = ranges[i].bars_ago,
+								is_up = ranges[i].is_up
+							});
+						}
+					}
+				}
+				#endregion
+
+				#region Print_Values_over_Percentile	
+				{
+					//Print triangles in the candles where the range surpassed the Percentile value.	
+					//If the candle is green, print the triangle below the candle pointing upwards.	
+					//If the candle is red, print the triangle above the candle pointing downwards.	
+					//Both meaning the possible momentum direction of the market.	
+					for (int i = 0; i < ranges_over_percentile.Count; i++)
+					{
+						if (ranges_over_percentile[i].is_up)
+						{
+							Draw.TriangleUp(this, "Range_Up" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].low - (TickSize * 30), Brushes.White);
+						}
+						else
+						{
+							Draw.TriangleDown(this, "Range_Down" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].high + (TickSize * 30), Brushes.White);
+						}
+					}
+				}
+				#endregion
+
+				#region Reset_Arrays	
+				{
+					ranges.Clear();
+					ranges_over_percentile.Clear();
+				}
+				#endregion
+			}
+			#endregion
+
 			#region Heat_Zones_Process
 			{
 				//Define the look back period for the swing calculation converting the Days parameters into candles.
