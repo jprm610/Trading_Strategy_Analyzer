@@ -32,13 +32,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private SMA iSMA1, iSMA2, iSMA3;
 		private ATR iATR;
 		private Swing iSwing1, iSwing2, iSwing3;
-		private MyStop stop_long, stop_short;
 		private int cross_above_bar, cross_below_bar, amount_long, fix_amount_long, amount_short, fix_amount_short, max_indicator_bar_calculation;
-		private double ATR_crossing_value, SMA_dis, stop_price_long, trigger_price_long, stop_price_short, trigger_price_short, swingHigh2_max, swingLow2_min;
+		private double ATR_crossing_value, SMA_dis, swingHigh2_max, swingLow2_min;
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, distance_to_BO;
 		private double swingHigh2_max_reentry, swingLow2_min_reentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
 		private double current_ATR, current_stop, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
 		private bool is_incipient_up_trend, is_incipient_down_trend, is_upward, is_downward, gray_ellipse_long, gray_ellipse_short, is_reentry_long, is_reentry_short, is_long, is_short, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;
+
+		#region Stop_Variables
+		private MyStop stop_long, stop_short;
+		#endregion
 
 		#region Momentum_Process_Variables
 		private Range iRange;
@@ -408,107 +411,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			#endregion
 
-			#region Momentum_Process
-			{
-				List<MyRanges> ranges = new List<MyRanges>();
-
-				#region Save_Ranges
-				{
-					//Save the last n ranges (n = Look_back_candles) using its class.
-					//Saving its value, the bar when it happened, is high and low, 
-					//and wheter it happened in a green or red candle (is_up).
-					for (int i = 0; i < Look_back_candles; i++)
-					{
-						if (Close[i] >= Open[i])
-						{
-							ranges.Add(new MyRanges()
-							{
-								value = iRange[i],
-								high = High[i],
-								low = Low[i],
-								bars_ago = i,
-								is_up = true
-							});
-						}
-						else
-						{
-							ranges.Add(new MyRanges()
-							{
-								value = iRange[i],
-								high = High[i],
-								low = Low[i],
-								bars_ago = i,
-								is_up = false
-							});
-						}
-					}
-				}
-				#endregion
-
-				#region Copy_Ranges_Values
-				//Traspass the ranges values to an array of double (ranges_values)
-				//in order to input the values in the Percentile function 
-				//which will appear in the next region.
-				double[] ranges_values = new double[ranges.Count];
-				for (int i = 0; i < ranges.Count; i++)
-				{
-					ranges_values[i] = ranges[i].value;
-				}
-				#endregion
-
-				#region Calculate_and_Evaluate_Percentiles
-				{
-					//Find the value equivalent to the Percentile parameter.
-					double ranges_percentile = Percentile(ranges_values, Percentile_v);
-
-					//Filter the ranges that are over the Percentile 
-					//and save them in another list which is going to be printed in the next region.  
-					for (int i = 0; i < Look_back_candles; i++)
-					{
-						if (ranges[i].value >= ranges_percentile)
-						{
-							ranges_over_percentile.Add(new MyRanges()
-							{
-								value = ranges[i].value,
-								high = ranges[i].high,
-								low = ranges[i].low,
-								bars_ago = ranges[i].bars_ago,
-								is_up = ranges[i].is_up
-							});
-						}
-					}
-				}
-				#endregion
-
-				#region Print_Values_over_Percentile
-				{
-					//Print triangles in the candles where the range surpassed the Percentile value.
-					//If the candle is green, print the triangle below the candle pointing upwards.
-					//If the candle is red, print the triangle above the candle pointing downwards.
-					//Both meaning the possible momentum direction of the market.
-					for (int i = 0; i < ranges_over_percentile.Count; i++)
-					{
-						if (ranges_over_percentile[i].is_up)
-						{
-							Draw.TriangleUp(this, "Range_Up" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].low - (TickSize * 30), Brushes.White);
-						}
-						else
-						{
-							Draw.TriangleDown(this, "Range_Down" + (CurrentBar - ranges_over_percentile[i].bars_ago), true, ranges_over_percentile[i].bars_ago, ranges_over_percentile[i].high + (TickSize * 30), Brushes.White);
-						}
-					}
-				}
-				#endregion
-
-				#region Reset_Arrays
-				{
-					ranges.Clear();
-					ranges_over_percentile.Clear();
-				}
-				#endregion
-			}
-			#endregion
-
 			#region Heat_Zones_Process
 			{
 				//Define the look back period for the swing calculation converting the Days parameters into candles.
@@ -686,6 +588,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[j] > swings3_high[i].value)
 							{
 								swings3_high[i].is_broken = true;
+								break;
 							}
 						}
 					}
@@ -697,6 +600,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[j] < swings3_low[i].value)
 							{
 								swings3_low[i].is_broken = true;
+								break;
 							}
 						}
 					}
@@ -708,6 +612,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[j] > swings2_high[i].value)
 							{
 								swings2_high[i].is_broken = true;
+								break;
 							}
 						}
 					}
@@ -719,6 +624,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 							if (Close[j] < swings2_low[i].value)
 							{
 								swings2_low[i].is_broken = true;
+								break;
 							}
 						}
 					}
@@ -916,7 +822,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
 				#region Swings_Update_Reset
 				{
-					//Reset the last swing value in order to execute the swing update processes.
+					//Reset the last swing value in order to execute the later swing update processes.
 					last_swingHigh1 = iSwing1.SwingHigh[0];
 					last_swingLow1 = iSwing1.SwingLow[0];
 					last_swingHigh2 = iSwing2.SwingHigh[0];
@@ -1501,7 +1407,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//set the amount, stop and trigger price levels,
 					fix_amount_long = amount_long;
 					fix_stop_price_long = stop_long.value;
-					fix_trigger_price_long = trigger_price_long;
+					fix_trigger_price_long = stop_long.trigger_price;
 
 					//and draw the Fibonacci diagram on screen.
 					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_long);
@@ -1633,7 +1539,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					//set the amount, stop and trigger price levels,
 					fix_amount_short = amount_short;
 					fix_stop_price_short = stop_short.value;
-					fix_trigger_price_short = trigger_price_short;
+					fix_trigger_price_short = stop_short.trigger_price;
 
 					//and draw the Fibonacci diagram on screen.
 					Draw.FibonacciRetracements(this, "tag1" + CurrentBar, false, 0, Position.AveragePrice, 10, fix_stop_price_short);
@@ -1695,7 +1601,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						{
 							//And if there is a near long order 
 							//(opposite direction order that can act as a stop order):
-							if (my_entry_order.OrderType == OrderType.StopMarket &&
+							if (my_entry_order.OrderType == OrderType.StopMarket && //!!!!! 
 								my_entry_order.OrderState == OrderState.Working &&
 								my_entry_order.OrderAction == OrderAction.Buy)
 							{
@@ -1734,6 +1640,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 								//and set the current trailing stop price level.
 								fix_stop_price_short = Trailing_Stop(false);
 							}
+
+							//If the stop_short is above the stop_short.lock_value:
+							//Set the stop_short value at the same level as its lock value.
+							if (fix_stop_price_short > stop_short.lock_value)
+								fix_stop_price_short = stop_short.lock_value;
 
 							//After all calculations, submit the stop_short order,
 							ExitShortStopMarket(fix_amount_short, fix_stop_price_short, @"exit", @"entryOrder");
@@ -1969,6 +1880,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			public double lock_value;
 			public string type;
 			public bool is_static;
+			public double trigger_price;
 		}
 		#endregion
 
@@ -2078,11 +1990,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				List<double> Liquidation_Values = Liquidation_Points(Close[0], Stop_Values.Item2, true).Item2;
 
 				stop_long = Stop_Values.Item1;
-				stop_price_long = Stop_Values.Item1.value;
-				trigger_price_long = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
-				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)); //calculates trade amount
-				EnterLong(amount_long, @"entryMarket"); // Long Stop order activation
-														//Print(string.Format("Long Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
+				stop_long.trigger_price = Close[0] + (Stop_Values.Item2 * UnitsTriggerForTrailing);
+				amount_long = Convert.ToInt32(RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize));
+				EnterLong(amount_long, @"entryMarket");
 				return true;
 			}
 			else if (order_type == "PendingOrder")
@@ -2096,11 +2006,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] + distance_to_BO, Stop_Values.Item2, true).Item2;
 
 				stop_long = Stop_Values.Item1;
-				stop_price_long = Stop_Values.Item1.value;
-				trigger_price_long = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				stop_long.trigger_price = BO_level[0] + distance_to_BO + (Stop_Values.Item2 * UnitsTriggerForTrailing);
 				amount_long = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterLongStopMarket(amount_long, BO_level[0] + distance_to_BO, @"entryOrder");
-				//Print(string.Format("Long Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_long, trigger_price_long, amount_long, Time[0]));
 				return false;
 			}
 			else
@@ -2123,11 +2031,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 				List<double> Liquidation_Values = Liquidation_Points(Close[0], Stop_Values.Item2, false).Item2;
 
 				stop_short = Stop_Values.Item1;
-				stop_price_short = Stop_Values.Item1.value; //calculates the stop price level
-				trigger_price_short = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				stop_short.trigger_price = Close[0] - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize))); //calculates trade amount		
 				EnterShort(amount_short, @"entryMarket"); // Long Stop order activation
-														  //Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
+														  //Print(string.Format("Short Market({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, stop_short.trigger_price, amount_short, Time[0]));
 				return true;
 			}
 			else if (order_type == "PendingOrder")
@@ -2141,11 +2048,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 				List<double> Liquidation_Values = Liquidation_Points(BO_level[0] - distance_to_BO, Stop_Values.Item2, false).Item2;
 
 				stop_short = Stop_Values.Item1;
-				stop_price_short = Stop_Values.Item1.value; //calculates the stop price level
-				trigger_price_short = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
+				stop_short.trigger_price = BO_level[0] - distance_to_BO - (Stop_Values.Item2 * UnitsTriggerForTrailing); //calculates the price level where the trailing stop is going to be trigger
 				amount_short = Convert.ToInt32((RiskUnit / ((Stop_Values.Item2 / TickSize) * Instrument.MasterInstrument.PointValue * TickSize)));
 				EnterShortStopMarket(amount_short, BO_level[0] - distance_to_BO, @"entryOrder");
-				//Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, trigger_price_short, amount_short, Time[0]));
+				//Print(string.Format("Short Pending({3} // Stop: {0} // Trigger: {1} // Amount: {2})", stop_price_short, stop_short.trigger_price, amount_short, Time[0]));
 				return false;
 			}
 			else
@@ -3594,8 +3500,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						min = possible_stops[i].value;
 						stop = possible_stops[i];
-						stop.lock_value = possible_stops[i].value;
-						stop.value -= iATR[0];
+						//stop.lock_value = possible_stops[i].value;
+						//stop.value -= iATR[0];
+						stop.lock_value = stop.value;
 					}
 				}
 			}
@@ -3608,8 +3515,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						max = possible_stops[i].value;
 						stop = possible_stops[i];
-						stop.lock_value = possible_stops[i].value;
-						stop.value += iATR[0];
+						//stop.lock_value = possible_stops[i].value;
+						//stop.value += iATR[0];
+						stop.lock_value = stop.value;
 					}
 				}
 			}
@@ -3891,12 +3799,16 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				#endregion
 			}
-			#endregion
+			#endregion //PARAMETRIZAR ATR
 
+			/*
 			if (is_long)
 				stop -= iATR[0];
 			else
-				stop += iATR[0];
+				stop += iATR[0]; //PARAMETRIZAR ATR
+			*/
+
+			//AGREGAR LISTA
 
 			return stop;
 		}
