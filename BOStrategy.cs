@@ -36,11 +36,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private double ATR_crossing_value, SMA_dis, swingHigh2_max, swingLow2_min;
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, distance_to_BO;
 		private double swingHigh2_max_reentry, swingLow2_min_reentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
-		private double current_ATR, current_stop, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
+		private double current_ATR;
 		private bool is_incipient_up_trend, is_incipient_down_trend, is_upward, is_downward, gray_ellipse_long, gray_ellipse_short, is_reentry_long, is_reentry_short, is_long, is_short, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;
 
 		#region Stop_Variables
 		private MyStop stop_long, stop_short;
+		private double current_stop, fix_stop_price_long, fix_trigger_price_long, fix_stop_price_short, fix_trigger_price_short;
 		#endregion
 
 		#region Momentum_Process_Variables
@@ -109,6 +110,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 				Heat_zone_strength = 2;
 				Width = 1.5;
 				ATRStopFactor = 3;
+				Close_Shield_Factor = 1;
+				Stop_Aditional_Range = 1;
 				Stop_Strength = 6;
 				SMA1_Strength = 5;
 				SMA2_Strength = 4;
@@ -1898,43 +1901,55 @@ namespace NinjaTrader.NinjaScript.Strategies
 		{ get; set; }
 
 		[NinjaScriptProperty]
-		[Display(Name = "Stop_Strength", Order = 2, GroupName = "Stop")]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Close_Shield_Factor (ATR)", Order = 2, GroupName = "Stop")]
+		public int Close_Shield_Factor
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Range(0, int.MaxValue)]
+		[Display(Name = "Stop_Aditional_Range (ATR)", Order = 3, GroupName = "Stop")]
+		public int Stop_Aditional_Range
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Stop_Strength", Order = 4, GroupName = "Stop")]
 		public int Stop_Strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "SMA1", Order = 3, GroupName = "Stop")]
+		[Display(Name = "SMA1_Score", Order = 5, GroupName = "Stop")]
 		public int SMA1_Strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "SMA2", Order = 4, GroupName = "Stop")]
+		[Display(Name = "SMA2_Score", Order = 6, GroupName = "Stop")]
 		public int SMA2_Strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "Swing1", Order = 5, GroupName = "Stop")]
+		[Display(Name = "Swing1_Score", Order = 7, GroupName = "Stop")]
 		public int Swing1_Strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "Swing2", Order = 6, GroupName = "Stop")]
+		[Display(Name = "Swing2_Score", Order = 8, GroupName = "Stop")]
 		public int Swing2_Strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name = "Heat Zone", Order = 7, GroupName = "Stop")]
+		[Display(Name = "Heat Zone_Score", Order = 9, GroupName = "Stop")]
 		public int Heat_Zone_Stop_Strength
 		{ get; set; }
 
 		[NinjaScriptProperty]
 		[Range(-1, 3)]
-		[Display(Name = "Trailing Stop Mode", Order = 8, GroupName = "Stop")]
+		[Display(Name = "Trailing Stop Mode", Order = 10, GroupName = "Stop")]
 		public int Trailing_Stop_Mode
 		{ get; set; }
 		#endregion
@@ -3601,8 +3616,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						min = possible_stops[i].value;
 						stop = possible_stops[i];
-						//stop.lock_value = possible_stops[i].value;
-						//stop.value -= iATR[0];
+						stop.value -= Stop_Aditional_Range * iATR[0];
 						stop.lock_value = stop.value;
 					}
 				}
@@ -3616,8 +3630,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					{
 						max = possible_stops[i].value;
 						stop = possible_stops[i];
-						//stop.lock_value = possible_stops[i].value;
-						//stop.value += iATR[0];
+						stop.value += Stop_Aditional_Range * iATR[0];
 						stop.lock_value = stop.value;
 					}
 				}
@@ -3626,292 +3639,6 @@ namespace NinjaTrader.NinjaScript.Strategies
 			stop_distance = Math.Abs(trade_point - stop.value);
 
 			return new Tuple<MyStop, double>(stop, stop_distance);
-		}
-
-		public double Trailing_Stop(bool is_long)
-		{
-			double stop;
-
-			#region Reference_Definition
-			if (is_long)
-			{
-				switch (stop_long.type)
-				{
-					case "SMA1":
-						stop = iSMA1[0];
-						break;
-
-					case "SMA2":
-						stop = iSMA2[0];
-						break;
-					case "SMA3":
-						stop = iSMA3[0];
-						break;
-					default:
-						return 0;
-				}
-			}
-			else
-			{
-				switch (stop_short.type)
-				{
-					case "SMA1":
-						stop = iSMA1[0];
-						break;
-
-					case "SMA2":
-						stop = iSMA2[0];
-						break;
-					case "SMA3":
-						stop = iSMA3[0];
-						break;
-					default:
-						return 0;
-				}
-			}
-			#endregion
-
-			#region Close_Price_Levels_Check
-			if (is_long)
-			{
-				#region SMAs
-				#region SMA1
-				{
-					double SMA_distance = stop - iSMA1[0];
-
-					if (SMA_distance > 0)
-					{
-						if (SMA_distance <= iATR[0])
-						{
-							stop = iSMA1[0];
-						}
-					}
-				}
-				#endregion
-
-				#region SMA2
-				{
-					double SMA_distance = stop - iSMA2[0];
-
-					if (SMA_distance > 0)
-					{
-						if (SMA_distance <= iATR[0])
-						{
-							stop = iSMA2[0];
-						}
-					}
-				}
-				#endregion
-
-				#region SMA3
-				{
-					double SMA_distance = stop - iSMA3[0];
-
-					if (SMA_distance > 0)
-					{
-						if (SMA_distance <= iATR[0])
-						{
-							stop = iSMA3[0];
-						}
-					}
-				}
-				#endregion
-				#endregion
-
-				#region SwingsLow
-				#region Swing1
-				{
-					double swing_distance = stop - iSwing1.SwingLow[0];
-
-					if (swing_distance > 0)
-					{
-						if (swing_distance <= iATR[0])
-						{
-							stop = iSwing1.SwingLow[0];
-						}
-					}
-				}
-				#endregion
-
-				#region Swing2
-				{
-					double swing_distance = stop - iSwing2.SwingLow[0];
-
-					if (swing_distance > 0)
-					{
-						if (swing_distance <= iATR[0])
-						{
-							stop = iSwing2.SwingLow[0];
-						}
-					}
-				}
-				#endregion
-
-				#region Swing3
-				{
-					double swing_distance = stop - iSwing3.SwingLow[0];
-
-					if (swing_distance > 0)
-					{
-						if (swing_distance <= iATR[0])
-						{
-							stop = iSwing3.SwingLow[0];
-						}
-					}
-				}
-				#endregion
-				#endregion
-
-				#region Heat_Zones
-				{
-					for (int i = 0; i < heat_zones.Count; i++)
-					{
-						double heat_zone_distance = stop - heat_zones[i].value;
-
-						if (heat_zone_distance > 0)
-						{
-							if (heat_zone_distance <= iATR[0])
-							{
-								stop = heat_zones[i].value;
-							}
-						}
-					}
-				}
-				#endregion
-			}
-			else
-			{
-				#region SMAs
-				#region SMA1
-				{
-					double SMA_distance = stop - iSMA1[0];
-
-					if (SMA_distance < 0)
-					{
-						SMA_distance = Math.Abs(SMA_distance);
-
-						if (SMA_distance <= iATR[0])
-						{
-							stop = iSMA1[0];
-						}
-					}
-				}
-				#endregion
-
-				#region SMA2
-				{
-					double SMA_distance = stop - iSMA2[0];
-
-					if (SMA_distance < 0)
-					{
-						SMA_distance = Math.Abs(SMA_distance);
-
-						if (SMA_distance <= iATR[0])
-						{
-							stop = iSMA2[0];
-						}
-					}
-				}
-				#endregion
-
-				#region SMA3
-				{
-					double SMA_distance = stop - iSMA3[0];
-
-					if (SMA_distance < 0)
-					{
-						SMA_distance = Math.Abs(SMA_distance);
-
-						if (SMA_distance <= iATR[0])
-						{
-							stop = iSMA3[0];
-						}
-					}
-				}
-				#endregion
-				#endregion
-
-				#region SwingsHigh
-				#region Swing1
-				{
-					double swing_distance = stop - iSwing1.SwingHigh[0];
-
-					if (swing_distance < 0)
-					{
-						swing_distance = Math.Abs(swing_distance);
-
-						if (swing_distance <= iATR[0])
-						{
-							stop = iSwing1.SwingHigh[0];
-						}
-					}
-				}
-				#endregion
-
-				#region Swing2
-				{
-					double swing_distance = stop - iSwing2.SwingHigh[0];
-
-					if (swing_distance < 0)
-					{
-						swing_distance = Math.Abs(swing_distance);
-
-						if (swing_distance <= iATR[0])
-						{
-							stop = iSwing2.SwingHigh[0];
-						}
-					}
-				}
-				#endregion
-
-				#region Swing3
-				{
-					double swing_distance = stop - iSwing3.SwingHigh[0];
-
-					if (swing_distance < 0)
-					{
-						swing_distance = Math.Abs(swing_distance);
-
-						if (swing_distance <= iATR[0])
-						{
-							stop = iSwing3.SwingHigh[0];
-						}
-					}
-				}
-				#endregion
-				#endregion
-
-				#region Heat_Zones
-				{
-					for (int i = 0; i < heat_zones.Count; i++)
-					{
-						double heat_zone_distance = stop - heat_zones[i].value;
-
-						if (heat_zone_distance < 0)
-						{
-							heat_zone_distance = Math.Abs(heat_zone_distance);
-
-							if (heat_zone_distance <= iATR[0])
-							{
-								stop = heat_zones[i].value;
-							}
-						}
-					}
-				}
-				#endregion
-			}
-			#endregion //PARAMETRIZAR ATR
-
-			/*
-			if (is_long)
-				stop -= iATR[0];
-			else
-				stop += iATR[0]; //PARAMETRIZAR ATR
-			*/
-
-			//AGREGAR LISTA
-
-			return stop;
 		}
 
 		public void Trailing_Stop_Definition(bool is_long)
@@ -4075,10 +3802,311 @@ namespace NinjaTrader.NinjaScript.Strategies
 			return;
         }
 
-        ///<summary>
-        ///Finds the value in the sequence, equivalent to the Percentile given.
-        ///</summary>
-        public double Percentile(double[] sequence, double excelPercentile)
+		public double Trailing_Stop(bool is_long)
+		{
+			double stop;
+			List<double> close_shields = new List<double>();
+
+			#region Reference_Definition
+			if (is_long)
+			{
+				switch (stop_long.type)
+				{
+					case "SMA1":
+						stop = iSMA1[0];
+						break;
+
+					case "SMA2":
+						stop = iSMA2[0];
+						break;
+					case "SMA3":
+						stop = iSMA3[0];
+						break;
+					default:
+						return 0;
+				}
+			}
+			else
+			{
+				switch (stop_short.type)
+				{
+					case "SMA1":
+						stop = iSMA1[0];
+						break;
+
+					case "SMA2":
+						stop = iSMA2[0];
+						break;
+					case "SMA3":
+						stop = iSMA3[0];
+						break;
+					default:
+						return 0;
+				}
+			}
+			#endregion
+
+			#region Close_Price_Levels_Check
+			{
+				double close_shields_range = Close_Shield_Factor * iATR[0];
+
+				if (is_long)
+				{
+					#region SMAs
+					#region SMA1
+					{
+						double SMA_distance = stop - iSMA1[0];
+
+						if (SMA_distance > 0)
+						{
+							if (SMA_distance <= close_shields_range)
+							{
+								close_shields.Add(iSMA1[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region SMA2
+					{
+						double SMA_distance = stop - iSMA2[0];
+
+						if (SMA_distance > 0)
+						{
+							if (SMA_distance <= close_shields_range)
+							{
+								close_shields.Add(iSMA2[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region SMA3
+					{
+						double SMA_distance = stop - iSMA3[0];
+
+						if (SMA_distance > 0)
+						{
+							if (SMA_distance <= close_shields_range)
+							{
+								close_shields.Add(iSMA3[0]);
+							}
+						}
+					}
+					#endregion
+					#endregion
+
+					#region SwingsLow
+					#region Swing1
+					{
+						double swing_distance = stop - iSwing1.SwingLow[0];
+
+						if (swing_distance > 0)
+						{
+							if (swing_distance <= close_shields_range)
+							{
+								close_shields.Add(iSwing1.SwingLow[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region Swing2
+					{
+						double swing_distance = stop - iSwing2.SwingLow[0];
+
+						if (swing_distance > 0)
+						{
+							if (swing_distance <= close_shields_range)
+							{
+								close_shields.Add(iSwing2.SwingLow[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region Swing3
+					{
+						double swing_distance = stop - iSwing3.SwingLow[0];
+
+						if (swing_distance > 0)
+						{
+							if (swing_distance <= close_shields_range)
+							{
+								close_shields.Add(iSwing3.SwingLow[0]);
+							}
+						}
+					}
+					#endregion
+					#endregion
+
+					#region Heat_Zones
+					{
+						for (int i = 0; i < heat_zones.Count; i++)
+						{
+							double heat_zone_distance = stop - heat_zones[i].value;
+
+							if (heat_zone_distance > 0)
+							{
+								if (heat_zone_distance <= close_shields_range)
+								{
+									close_shields.Add(heat_zones[i].value);
+								}
+							}
+						}
+					}
+					#endregion
+				}
+				else
+				{
+					#region SMAs
+					#region SMA1
+					{
+						double SMA_distance = stop - iSMA1[0];
+
+						if (SMA_distance < 0)
+						{
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= close_shields_range)
+							{
+								close_shields.Add(iSMA1[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region SMA2
+					{
+						double SMA_distance = stop - iSMA2[0];
+
+						if (SMA_distance < 0)
+						{
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= close_shields_range)
+							{
+								close_shields.Add(iSMA2[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region SMA3
+					{
+						double SMA_distance = stop - iSMA3[0];
+
+						if (SMA_distance < 0)
+						{
+							SMA_distance = Math.Abs(SMA_distance);
+
+							if (SMA_distance <= close_shields_range)
+							{
+								close_shields.Add(iSMA3[0]);
+							}
+						}
+					}
+					#endregion
+					#endregion
+
+					#region SwingsHigh
+					#region Swing1
+					{
+						double swing_distance = stop - iSwing1.SwingHigh[0];
+
+						if (swing_distance < 0)
+						{
+							swing_distance = Math.Abs(swing_distance);
+
+							if (swing_distance <= close_shields_range)
+							{
+								close_shields.Add(iSwing1.SwingHigh[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region Swing2
+					{
+						double swing_distance = stop - iSwing2.SwingHigh[0];
+
+						if (swing_distance < 0)
+						{
+							swing_distance = Math.Abs(swing_distance);
+
+							if (swing_distance <= close_shields_range)
+							{
+								close_shields.Add(iSwing2.SwingHigh[0]);
+							}
+						}
+					}
+					#endregion
+
+					#region Swing3
+					{
+						double swing_distance = stop - iSwing3.SwingHigh[0];
+
+						if (swing_distance < 0)
+						{
+							swing_distance = Math.Abs(swing_distance);
+
+							if (swing_distance <= close_shields_range)
+							{
+								close_shields.Add(iSwing3.SwingHigh[0]);
+							}
+						}
+					}
+					#endregion
+					#endregion
+
+					#region Heat_Zones
+					{
+						for (int i = 0; i < heat_zones.Count; i++)
+						{
+							double heat_zone_distance = stop - heat_zones[i].value;
+
+							if (heat_zone_distance < 0)
+							{
+								heat_zone_distance = Math.Abs(heat_zone_distance);
+
+								if (heat_zone_distance <= close_shields_range)
+								{
+									close_shields.Add(heat_zones[i].value);
+								}
+							}
+						}
+					}
+				}
+				#endregion
+			}
+			#endregion //PARAMETRIZAR ATR
+
+			if (is_long)
+            {
+				if (close_shields.Count > 0)
+                {
+					stop = close_shields.Min();
+                }
+
+				stop -= Stop_Aditional_Range * iATR[0];
+            }
+			else
+            {
+				if (close_shields.Count > 0)
+				{
+					stop = close_shields.Max();
+				}
+
+				stop += Stop_Aditional_Range * iATR[0];
+			}
+
+			return stop;
+		}
+
+		///<summary>
+		///Finds the value in the sequence, equivalent to the Percentile given.
+		///</summary>
+		public double Percentile(double[] sequence, double excelPercentile)
 		{
 			Array.Sort(sequence);
 			int N = sequence.Length;
