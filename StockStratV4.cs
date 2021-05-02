@@ -49,12 +49,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 		#endregion
 
 		private int AmountLong, FixAmountLong, AmountShort, FixAmountShort;
-		private double EMA_distance, StopPriceLong, TriggerPriceLong, StopPriceShort, TriggerPriceShort, SwingHigh14max, SwingLow14min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
+		private double EMA_distance, StopPriceLong, TriggerPriceLong, StopPriceShort, TriggerPriceShort, swingHigh2_max, SwingLow14min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, ExtremeClose, FixDistanceToPullbackClose, FixStopSize, StopSize;
-		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, SwingHigh14maxReentry, SwingLow14minReentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
+		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, swingHigh2_maxReentry, SwingLow14minReentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
 		private double last_swingHigh2, last_swingLow2, last_swingHigh1, last_swingLow1, DistanceToSMA, DistanceToPullbackClose, FixStopPriceLong, FixTriggerPriceLong, FixStopPriceShort, FixTriggerPriceShort;
 		private bool is_incipient_up_trend, is_incipient_down_trend, gray_ellipse_long, gray_ellipse_short, isReentryLong, isReentryShort, isLong, isShort, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;			
-		private bool CrossBelow20_50, CrossAbove20_50, isTrailing;
+		private bool cross_below_iSMA3_to_iSMA2, cross_above_iSMA3_to_iSMA2, isTrailing;
 		private Account myAccount;
 		private Order myEntryOrder = null, myEntryMarket = null, myExitOrder = null;
         #endregion
@@ -95,7 +95,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				ATRSMAFactor				= 3;
 				ATRPullbackFactor			= 4;
 				ATRStopFactor				= 2;
-				ATREMACrossFactor			= 2;
+				ATR_EMA_cross_factor			= 2;
 				EMAForTrailing				= 2;
 				EMAShield					= 2;
 				TicksToBO					= 10;
@@ -330,7 +330,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 				is_incipient_up_trend = true;
 				is_incipient_down_trend = false;
 				gray_ellipse_short = false;
-				CrossBelow20_50 = false;
+				cross_below_iSMA3_to_iSMA2 = false;
 			}
 
 			//If the overall market movement is going downwards and
@@ -344,92 +344,91 @@ namespace NinjaTrader.NinjaScript.Strategies
 				is_incipient_down_trend = true;
 				is_incipient_up_trend = false;
 				gray_ellipse_long = false;
-				CrossAbove20_50 = false;
+				cross_above_iSMA3_to_iSMA2 = false;
+			}
+			#endregion
+
+			#region Gray Ellipse
+			//Gray Ellipse: Is when the smallest and second biggest
+			//EMAs crosses in the opposite direction of the overall
+			//market movement.
+
+			//This if statement recognizes the cross below event
+			//between the smallest and second biggest SMAs nevertheless,
+			//it does not mean that a gray ellipse event has happened.
+			if (Math.Abs(iEMA3[0] - iEMA2[0]) <= iATR[0] * ATR_EMA_cross_factor)
+			{
+			 	cross_below_iSMA3_to_iSMA2 = true;
+			}
+
+			//If both events (Incipient Trend event and smallest SMAs
+			//opposite cross) happens it means that a Gray Ellipse
+			//event has happened.
+			//That is why the gray_ellipse_long flag is set to true
+			//while the cross_below_iSMA3_to_iSMA2 is reset to false
+			//for next events.
+			//Then there is going to be an iteration in order to find
+			//the highest swingHigh2 between the biggest SMA cross
+			//event and the gray ellipse.
+			if (is_incipient_up_trend && cross_below_iSMA3_to_iSMA2)
+			{
+				cross_below_iSMA3_to_iSMA2 = false;
+				isReentryLong = false;
+				gray_ellipse_long = true;
+
+				//This if statement is done to avoid the bug when
+				//trying to find the value of swing indicator beyond
+				//the 256 MaximunBarLookBack period, which is not
+				//possible.
+				int SMAs_cross_and_gray_ellipse_dis = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
+				if (SMAs_cross_and_gray_ellipse_dis > 240)
+				{
+					SMAs_cross_and_gray_ellipse_dis = 240;	
+				}
+
+				//Iterate to find the highest swingHigh2
+				swingHigh2_max = iSwing2.SwingHigh[0];
+				for (int i = 0; i <= SMAs_cross_and_gray_ellipse_dis; i++)
+            	{
+					if (iSwing2.SwingHigh[i] > swingHigh2_max)
+                	{
+						swingHigh2_max = iSwing2.SwingHigh[i];
+					}
+				}
+			}
+			//If the swingHigh of the current bar surpass the
+			//Max Level of the swingHigh (bigggest swing) where the
+			//gray_ellipse_long was originated, and the current swing
+			//is right next to the gray_ellipse swing it means that a
+			//Reentry trade can be executed.
+			//That is why the is_reentry_long flag is set to true and
+			//the current swingHigh (biggest swing) is saved to keep
+			//track of the last swing where a Reentry trade can be
+			//executed.
+			else if (gray_ellipse_long &&
+				iSwing2.SwingHigh[0] > swingHigh2_max)
+			{
+				swingHigh2_maxReentry = iSwing2.SwingHigh[0];
+				isReentryLong = true;
+			}
+
+			//If the current high surpass the swingHigh where a
+			//Reentry trade can be executed, it means that this trade
+			//type can't be done again before another gray_ellipse.
+			//That is why the gray_ellipse_long flag and the
+			//is_reentry_long flag are set to false.
+			if (isReentryLong &&
+				High[0] > swingHigh2_maxReentry)
+			{
+				gray_ellipse_long = false;
+				isReentryLong = false;
 			}
             #endregion
 
-            ////		GrayEllipse turn on/off inside an incipient trend (SMA 20-50 Crossing Event) (GrayEllipse: An SMAs 20-50 crossing event in the opposite direction of the overall market movement)
-            ///Long			
-
-            if (/*CrossBelow(iEMA3, iEMA2, 1) && */iEMA3[0] - iEMA2[0] <= iATR[0] * ATREMACrossFactor)
-			 {
-			 	CrossBelow20_50 = true;
-			 }
-			if (is_incipient_up_trend && CrossBelow20_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
-			{
-				if (isReentryLong)
-				{
-					isReentryLong = false;
-				}
-				gray_ellipse_long = true; //gray_ellipse_long Flag turning on
-				int ArrayListSize = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
-				if (ArrayListSize>=240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
-				{
-					ArrayListSize=240;	
-				}							
-				SwingHigh14max = iSwing2.SwingHigh[0]; //initializing the variable that is going to keep the reference high, with the array firts value for comparison purposes
-				for (int i = 0; i <= ArrayListSize; i++) //Loop that walk the array 
-            	{
-					if (iSwing2.SwingHigh[i] > SwingHigh14max && iSwing2.SwingHigh[i] != 0) //To determine the highest value (highest swinghigh 14)
-                	{
-						SwingHigh14max = iSwing2.SwingHigh[i]; //And saves that value in this variable
-					}
-				}	
-				CrossBelow20_50 = false;
-			}	
-			else if (iSwing2.SwingHigh[0] > SwingHigh14max && gray_ellipse_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
-			{
-				SwingHigh14maxReentry = iSwing2.SwingHigh[0]; //Then lower the flag of the GrayEllipse in that direction
-				isReentryLong = true;
-			}	
-			if (High[0] > SwingHigh14maxReentry && isReentryLong) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
-			{
-				gray_ellipse_long = false; //Then lower the flag of the GrayEllipse in that direction
-				isReentryLong = false;
-			}
-
-			///Short
-			if (/*CrossAbove(iEMA3, iEMA2, 1) && */iEMA2[0] - iEMA3[0] <= iATR[0] * ATREMACrossFactor)
-			 {
-			 	CrossAbove20_50 = true;
-			 }
-			if (is_incipient_down_trend && CrossAbove20_50/* && !gray_ellipse_short*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
-			{
-				if (isReentryShort)
-				{
-					isReentryShort = false;
-				}
-				gray_ellipse_short = true; //gray_ellipse_long Flag turning on
-				int ArrayListSize = CurrentBar - cross_below_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
-				if (ArrayListSize>=240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
-				{
-					ArrayListSize=240;					
-				}	
-				SwingLow14min = iSwing2.SwingLow[0]; //initializing the variable that is going to keep the reference low, with the array firts value for comparison purposes
-				for (int i = 0; i <= ArrayListSize; i++) //Loop that walk the array
-            	{
-					if (iSwing2.SwingLow[i] < SwingLow14min && iSwing2.SwingLow[i] != 0) //To determine the lowest value (lowest swinglow 14)
-					{
-                		SwingLow14min = iSwing2.SwingLow[i]; //And saves that value in this variable
-					}
-				}
-				CrossAbove20_50 = false;
-			}		
-			else if (iSwing2.SwingLow[0] < SwingLow14min  && gray_ellipse_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
-			{
-				SwingLow14minReentry = iSwing2.SwingLow[0]; //Then lower the flag of the GrayEllipse in that direction
-				isReentryShort = true;
-			}		
-			if (Low[0] < SwingLow14minReentry  && isReentryShort) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
-			{
-				gray_ellipse_short = false; //Then lower the flag of the GrayEllipse in that direction
-				isReentryShort = false;
-			}			
-
-////		TRADE IDENTIFICATION			
-////		Red Trade Type Process			
-			///Long			 
-			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+            ////		TRADE IDENTIFICATION			
+            ////		Red Trade Type Process			
+            ///Long			 
+            if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -1309,8 +1308,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		
 		[NinjaScriptProperty]
 		[Range(0, int.MaxValue)]
-		[Display(Name="ATREMACrossFactor", Order=19, GroupName="Parameters")]
-		public double ATREMACrossFactor
+		[Display(Name="ATR_EMA_cross_factor", Order=19, GroupName="Parameters")]
+		public double ATR_EMA_cross_factor
 		{ get; set; }
 				
 		[NinjaScriptProperty]
