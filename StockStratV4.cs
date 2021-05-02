@@ -53,7 +53,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, ExtremeClose, FixDistanceToPullbackClose, FixStopSize, StopSize;
 		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, SwingHigh14maxReentry, SwingLow14minReentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
 		private double last_swingHigh2, last_swingLow2, last_swingHigh1, last_swingLow1, DistanceToSMA, DistanceToPullbackClose, FixStopPriceLong, FixTriggerPriceLong, FixStopPriceShort, FixTriggerPriceShort;
-		private bool isIncipientUpTrend, isIncipientDownTrend, GrayEllipseLong, GrayEllipseShort, isReentryLong, isReentryShort, isLong, isShort, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;			
+		private bool is_incipient_up_trend, is_incipient_down_trend, gray_ellipse_long, gray_ellipse_short, isReentryLong, isReentryShort, isLong, isShort, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;			
 		private bool CrossBelow20_50, CrossAbove20_50, isTrailing;
 		private Account myAccount;
 		private Order myEntryOrder = null, myEntryMarket = null, myExitOrder = null;
@@ -197,7 +197,6 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
         }
 		
-////	OnBarUpdate Method
 		protected override void OnBarUpdate()
 		{
 			#region Chart_Initialization
@@ -314,39 +313,55 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			#endregion
 
-            ////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
-            ///UpWard			
-            if (is_upward && EMA_distance >= IncipientTrendFactor * ATR_crossing_value && ATR_crossing_value!=0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
+			#region Incipient_Trend_Identification
+			//IncipientTrend: There has been a crossing event with
+			//the 2 biggest SMAs and the distance between them is
+			//greater or equal to the ATR value at the SMAs crossing
+			//event multiplied by the IncipientTrendFactor parameter.
+
+			//If the overall market movement is going upwards and
+			//the Incipient Trend is confirmed, the is_incipient_up_trend
+			//flag is set to true while its opposite
+			//(is_incipient_down_trend) is set to false and the
+			//gray_ellipse_short flag is set to false.
+			if (is_upward && 
+				EMA_distance >= IncipientTrendFactor * ATR_crossing_value)
 			{
-				isIncipientUpTrend = true; //isIncipientUpTrend turning on
-				isIncipientDownTrend = false; //isIncipientDownTrend turning off
-				GrayEllipseShort = false; // GrayEllipseShort Flag Lowering
+				is_incipient_up_trend = true;
+				is_incipient_down_trend = false;
+				gray_ellipse_short = false;
 				CrossBelow20_50 = false;
 			}
-			
-			///DownWard		
-			else if (is_downward && EMA_distance >= IncipientTrendFactor * ATR_crossing_value && ATR_crossing_value!=0) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
+
+			//If the overall market movement is going downwards and
+			//the Incipient Trend is confirmed, the
+			//is_incipient_down_trend flag is set to true while its
+			//opposite (is_incipient_up_trend) is set to false and the
+			//gray_ellipse_long flag is set to false.
+			if (is_downward && 
+				EMA_distance >= IncipientTrendFactor * ATR_crossing_value) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
 			{
-				isIncipientDownTrend = true; //isIncipientDownTrend turning on
-				isIncipientUpTrend = false; //isIncipientUpTrend turning off
-				GrayEllipseLong = false; //GrayEllipseLong Flag Lowering
+				is_incipient_down_trend = true;
+				is_incipient_up_trend = false;
+				gray_ellipse_long = false;
 				CrossAbove20_50 = false;
 			}
-			
-////		GrayEllipse turn on/off inside an incipient trend (SMA 20-50 Crossing Event) (GrayEllipse: An SMAs 20-50 crossing event in the opposite direction of the overall market movement)
-			///Long			
-			
-			if (/*CrossBelow(iEMA3, iEMA2, 1) && */iEMA3[0] - iEMA2[0] <= iATR[0] * ATREMACrossFactor)
+            #endregion
+
+            ////		GrayEllipse turn on/off inside an incipient trend (SMA 20-50 Crossing Event) (GrayEllipse: An SMAs 20-50 crossing event in the opposite direction of the overall market movement)
+            ///Long			
+
+            if (/*CrossBelow(iEMA3, iEMA2, 1) && */iEMA3[0] - iEMA2[0] <= iATR[0] * ATREMACrossFactor)
 			 {
 			 	CrossBelow20_50 = true;
 			 }
-			if (isIncipientUpTrend && CrossBelow20_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
+			if (is_incipient_up_trend && CrossBelow20_50) // If the SMA 50 is above the SMA200 (upward market movement), there is an SMAs 20-50 crossbelow event and the GrayEllipse in that direction is turned off (false) then...
 			{
 				if (isReentryLong)
 				{
 					isReentryLong = false;
 				}
-				GrayEllipseLong = true; //GrayEllipseLong Flag turning on
+				gray_ellipse_long = true; //gray_ellipse_long Flag turning on
 				int ArrayListSize = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize>=240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
@@ -362,14 +377,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}	
 				CrossBelow20_50 = false;
 			}	
-			else if (iSwing2.SwingHigh[0] > SwingHigh14max && GrayEllipseLong) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the GrayEllipseLong was originated 
+			else if (iSwing2.SwingHigh[0] > SwingHigh14max && gray_ellipse_long) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
 			{
 				SwingHigh14maxReentry = iSwing2.SwingHigh[0]; //Then lower the flag of the GrayEllipse in that direction
 				isReentryLong = true;
 			}	
-			if (High[0] > SwingHigh14maxReentry && isReentryLong) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the GrayEllipseLong was originated 
+			if (High[0] > SwingHigh14maxReentry && isReentryLong) //if the high of the current bar surpass the Max Level of the swinghigh (strength 14) where the gray_ellipse_long was originated 
 			{
-				GrayEllipseLong = false; //Then lower the flag of the GrayEllipse in that direction
+				gray_ellipse_long = false; //Then lower the flag of the GrayEllipse in that direction
 				isReentryLong = false;
 			}
 
@@ -378,13 +393,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 			 {
 			 	CrossAbove20_50 = true;
 			 }
-			if (isIncipientDownTrend && CrossAbove20_50/* && !GrayEllipseShort*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
+			if (is_incipient_down_trend && CrossAbove20_50/* && !gray_ellipse_short*/) // If the SMA 50 is below the SMA200 (downward market movement), there is an SMAs 20-50 crabove event and the GrayEllipse in that direction is turned off (false) then...
 			{
 				if (isReentryShort)
 				{
 					isReentryShort = false;
 				}
-				GrayEllipseShort = true; //GrayEllipseLong Flag turning on
+				gray_ellipse_short = true; //gray_ellipse_long Flag turning on
 				int ArrayListSize = CurrentBar - cross_below_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize>=240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
@@ -400,21 +415,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 				}
 				CrossAbove20_50 = false;
 			}		
-			else if (iSwing2.SwingLow[0] < SwingLow14min  && GrayEllipseShort) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the GrayEllipseShort was originated
+			else if (iSwing2.SwingLow[0] < SwingLow14min  && gray_ellipse_short) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
 			{
 				SwingLow14minReentry = iSwing2.SwingLow[0]; //Then lower the flag of the GrayEllipse in that direction
 				isReentryShort = true;
 			}		
-			if (Low[0] < SwingLow14minReentry  && isReentryShort) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the GrayEllipseShort was originated
+			if (Low[0] < SwingLow14minReentry  && isReentryShort) //if the Low of the current bar surpass the Min Level of the swinglow (strength 14) where the gray_ellipse_short was originated
 			{
-				GrayEllipseShort = false; //Then lower the flag of the GrayEllipse in that direction
+				gray_ellipse_short = false; //Then lower the flag of the GrayEllipse in that direction
 				isReentryShort = false;
 			}			
 
 ////		TRADE IDENTIFICATION			
 ////		Red Trade Type Process			
 			///Long			 
-			if (isIncipientDownTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -438,7 +453,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			 
 			///Short		 
-			else if (isIncipientUpTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+			else if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
@@ -463,7 +478,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			
 ////		TRADITIONAL RED Trade Type Process			
 			///Long			 
-			if (isIncipientUpTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
+			if (is_incipient_up_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 				bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -487,7 +502,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			 
 			///Short		 
-			if (isIncipientDownTrend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
+			if (is_incipient_down_trend && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if the overall market movement is upward and there is no active position then...
 			{
 				///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4			
 				bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
@@ -512,7 +527,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			
 ////		Traditional Trade Type Process
 			///Long
-			if (isIncipientUpTrend && GrayEllipseLong && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an isIncipientUpTrend, a GrayEllipseLong and there is no active position then...
+			if (is_incipient_up_trend && gray_ellipse_long && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an is_incipient_up_trend, a gray_ellipse_long and there is no active position then...
 			{			
 				///Normal traditional
 				if (is_upward)
@@ -564,7 +579,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			
 			///Short	
-			else if (isIncipientDownTrend && GrayEllipseShort && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an isIncipientDownTrend, a GrayEllipseShort and there is no active position then...
+			else if (is_incipient_down_trend && gray_ellipse_short && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an is_incipient_down_trend, a gray_ellipse_short and there is no active position then...
 			{			
 				///Normal traditional
 				if (is_downward)	
