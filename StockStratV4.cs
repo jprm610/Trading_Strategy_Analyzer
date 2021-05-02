@@ -39,15 +39,21 @@ namespace NinjaTrader.NinjaScript.Strategies
 		#endregion
 
 		#region Parameters_Check
-		int max_indicator_bar_calculation = 0;
+		private int max_indicator_bar_calculation = 0;
 		#endregion
 
-		private int CrossAboveBar, CrossBelowBar, AmountLong, FixAmountLong, AmountShort, FixAmountShort;
-		private double ATRCrossingTime, EMA_distance, StopPriceLong, TriggerPriceLong, StopPriceShort, TriggerPriceShort, SwingHigh14max, SwingLow14min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
+		#region Overall_Market_Movement
+		private int cross_above_bar, cross_below_bar;
+		private double ATR_crossing_value;
+		private bool is_upward, is_downward;
+		#endregion
+
+		private int AmountLong, FixAmountLong, AmountShort, FixAmountShort;
+		private double EMA_distance, StopPriceLong, TriggerPriceLong, StopPriceShort, TriggerPriceShort, SwingHigh14max, SwingLow14min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
 		private double last_max_high_swingHigh1, last_max_high_swingHigh2, last_min_low_swingLow1, last_min_low_swingLow2, ExtremeClose, FixDistanceToPullbackClose, FixStopSize, StopSize;
 		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, SwingHigh14maxReentry, SwingLow14minReentry, max_high_swingHigh1, max_high_swingHigh2, min_low_swingLow1, min_low_swingLow2;
 		private double last_swingHigh2, last_swingLow2, last_swingHigh1, last_swingLow1, DistanceToSMA, DistanceToPullbackClose, FixStopPriceLong, FixTriggerPriceLong, FixStopPriceShort, FixTriggerPriceShort;
-		private bool isIncipientUpTrend, isIncipientDownTrend, IsUpWard = true, IsDownWard = true, GrayEllipseLong, GrayEllipseShort, isReentryLong, isReentryShort, isLong, isShort, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;			
+		private bool isIncipientUpTrend, isIncipientDownTrend, GrayEllipseLong, GrayEllipseShort, isReentryLong, isReentryShort, isLong, isShort, isBO, is_BO_up_swing1, is_BO_up_swing2, is_BO_down_swing1, is_BO_down_swing2;			
 		private bool CrossBelow20_50, CrossAbove20_50, isTrailing;
 		private Account myAccount;
 		private Order myEntryOrder = null, myEntryMarket = null, myExitOrder = null;
@@ -284,28 +290,33 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			#endregion
 
-			////		Identifying the overall market  movement type Process and saving the ATR value at that time (SMA 50-200 Crossing Event) (if the SMA 50 is above the SMA 200 then there is an upward overall movement type, if the SMA 50 is below the SMA 200 then there is an downward overall movement type)	
-			///Above
-			if (CrossAbove(iEMA2, iEMA1, 1) && IsDownWard) //Once an SMAs 50-200 crossabove happens and there exists a downward overall movement then...
+			#region Overall_Market_Movement
+			//If the second biggest SMA crosses above the biggest SMA it means the market is going upwards.
+			//The ATR value is saved immediately, the is_upward flag is set to true while its opposite flag (is_downward) is set to false.
+			//Finally the CurrentBar of the event is saved for later calculations.
+			if (CrossAbove(iEMA2, iEMA1, 1))
 			{
-				ATRCrossingTime = iATR[0]; //Tomar valor del ATR en el cruce
-				IsUpWard = true; //Defining overall movement type
-				IsDownWard = false; //Opposing movement Flag Lowering
-				CrossAboveBar = CurrentBar; //Saves the bar number at the crossing time
+				ATR_crossing_value = iATR[0];
+				is_upward = true;
+				is_downward = false;
+				cross_above_bar = CurrentBar;
 			}
-			
-			///Below
-			else if (CrossBelow(iEMA2, iEMA1, 1) && IsUpWard) //Once an SMAs 50-200 crossbelow happens and there exists an upward overall movement then...
+
+			//If the second biggest SMA crosses below the biggest SMA it means the market is going downwards.
+			//The ATR value is saved immediately, the is_downward flag is set to true while its opposite flag (is_upward) is set to false.
+			//Finally the CurrentBar of the event is saved for later calculations.
+			if (CrossBelow(iEMA2, iEMA1, 1))
 			{
-				ATRCrossingTime = iATR[0]; //Tomar valor ATR en el cruce
-				IsDownWard = true; //Defining overall movement type
-				IsUpWard = false; //Opposing movement Flag Lowering
-				CrossBelowBar = CurrentBar; //Saves the bar number at the crossing time
+				ATR_crossing_value = iATR[0];
+				is_downward = true;
+				is_upward = false;
+				cross_below_bar = CurrentBar;
 			}
-			
-////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
-			///UpWard			
-			if (IsUpWard && EMA_distance >= IncipientTrendFactor * ATRCrossingTime && ATRCrossingTime!=0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
+			#endregion
+
+            ////		IncipientTrend Identification Process (IncipientTrend: there has been an SMAs 50-200 crossing event and the distance between those SMAs has reached the double of the ATR value at the crossing time)
+            ///UpWard			
+            if (is_upward && EMA_distance >= IncipientTrendFactor * ATR_crossing_value && ATR_crossing_value!=0) //Once an upward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossAbove 50-200 event that records an ATR value then...
 			{
 				isIncipientUpTrend = true; //isIncipientUpTrend turning on
 				isIncipientDownTrend = false; //isIncipientDownTrend turning off
@@ -314,7 +325,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			}
 			
 			///DownWard		
-			else if (IsDownWard && EMA_distance >= IncipientTrendFactor * ATRCrossingTime && ATRCrossingTime!=0) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
+			else if (is_downward && EMA_distance >= IncipientTrendFactor * ATR_crossing_value && ATR_crossing_value!=0) //Once an downward overall movement has been identified, the SMAs 50-200 distance is greater than the ATR value at the crossing time and there have been a first CrossBelow 50-200 event that records an ATR value then...
 			{
 				isIncipientDownTrend = true; //isIncipientDownTrend turning on
 				isIncipientUpTrend = false; //isIncipientUpTrend turning off
@@ -336,7 +347,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					isReentryLong = false;
 				}
 				GrayEllipseLong = true; //GrayEllipseLong Flag turning on
-				int ArrayListSize = CurrentBar - CrossAboveBar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
+				int ArrayListSize = CurrentBar - cross_above_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize>=240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
 					ArrayListSize=240;	
@@ -374,7 +385,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 					isReentryShort = false;
 				}
 				GrayEllipseShort = true; //GrayEllipseLong Flag turning on
-				int ArrayListSize = CurrentBar - CrossBelowBar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
+				int ArrayListSize = CurrentBar - cross_below_bar; //Calculating the distance in bars (that determines the array size to check for the max/min swinghigh/low level) between the SMAs 20-50 crossing event and the Last SMAs 50-200 crossing event			
 				if (ArrayListSize>=240) //trick to avoid the bug when trying to find the value of swing indicator beyond the 256 MaximunBarlookbar period, which is not possible
 				{
 					ArrayListSize=240;					
@@ -504,7 +515,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			if (isIncipientUpTrend && GrayEllipseLong && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Short)) //if we have an isIncipientUpTrend, a GrayEllipseLong and there is no active position then...
 			{			
 				///Normal traditional
-				if (IsUpWard)
+				if (is_upward)
 				{			
 					///Validate whether there is a valid higher low strength 4 (HL4) and if so then send a long stop order above the reference swing high 4				
 					bool isSwingHigh4 = false; //Higher Swing strength 4 Flag creation, set to false and pending of validation
@@ -556,7 +567,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			else if (isIncipientDownTrend && GrayEllipseShort && (Position.MarketPosition == MarketPosition.Flat || Position.MarketPosition == MarketPosition.Long)) //if we have an isIncipientDownTrend, a GrayEllipseShort and there is no active position then...
 			{			
 				///Normal traditional
-				if (IsDownWard)	
+				if (is_downward)	
 				{				
 					///Validate whether there is a valid lower high strength 4 (LH4) and if so then send a short stop order below the reference swing low 4		
 					bool isSwingLow4 = false; //Lower Swing strength 4 Flag creation, set to false and pending of validation
