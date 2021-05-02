@@ -36,9 +36,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 		private VOL iVOL;
 		private VOLMA iVOLMA;
 		private Swing iSwing1, iSwing2;
-        #endregion
+		#endregion
 
-        private int CrossAboveBar, CrossBelowBar, AmountLong, FixAmountLong, AmountShort, FixAmountShort;
+		#region Parameters_Check
+		int max_indicator_bar_calculation = 0;
+		#endregion
+
+		private int CrossAboveBar, CrossBelowBar, AmountLong, FixAmountLong, AmountShort, FixAmountShort;
 		private double ATRCrossingTime, SMAdif, StopPriceLong, TriggerPriceLong, StopPriceShort, TriggerPriceShort, SwingHigh14max, SwingLow14min, MaxCloseSwingLow4, RangeSizeSwingLow4, MaxCloseSwingLow14;
 		private double LastMaxHighSwingHigh4, LastMaxHighSwingHigh14, LastMinLowSwingLow4, LastMinLowSwingLow14, ExtremeClose, FixDistanceToPullbackClose, FixStopSize, StopSize;
 		private double RangeSizeSwingLow14, MinCloseSwingHigh4, RangeSizeSwingHigh4, MinCloseSwingHigh14, RangeSizeSwingHigh14, SwingHigh14maxReentry, SwingLow14minReentry, MaxHighSwingHigh4, MaxHighSwingHigh14, MinLowSwingLow4, MinLowSwingLow14;
@@ -70,13 +74,12 @@ namespace NinjaTrader.NinjaScript.Strategies
 				RealtimeErrorHandling						= RealtimeErrorHandling.StopCancelClose;
 				StopTargetHandling							= StopTargetHandling.PerEntryExecution;
 				BarsRequiredToTrade							= 20;
-				// Disable this property for performance gains in Strategy Analyzer optimizations
-				// See the Help Guide for additional information
 				IsInstantiatedOnEachOptimizationIteration	= true;
-				EMA1						= 200;
-				EMA2						= 50;
-				EMA3						= 20;
-				ATR1						= 14;
+
+				EMA1						= 100;
+				EMA2						= 25;
+				EMA3						= 10;
+				ATR1						= 20;
 				Swing1						= 3;
 				Swing2						= 9;
 				UnitsTriggerForTrailing		= 1;				
@@ -100,23 +103,25 @@ namespace NinjaTrader.NinjaScript.Strategies
 			else if (State == State.DataLoaded)
 			{
 				// iEMA1 > iEMA2 > iEMA3
-				iEMA1 = EMA(Close, EMA1);
-				iEMA2 = EMA(Close, EMA2);
-				iEMA3 = EMA(Close, EMA3);
+				iEMA1			= EMA(Close, EMA1);
+				iEMA2			= EMA(Close, EMA2);
+				iEMA3			= EMA(Close, EMA3);
 
-				iATR = ATR(Close, ATR1);
-				iVOL = VOL();
-				iVOLMA = VOLMA(10);
-				iSwing1	= Swing(Close, Swing1);
-				iSwing2 = Swing(Close, Swing2);
-				iEMA1.Plots[0].Brush = Brushes.Red;
+				iATR			= ATR(Close, ATR1);
+				iVOL			= VOL();
+				iVOLMA			= VOLMA(10);
+				iSwing1			= Swing(Close, Swing1);
+				iSwing2			= Swing(Close, Swing2);
+
+				iEMA1.Plots[0].Brush= Brushes.Red;
 				iEMA2.Plots[0].Brush = Brushes.Gold;
 				iEMA3.Plots[0].Brush = Brushes.Lime;
 				iATR.Plots[0].Brush = Brushes.White;
 				iSwing1.Plots[0].Brush = Brushes.Fuchsia;
-				iSwing1.Plots[1].Brush = Brushes.Gold;
+				iSwing1.Plots[1].Brush = Brushes.Fuchsia;
 				iSwing2.Plots[0].Brush = Brushes.Silver;
 				iSwing2.Plots[1].Brush = Brushes.Silver;
+
 				AddChartIndicator(iEMA1);
 				AddChartIndicator(iEMA2);
 				AddChartIndicator(iEMA3);
@@ -188,34 +193,46 @@ namespace NinjaTrader.NinjaScript.Strategies
 		
 ////	OnBarUpdate Method
 		protected override void OnBarUpdate()
-		{	
-//			if (myEntryOrder != null)
-//			{
-//				Print (String.Format("{0} // {1} // {2}", myEntryOrder, myEntryOrder.Quantity, Time[0]));
-//			}
-//			if (myEntryMarket != null)
-//			{
-//				Print (String.Format("{0} // {1} // {2}", myEntryMarket, myEntryMarket.Quantity, Time[0]));
-//			}
-//			if (myExitOrder != null)
-//			{
-//				Print (String.Format("{0} // {1} // {2}", myExitOrder, myExitOrder.Quantity, Time[0]));
-//			}
-//			Print (String.Format("{0} // {1} // {2}", GrayEllipseLong, GrayEllipseShort, Time[0]));
-////		Properly stop setting confirmation			
-			if (TrailerUnitsStop - UnitsTriggerForTrailing > 1)
+		{
+			#region Chart_Initialization
+			if (BarsInProgress != 0) return;
+
+			if (CurrentBars[0] < 0) return;
+
+			if (CurrentBar < BarsRequiredToTrade || CurrentBar < max_indicator_bar_calculation) return;
+
+			//This conditional checks that the indicator values that will be used in later calculations are not equal to 0.
+			if (iSwing1.SwingHigh[0] == 0 || iSwing1.SwingLow[0] == 0 ||
+				iSwing2.SwingHigh[0] == 0 || iSwing2.SwingLow[0] == 0 ||
+				iEMA1[0] == 0 ||
+				iATR[0] == 0)
+				return;
+			#endregion
+
+			#region Parameters_Check
+			//This block of code checks if the indicator values that will be used in later calculations are correct.
+			//When a SMA of period 200 prints a value in the bar 100 is an example of a wrong indicator value.
+			//This conditional only executes once, that is why its argument.
+			if (max_indicator_bar_calculation == 0)
+			{
+				//Create an array so that we can get the maximum value.
+				int[] indicators = { EMA1, EMA2, EMA3, ATR1 };
+
+				max_indicator_bar_calculation = indicators.Max();
+
+				//Stop calculations if the chart is not printing correct indicator values.
+				if (CurrentBar < max_indicator_bar_calculation)
+				{
+					Print(string.Format("BarsRequiredToTrade has been updated to {0} to avoid wrong indicator values.", max_indicator_bar_calculation));
+					return;
+				}
+			}
+            #endregion
+
+            ////		Properly stop setting confirmation			
+            if (TrailerUnitsStop - UnitsTriggerForTrailing > 1)
 			{
 				Print("You should correct the stop input data");
-				return;
-			}		
-			
-////		Bars in the Chart confirmation		
-			if (BarsInProgress != 0) 
-			{
-				return;
-			}
-			if (CurrentBars[0] < 1)
-			{
 				return;
 			}
 			
