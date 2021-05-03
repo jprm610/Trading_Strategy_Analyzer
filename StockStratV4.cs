@@ -604,9 +604,8 @@ namespace NinjaTrader.NinjaScript.Strategies
             #endregion
             #endregion
 
-            ////		TRADE MANAGEMENT (Stop and Trailing Stop Trigger Setting)						
-            ///Stop Updating Process (by both trailing and SMA)
-            ///While Long	
+            #region Trade_Management
+            #region Long   
             if (Position.MarketPosition == MarketPosition.Long && !isLong) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{				
 				isLong = true;
@@ -624,7 +623,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 			{				
 				if (myEntryOrder == null || myEntryMarket == null)
 				{
-					if (myEntryMarket == null && myEntryOrder.OrderState == OrderState.Filled)
+                    if (myEntryMarket == null && myEntryOrder.OrderState == OrderState.Filled)
 					{
 //						if (myEntryOrder.OrderState == OrderState.Filled)
 //						{
@@ -768,7 +767,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 						}
 					}
 				}
-				else if (myEntryOrder.OrderState == OrderState.Filled/* && myEntryMarket.OrderState != OrderState.Filled*/)
+                else if (myEntryOrder.OrderState == OrderState.Filled/* && myEntryMarket.OrderState != OrderState.Filled*/)
 				{
 //					if (myEntryOrder.OrderState == OrderState.Filled && myEntryMarket.OrderState != OrderState.Filled)
 //					{
@@ -919,9 +918,10 @@ namespace NinjaTrader.NinjaScript.Strategies
 					}
 				}
 			}
-			
-			///While Short	
-			if (Position.MarketPosition == MarketPosition.Short && !isShort) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
+            #endregion
+
+            #region Short   
+            if (Position.MarketPosition == MarketPosition.Short && !isShort) //if the postition is stil active and the initial stop and trailing stop trigger price levels were set then...
 			{
 				isLong = false;
 				isShort = true;
@@ -1172,11 +1172,13 @@ namespace NinjaTrader.NinjaScript.Strategies
 						ExitLongStopMarket(FixAmountLong, FixStopPriceLong, @"exit", @"entryOrder");
 					}
 				}
-			}
-		}
-		
-		#region Properties
-		[NinjaScriptProperty]
+            }
+            #endregion
+			#endregion
+        }
+
+        #region Properties
+        [NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name="EMA1", Order=1, GroupName="Parameters")]
 		public int EMA1
