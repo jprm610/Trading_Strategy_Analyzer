@@ -355,52 +355,37 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
 #Relative Strength Index (RSI)
 def RSI(prices, period) :
     """
-    Isn't working!!!!!!!!!!!!
+    INPUTS:
+    *prices: The df with opens, highs, lows and closes.
+    *period: The period used to calculate indicator (int).
+
+    OUTPUTS:
+    *RSIs: A list of all RSI values according to the dataframe.
     """
+    
+    #Create a df in order to manipulate the data easily.
+    df = pd.DataFrame()
 
-    #Create a list in which the RSI values are going to be saved.
+    #Define a column in which the diference between the Highs and Lows is saved.
+    df['Price Change'] = prices['close'].pct_change()
+
+    #Determine the Upmoves and Downmoves using the price change.
+    df['Upmove'] = df['Price Change'].apply(lambda x : x if x > 0 else 0)
+    df['Downmove'] = df['Price Change'].apply(lambda x : abs(x) if x < 0 else 0)
+
+    #Calculate the Avg Up and Down with an EMA smoothing factor.
+    df['avg Up'] = df['Upmove'].ewm(span = period - 1).mean()
+    df['avg Down'] = df['Downmove'].ewm(span = period - 1).mean()
+
+    #Calculate the Relative Strength.
+    df['RS'] = df['avg Up'] / df['avg Down']
+
+    #Calculate the final RSI value using the formula.
+    df['RSI'] = df['RS'].apply(lambda x : 100 - (100 / (x + 1)))
+
+    #Create a list in which only the RSI values are going to be saved.
     RSIs = []
-
-    #For each candle:
-    for i in range(len(prices)) :
-        #If there isn't enough data, 
-        #set the current RSI value to -1.
-        if i < period - 1 :
-            RSIs.append(-1)
-        else :
-            #Create 2 lists in which the positive and negative candles are going to be saved. 
-            gains = []
-            loses = []
-
-            #Reviews the last n candles (n == period).
-            for j in range(period + 1) :
-                #Find the type of candle (gain or lose) and save it in the 2 lists.
-                c = prices.close[i - j]
-                o = prices.open[i - j]
-                difference = prices.close[i - j] - prices.open[i - j]
-                if difference >= 0 :
-                    gains.append(difference)
-                else :
-                    loses.append(difference)
-            
-            #Check the corner cases in which there isn't gains or loses, 
-            #so arbitrary values are set to avoid indeterminations 
-            #in the RS and RSI formulas calculations.
-            if len(gains) == 0 :
-                gain_avg = 0
-            else :
-                gain_avg = sum(gains) / len(gains)
-
-            if len(loses) == 0 :
-                lose_avg = 1
-            else :
-                lose_avg = abs(sum(loses) / len(loses))
-
-            #Calculate the Relative Strength.
-            RS = gain_avg / lose_avg
-            
-            #And finally calculate the current RSI value in a range between 0 and 100 inclusive.
-            RSIs.append(100 - (100 / (1 + RS)))
+    RSIs = df['RSI'].tolist()
 
     return RSIs
 

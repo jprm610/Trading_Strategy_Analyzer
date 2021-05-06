@@ -57,6 +57,8 @@ iROC20 = ROC(df, 20)
 iROC50 = ROC(df, 50)
 iROC200 = ROC(df, 200)
 
+iRSI = RSI(df, 20)
+
 """
 iTIH = TI(df, 10, True)
 iTIL = TI(df, 10, False)
@@ -65,8 +67,6 @@ iRIL = RI(df, 10, False)
 iVIH = VI(df, 10, True)
 iVIL = VI(df, 10, False)
 iOBV = OBV(df, 10)
-
-RSI = RSI(df, 14)
 """
 # endregion
 
@@ -95,6 +95,8 @@ iROC200_ot = []
 iEMA20_ot = []
 iEMA50_ot = []
 iEMA200_ot = []
+
+iRSI_ot = []
 
 #Dimensions
 recoil_x = []
@@ -163,6 +165,7 @@ for i in range(len(df)) :
 					iEMA20_ot.append(iEMA20[i])
 					iEMA50_ot.append(iEMA50[i])
 					iEMA200_ot.append(iEMA200[i])
+					iRSI_ot.append(iRSI[i])
 
 					dimensions = Swing_Dimensions(df[0:i], iSwing4.swingHigh[0:i], iSwing4.swingLow[0:i], iSwing4.strength)
 					recoil_x.append(dimensions["pullback_x"])
@@ -199,6 +202,7 @@ for i in range(len(df)) :
 					iEMA20_ot.append(iEMA20[i])
 					iEMA50_ot.append(iEMA50[i])
 					iEMA200_ot.append(iEMA200[i])
+					iRSI_ot.append(iRSI[i])
 
 					dimensions = Swing_Dimensions(df[0:i], iSwing4.swingLow[0:i], iSwing4.swingHigh[0:i], iSwing4.strength)
 					recoil_x.append(dimensions["pullback_x"])
@@ -280,6 +284,8 @@ trades['iBBLower20'] = np.array(iBB_Lower_20_ot)
 
 trades['iMACD1226'] = np.array(iMACD_12_26_ot)
 
+trades['iRSI'] = np.array(iRSI_ot)
+
 trades['recoil_x'] = np.array(recoil_x)
 trades['init_x'] = np.array(init_x)
 
@@ -316,6 +322,8 @@ df['BBUpper20'] = np.array(iBB_Upper_20)
 df['swing4high'] = np.array(iSwing4.swingHigh)
 df['swing4low'] = np.array(iSwing4.swingLow)
 
+df["RSI"] = np.array(iRSI)
+
 """
 df['TIH'] = np.array(TIH)
 df['TIL'] = np.array(TIL)
@@ -323,7 +331,6 @@ df['RIH'] = np.array(RIH)
 df['RIL'] = np.array(RIL)
 df['VIH'] = np.array(VIH)
 df['VIL'] = np.array(VIL)
-df["RSI"] = np.array(RSI)
 df['MACD']   = np.array(MACD)
 df["BB_Upper"] = np.array(BB_Upper)
 df["BB_Lower"] = np.array(BB_Lower)
@@ -369,5 +376,5 @@ py.offline.plot(fig, filename = "main.html")
 # endregion
 
 #Save the edited dataframe as a new .csv file
-#df.to_csv('Final_frame.csv')
-trades.to_csv('trades.csv')
+df.to_csv('Final_frame.csv', sep=';')
+trades.to_csv('trades.csv', sep=';')
