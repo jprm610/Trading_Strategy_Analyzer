@@ -39,6 +39,7 @@ for asset in tickers :
 
     # region INDICATOR CALCULATIONS
     #Get all indicator lists
+    """
     iSwing1 = MySwing(4)
     iSwing1.swingHigh, iSwing1.swingLow = MySwing.Swing(MySwing, df, iSwing1.strength)
 
@@ -46,8 +47,11 @@ for asset in tickers :
 
     iSMA3  = SMA(df, 20)
     iSMA2  = SMA(df, 50)
+    """
+
     iSMA1 = SMA(df, 200)
 
+    """
     iEMA3  = EMA(df, 20)
     iEMA2  = EMA(df, 50)
     iEMA1 = EMA(df, 200)
@@ -59,8 +63,9 @@ for asset in tickers :
     iROC3 = ROC(df, 20)
     iROC2 = ROC(df, 50)
     iROC1 = ROC(df, 200)
+    """
 
-    iRSI = RSI(df, 20)
+    iRSI = RSI(df, 10)
 
     """
     iTIH = TI(df, 10, True)
@@ -76,21 +81,23 @@ for asset in tickers :
     # region TRADE_EMULATION
     dates = []
     trade_type = []
+    stock = []
 
     entry_close = []
-    reference_swing_entry = []
+    #reference_swing_entry = []
 
-    iSMA3_ot = []
-    iSMA2_ot = [] 
+    #iSMA3_ot = []
+    #iSMA2_ot = [] 
     iSMA1_ot = []
 
-    iATR_ot = []
+    #iATR_ot = []
 
-    iMACD1_ot = []
+    #iMACD1_ot = []
 
-    iBB_Upper_1_ot = []
-    iBB_Lower_1_ot = []
+    #iBB_Upper_1_ot = []
+    #iBB_Lower_1_ot = []
 
+    """
     iROC3_ot = []
     iROC2_ot = []
     iROC1_ot = []
@@ -98,10 +105,12 @@ for asset in tickers :
     iEMA3_ot = []
     iEMA2_ot = []
     iEMA1_ot = []
+    """
 
     iRSI_ot = []
 
     #Dimensions
+    """
     recoil_x = []
     init_x = []
 
@@ -109,13 +118,14 @@ for asset in tickers :
     iVI_ot = []
     iRI_ot = []
     iOBV_ot = []
+    """
 
     y = []
     y2 = []
     y_index = []
 
-    is_upward = False
-    is_downward = False
+    #is_upward = False
+    #is_downward = False
     on_trade = False
     trade_point_long = -1
     trade_point_short = -1
@@ -124,134 +134,49 @@ for asset in tickers :
 
         if i == 0 : continue
 
-        if iSwing1.swingHigh[i] == 0 or iSwing1.swingLow[i] == 0 : continue
+        #if iSwing1.swingHigh[i] == 0 or iSwing1.swingLow[i] == 0 : continue
 
-        if iSwing1.Swing_Bar(iSwing1.swingHigh[0:i], 1, iSwing1.strength) == -1 or iSwing1.Swing_Bar(iSwing1.swingLow[0:i], 1, iSwing1.strength) == -1 : continue
+        #if iSwing1.Swing_Bar(iSwing1.swingHigh[0:i], 1, iSwing1.strength) == -1 or iSwing1.Swing_Bar(iSwing1.swingLow[0:i], 1, iSwing1.strength) == -1 : continue
 
-        if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iATR[i] == -1 or iRSI[i] == -1 : continue
+        #if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iATR[i] == -1 or iRSI[i] == -1 : continue
 
-        trade_point_short = -1
-        trade_point_long = -1
+        if iSMA1[i] == -1 or iRSI[i] == -1 : continue
 
-        current_stop = iATR[i] * 3
+        #trade_point_short = -1
+        #trade_point_long = -1
+
+        #current_stop = iATR[i] * 3
         
         # region TRADE CALCULATION
         if not on_trade :
+            if df.close[i] > iSMA1[i] :
+                if iRSI[i] < 30 :
+                    on_trade = True
+                    max_income = df.high[i]
+                    dates.append(df.index[i])
+                    trade_type.append("Long")
+                    entry_close.append(df.close[i])
+                    entry_candle = i
 
-            if Swing_Found(df[0:i], iSwing1.swingLow[0:i], iSwing1.Swing_Bar(iSwing1.swingHigh[0:i], 1, iSwing1.strength), True, distance_to_BO) :
-                trade_point_long = iSwing1.swingHigh[i] + distance_to_BO
-
-            if Swing_Found(df[0:i], iSwing1.swingHigh[0:i], iSwing1.Swing_Bar(iSwing1.swingLow[0:i], 1, iSwing1.strength), False, distance_to_BO) :
-                trade_point_short = iSwing1.swingLow[i] - distance_to_BO
-
-            # region ENTRY_MARKET_LONG
-            if trade_point_long != -1 :
-                if df.close[i] >= trade_point_long and trade_point_long - iSMA2[i] > 0 :
-                    if abs(df.close[i] - iSMA2[i]) <= current_stop :
-                        on_trade = True
-                        max_income = df.high[i]
-
-                        dates.append(df.index[i])
-                        trade_type.append("Long")
-                        entry_close.append(df.close[i])
-                        reference_swing_entry.append(iSwing1.swingHigh[i])
-                        iSMA3_ot.append(iSMA3[i])
-                        iSMA2_ot.append(iSMA2[i])
-                        iSMA1_ot.append(iSMA1[i])
-                        iATR_ot.append(iATR[i])
-                        iMACD1_ot.append(iMACD1[i])
-                        iBB_Upper_1_ot.append(iBB_Upper_1[i])
-                        iBB_Lower_1_ot.append(iBB_Lower_1[i])
-                        iROC3_ot.append(iROC3[i])
-                        iROC2_ot.append(iROC2[i])
-                        iROC1_ot.append(iROC1[i])
-                        iEMA3_ot.append(iEMA3[i])
-                        iEMA2_ot.append(iEMA2[i])
-                        iEMA1_ot.append(iEMA1[i])
-                        iRSI_ot.append(iRSI[i])
-
-                        dimensions = Swing_Dimensions(df[0:i], iSwing1.swingHigh[0:i], iSwing1.swingLow[0:i], iSwing1.strength)
-                        recoil_x.append(dimensions["pullback_x"])
-                        init_x.append(dimensions["init_x"])
-
-                        iOBV_ot.append(OBV(df[0:i], 10))
-                        iRI_ot.append(RI(df[0:i], 10, True))
-                        iVI_ot.append(VI(df[0:i], 10 ,True))
-                        iTI_ot.append(TI(df[0:i], 10, True))
-
-            # endregion
-
-            # region ENTRY_MARKET_SHORT
-            if trade_point_short != -1 :
-                if df.close[i] <= trade_point_short and trade_point_short - iSMA2[i] < 0 :
-                    if abs(df.close[i] - iSMA2[i]) <= current_stop :
-                        on_trade = True
-                        max_income = df.low[i]
-
-                        dates.append(df.index[i])
-                        trade_type.append("Short")
-                        entry_close.append(df.close[i])
-                        reference_swing_entry.append(iSwing1.swingLow[i])
-                        iSMA3_ot.append(iSMA3[i])
-                        iSMA2_ot.append(iSMA2[i])
-                        iSMA1_ot.append(iSMA1[i])
-                        iATR_ot.append(iATR[i])
-                        iMACD1_ot.append(iMACD1[i])
-                        iBB_Upper_1_ot.append(iBB_Upper_1[i])
-                        iBB_Lower_1_ot.append(iBB_Lower_1[i])
-                        iROC3_ot.append(iROC3[i])
-                        iROC2_ot.append(iROC2[i])
-                        iROC1_ot.append(iROC1[i])
-                        iEMA3_ot.append(iEMA3[i])
-                        iEMA2_ot.append(iEMA2[i])
-                        iEMA1_ot.append(iEMA1[i])
-                        iRSI_ot.append(iRSI[i])
-
-                        dimensions = Swing_Dimensions(df[0:i], iSwing1.swingLow[0:i], iSwing1.swingHigh[0:i], iSwing1.strength)
-                        recoil_x.append(dimensions["pullback_x"])
-                        init_x.append(dimensions["init_x"])
-
-                        iOBV_ot.append(OBV(df[0:i], 10))
-                        iRI_ot.append(RI(df[0:i], 10, False))
-                        iVI_ot.append(VI(df[0:i], 10 ,False))
-                        iTI_ot.append(TI(df[0:i], 10, False))
-            # endregion
+                    iSMA1_ot.append(iSMA1[i])
+                    iRSI_ot.append(iRSI[i])
         # endregion
-        
+
         # region TRADE MANAGEMENT
         else :
             if len(trade_type) == 0 : continue
 
-            if trade_type[-1] == "Long" :
-                if df.high[i] > max_income :
+            if df.high[i] > max_income :
                     max_income = df.high[i]
+
+            if iRSI[i] < 40 or i == entry_candle + 10 :
+                on_trade = False
+                outcome = df.close[i] - entry_close[-1]
                 
-                if df.close[i] <= iSMA2[i] :
-                    on_trade = False
-                    outcome = df.close[i] - entry_close[-1]
-                    trade_point_long = -1
-                    trade_point_short = -1
+                y.append(outcome)
+                y_index.append(df.index[i])
+                y2.append(max_income - entry_close[-1])
 
-                    y.append(outcome)
-                    y_index.append(df.index[i])
-                    y2.append(max_income - entry_close[-1])
-            else :
-                if df.low[i] < max_income :
-                    max_income = df.low[i]
-
-                if df.close[i] >= iSMA2[i] :
-                    on_trade = False
-                    outcome = df.close[i] - entry_close[-1]
-                    trade_point_long = -1
-                    trade_point_short = -1
-
-                    if outcome >= 0 :
-                        y.append(-outcome)
-                    else :
-                        y.append(abs(outcome))
-                    y_index.append(df.index[i])
-                    y2.append(abs(max_income - entry_close[-1]))
-        
         if i == len(df) - 1 and on_trade :
             y.append(-1)
             y_index.append(df.index[i])
@@ -266,14 +191,18 @@ for asset in tickers :
     trades['trade_type']  = np.array(trade_type)
 
     trades['entry_close'] = np.array(entry_close)
-    trades['reference_swing'] = np.array(reference_swing_entry)
+    #trades['reference_swing'] = np.array(reference_swing_entry)
 
+    """
     trades['iATR']  = np.array(iATR_ot)
 
     trades['iSMA3']  = np.array(iSMA3_ot)
     trades['iSMA2']  = np.array(iSMA2_ot)
+    """
+
     trades['iSMA1']  = np.array(iSMA1_ot)
 
+    """
     trades['iROC3'] = np.array(iROC3_ot)
     trades['iROC2'] = np.array(iROC2_ot)
     trades['iROC1'] = np.array(iROC1_ot)
@@ -286,9 +215,11 @@ for asset in tickers :
     trades['iBBLower20'] = np.array(iBB_Lower_1_ot)
 
     trades['iMACD1226'] = np.array(iMACD1_ot)
+    """
 
     trades['iRSI'] = np.array(iRSI_ot)
 
+    """
     trades['recoil_x'] = np.array(recoil_x)
     trades['init_x'] = np.array(init_x)
 
@@ -296,6 +227,7 @@ for asset in tickers :
     trades['iRI'] = np.array(iRI_ot)
     trades['iVI'] = np.array(iVI_ot)
     trades['iTI'] = np.array(iTI_ot)
+    """
 
     trades['y']  = np.array(y)
 
@@ -306,12 +238,16 @@ for asset in tickers :
 
     # region BUILD NEW DATASET
     #Attach those lists to columns
+    """
     df['ATR100'] = np.array(iATR)
 
     df['SMA20']  = np.array(iSMA3)
     df['SMA50']  = np.array(iSMA2)
+    """
+
     df['SMA200'] = np.array(iSMA1)
 
+    """
     df['ROC20'] = np.array(iROC3)
     df['ROC50'] = np.array(iROC2)
     df['ROC200'] = np.array(iROC1)
@@ -327,7 +263,8 @@ for asset in tickers :
 
     df['swing4high'] = np.array(iSwing1.swingHigh)
     df['swing4low'] = np.array(iSwing1.swingLow)
-
+    """
+    
     df["RSI"] = np.array(iRSI)
 
     """

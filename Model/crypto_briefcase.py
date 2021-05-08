@@ -344,5 +344,5 @@ for asset in crypto_symbols :
     # endregion
 
     #Save the edited dataframe as a new .csv file
-    df.to_csv(r'C:\Users\jprmg\Documents\NinjaTrader 8\bin\Custom\Strategies\Trading\Model\Cryptos\_' + str(asset) + '_data.csv', sep=';')
-    trades.to_csv(r'C:\Users\jprmg\Documents\NinjaTrader 8\bin\Custom\Strategies\Trading\Model\Cryptos\_' + str(asset) + '_trades.csv', sep=';')
+    df.to_csv(r'Cryptos\_' + str(asset) + '_data.csv', sep=';')
+    trades.to_csv(r'Cryptos\_' + str(asset) + '_trades.csv', sep=';')
