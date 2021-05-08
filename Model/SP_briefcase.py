@@ -183,7 +183,10 @@ for asset in tickers :
                 y2.append(max_income - entry_close[-1])
 
         if i == len(df) - 1 and on_trade :
-            y.append(-1)
+            outcome = df.close[i] - entry_close[-1]
+
+            y2.append(max_income - entry_close[-1])
+            y.append(outcome)
             y_index.append(df.index[i])
         # endregion
     # endregion
@@ -236,9 +239,6 @@ for asset in tickers :
     """
 
     trades['y']  = np.array(y)
-
-    if len(y2) != len(y) : y2.append(-1)
-    
     trades['y2'] = np.array(y2)
     # endregion
 
@@ -291,4 +291,10 @@ for asset in tickers :
     #df.to_csv(r'SP\_' + str(asset) + '_data.csv', sep=';')
     trades_global = trades_global.append(trades)
     
+wins = [i for i in trades_global['y'] if i > 0]
+loses = [i for i in trades_global['y'] if i < 0]
+print('Winning weight: ' + str(len(wins) / len(trades_global) * 100) + '%')
+
+print('Net profit: ' + str(trades['y'].sum()))
+
 trades_global.to_csv('SP_trades.csv', sep=';')
