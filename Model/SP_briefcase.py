@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import yfinance as yf
+from csv import writer
 from indicators import *
 pd.options.mode.chained_assignment = None
 
@@ -8,6 +9,8 @@ sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
 actives = sp500[0]
 tickers = actives['Symbol'].to_list()
 tickers = [i.replace('.','-') for i in tickers]
+
+trades_global = pd.DataFrame()
 
 for asset in tickers :
     # region DATA CLEANING
@@ -27,6 +30,7 @@ for asset in tickers :
 
     #Drop duplicates leaving only the first value
     df = df.drop_duplicates(keep=False)
+    trades = pd.DataFrame()
 
     #df = df[:2000].copy()
 
@@ -155,6 +159,7 @@ for asset in tickers :
                     max_income = df.high[i]
                     dates.append(df.index[i])
                     trade_type.append("Long")
+                    stock.append(asset)
                     entry_close.append(df.close[i])
                     entry_candle = i
 
@@ -189,6 +194,7 @@ for asset in tickers :
     trades['entry_date'] = np.array(dates)
     trades['exit_date'] = np.array(y_index)
     trades['trade_type']  = np.array(trade_type)
+    trades['stock'] = np.array(stock)
 
     trades['entry_close'] = np.array(entry_close)
     #trades['reference_swing'] = np.array(reference_swing_entry)
@@ -264,7 +270,7 @@ for asset in tickers :
     df['swing4high'] = np.array(iSwing1.swingHigh)
     df['swing4low'] = np.array(iSwing1.swingLow)
     """
-    
+
     df["RSI"] = np.array(iRSI)
 
     """
@@ -282,5 +288,7 @@ for asset in tickers :
     # endregion
 
     #Save the edited dataframe as a new .csv file
-    df.to_csv(r'SP\_' + str(asset) + '_data.csv', sep=';')
-    trades.to_csv(r'SP\_' + str(asset) + '_trades.csv', sep=';')
+    #df.to_csv(r'SP\_' + str(asset) + '_data.csv', sep=';')
+    trades_global = trades_global.append(trades)
+    
+trades_global.to_csv('SP_trades.csv', sep=';')
