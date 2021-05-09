@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import yfinance as yf
-from csv import writer
+import statistics
 from indicators import *
 pd.options.mode.chained_assignment = None
 
@@ -16,12 +16,11 @@ for asset in tickers :
     # region DATA CLEANING
     #Read historical exchange rate file (extracted from dukascopy.com)
     try :
-        df = yf.download(asset,'2019-01-01')
+        df = yf.download(asset,'2011-01-01')
     except ValueError :
         continue
     
-    if len(df) == 0 :
-        continue
+    if len(df) == 0 : continue
 
     print(asset)
 
@@ -174,7 +173,7 @@ for asset in tickers :
             if df.high[i] > max_income :
                     max_income = df.high[i]
 
-            if iRSI[i] < 40 or i == entry_candle + 10 :
+            if iRSI[i] > 40 or i == entry_candle + 10 :
                 on_trade = False
                 outcome = df.close[i] - entry_close[-1]
                 
@@ -288,13 +287,46 @@ for asset in tickers :
     # endregion
 
     #Save the edited dataframe as a new .csv file
-    #df.to_csv(r'SP\_' + str(asset) + '_data.csv', sep=';')
     trades_global = trades_global.append(trades)
     
+# region Stats
+stats = pd.DataFrame(columns=['stat', 'value'])
+
 wins = [i for i in trades_global['y'] if i > 0]
 loses = [i for i in trades_global['y'] if i < 0]
-print('Winning weight: ' + str(len(wins) / len(trades_global) * 100) + '%')
 
-print('Net profit: ' + str(trades['y'].sum()))
+stats.loc[len(stats)] = ['Net profit', trades_global['y'].sum()]
+stats.loc[len(stats)] = ['Total # of trades', len(trades_global)]
+stats.loc[len(stats)] = ['# of winning trades', len(wins)]
+stats.loc[len(stats)] = ['# of losing trades', len(loses)]
 
+total_win = sum(wins)
+total_lose = sum(loses)
+stats.loc[len(stats)] = ['Total win', total_win]
+stats.loc[len(stats)] = ['Total lose', total_lose]
+
+stats.loc[len(stats)] = ['Profit factor', total_win / abs(total_lose)]
+
+profitable = len(wins) / len(trades_global) * 100
+stats.loc[len(stats)] = ['Winning Weight', profitable]
+
+avg_win = statistics.mean(wins)
+avg_lose = statistics.mean(loses)
+stats.loc[len(stats)] = ['Avg win', avg_win]
+stats.loc[len(stats)] = ['Avg lose', avg_lose]
+
+stats.loc[len(stats)] = ['Reward to risk ratio', avg_win / abs(avg_lose)]
+stats.loc[len(stats)] = ['Best trade', max(wins)]
+stats.loc[len(stats)] = ['Worst trade', min(loses)]
+stats.loc[len(stats)] = ['Expectancy', ((profitable / 100) * avg_win) - (((100 - profitable) / 100) * -avg_lose)]
+
+#Drawdown 
+#Sort by entry_date
+#Analysis chart
+#Max losing in a row
+#Max winnging in a row
+#adj close instead of close
+# endregion
+
+stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
