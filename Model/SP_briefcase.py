@@ -12,7 +12,14 @@ tickers = [i.replace('.','-') for i in tickers]
 
 trades_global = pd.DataFrame()
 
-for asset in tickers :
+ti = tickers[0:10].copy()
+
+asset_count = 1
+for asset in ti :
+    print(str(asset_count) + '/' + str(len(tickers)))
+    print(asset)
+    asset_count += 1
+
     # region DATA CLEANING
     #Read historical exchange rate file (extracted from dukascopy.com)
     try :
@@ -21,8 +28,6 @@ for asset in tickers :
         continue
     
     if len(df) == 0 : continue
-
-    print(asset)
 
     #Rename df columns for cleaning porpuses
     df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
@@ -307,8 +312,8 @@ stats.loc[len(stats)] = ['Total lose', total_lose]
 
 stats.loc[len(stats)] = ['Profit factor', total_win / abs(total_lose)]
 
-profitable = len(wins) / len(trades_global) * 100
-stats.loc[len(stats)] = ['Winning Weight', profitable]
+profitable = len(wins) / len(trades_global)
+stats.loc[len(stats)] = ['Winning Weight', profitable * 100]
 
 avg_win = statistics.mean(wins)
 avg_lose = statistics.mean(loses)
@@ -318,7 +323,7 @@ stats.loc[len(stats)] = ['Avg lose', avg_lose]
 stats.loc[len(stats)] = ['Reward to risk ratio', avg_win / abs(avg_lose)]
 stats.loc[len(stats)] = ['Best trade', max(wins)]
 stats.loc[len(stats)] = ['Worst trade', min(loses)]
-stats.loc[len(stats)] = ['Expectancy', ((profitable / 100) * avg_win) - (((100 - profitable) / 100) * -avg_lose)]
+stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable) * -avg_lose)]
 
 #Drawdown 
 #Sort by entry_date
@@ -326,6 +331,7 @@ stats.loc[len(stats)] = ['Expectancy', ((profitable / 100) * avg_win) - (((100 -
 #Max losing in a row
 #Max winnging in a row
 #adj close instead of close
+#Fix entry date and open
 # endregion
 
 stats.to_csv('SP_stats.csv', sep=';')
