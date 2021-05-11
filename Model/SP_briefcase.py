@@ -329,6 +329,7 @@ stats.loc[len(stats)] = ['Best trade', max(wins)]
 stats.loc[len(stats)] = ['Worst trade', min(loses)]
 stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable) * -avg_lose)]
 
+# region Streaks
 winning_streaks = []
 win_streak = 0
 for i in range(len(trades_global)) :
@@ -348,11 +349,9 @@ for i in range(len(trades_global)) :
         losing_streaks.append(lose_streak)
         lose_streak = 0
 stats.loc[len(stats)] = ['Worst streak', max(losing_streaks)]
+# endregion
 
-#Drawdown 
-#adj close instead of close
-#Fix entry date and open
-
+# region Analysis_chart
 accumulate_y = pd.DataFrame()
 accumulate_y['acc_y'] = np.cumsum(trades_global['y'])
 accumulate_y.reset_index(drop=True, inplace=True)
@@ -368,6 +367,28 @@ fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
 py.offline.plot(fig, filename = "Accumulate.html")
 # endregion
+
+# region Drawdown
+piecks = []
+drawdowns = []
+for i in range(len(trades_global)) :
+    if i == 0 : 
+        piecks.append(accumulate_y['acc_y'].values[i])
+        drawdowns.append(0)
+        continue
+    
+    piecks.append(max(accumulate_y['acc_y'].values[i], piecks[i - 1]))
+
+    if accumulate_y['acc_y'].values[i] < piecks[i] : 
+        drawdowns.append(piecks[i] - accumulate_y['acc_y'].values[i])
+
+stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
+# endregion
+# endregion
+
+#adj close instead of close
+#Fix entry date and open
+#Define the portfolio
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
