@@ -12,8 +12,10 @@ tickers = [i.replace('.','-') for i in tickers]
 
 trades_global = pd.DataFrame()
 
+ti = tickers[0:5].copy()
+
 asset_count = 1
-for asset in tickers :
+for asset in ti :
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
@@ -324,6 +326,26 @@ stats.loc[len(stats)] = ['Reward to risk ratio', avg_win / abs(avg_lose)]
 stats.loc[len(stats)] = ['Best trade', max(wins)]
 stats.loc[len(stats)] = ['Worst trade', min(loses)]
 stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable) * -avg_lose)]
+
+winning_streaks = []
+win_streak = 0
+for i in range(len(trades_global)) :
+    if trades_global['y'].values[i] >= 0 :
+        win_streak += 1
+    else : 
+        winning_streaks.append(win_streak)
+        win_streak = 0
+stats.loc[len(stats)] = ['Best streak', max(winning_streaks)]
+
+losing_streaks = []
+lose_streak = 0
+for i in range(len(trades_global)) :
+    if trades_global['y'].values[i] < 0 :
+        lose_streak += 1
+    else : 
+        losing_streaks.append(lose_streak)
+        lose_streak = 0
+stats.loc[len(stats)] = ['Worst streak', max(losing_streaks)]
 
 #Drawdown 
 #Analysis chart
