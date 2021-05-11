@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import statistics
+import plotly as py
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from plotly.graph_objs import *
 from indicators import *
 pd.options.mode.chained_assignment = None
 
@@ -12,10 +16,8 @@ tickers = [i.replace('.','-') for i in tickers]
 
 trades_global = pd.DataFrame()
 
-ti = tickers[0:5].copy()
-
 asset_count = 1
-for asset in ti :
+for asset in tickers :
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
@@ -348,11 +350,23 @@ for i in range(len(trades_global)) :
 stats.loc[len(stats)] = ['Worst streak', max(losing_streaks)]
 
 #Drawdown 
-#Analysis chart
-#Max losing in a row
-#Max winnging in a row
 #adj close instead of close
 #Fix entry date and open
+
+accumulate_y = pd.DataFrame()
+accumulate_y['acc_y'] = np.cumsum(trades_global['y'])
+accumulate_y.reset_index(drop=True, inplace=True)
+
+fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
+
+fig.add_trace(
+	go.Scatter(x=accumulate_y.index, y=accumulate_y['acc_y'], line=dict(color='green', width=1)),
+	row=1, col=1
+)
+
+fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
+
+py.offline.plot(fig, filename = "Accumulate.html")
 # endregion
 
 stats.to_csv('SP_stats.csv', sep=';')
