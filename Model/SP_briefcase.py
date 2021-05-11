@@ -6,6 +6,8 @@ import plotly as py
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from plotly.graph_objs import *
+import finta
+from finta import TA
 from indicators import *
 pd.options.mode.chained_assignment = None
 
@@ -72,7 +74,7 @@ for asset in tickers :
     iROC1 = ROC(df, 200)
     """
 
-    iRSI = RSI(df, 10)
+    iRSI = TA.RSI(df, 10)
 
     """
     iTIH = TI(df, 10, True)
@@ -179,7 +181,7 @@ for asset in tickers :
 
             if iRSI[i] > 40 or i == entry_candle + 10 :
                 on_trade = False
-                outcome = df.close[i] - entry_close[-1]
+                outcome = (df.close[i] - entry_close[-1])
                 
                 y.append(outcome)
                 y_index.append(df.index[i])
@@ -389,6 +391,7 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 #adj close instead of close
 #Fix entry date and open
 #Define the portfolio
+#avg lose for each stock and unit risk parameter
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
