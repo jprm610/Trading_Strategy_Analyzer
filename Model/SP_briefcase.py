@@ -12,10 +12,8 @@ tickers = [i.replace('.','-') for i in tickers]
 
 trades_global = pd.DataFrame()
 
-ti = tickers[0:10].copy()
-
 asset_count = 1
-for asset in ti :
+for asset in tickers :
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
@@ -35,9 +33,6 @@ for asset in ti :
     #Drop duplicates leaving only the first value
     df = df.drop_duplicates(keep=False)
     trades = pd.DataFrame()
-
-    #df = df[:2000].copy()
-
     # endregion
 
     # region PARAMETERS
@@ -294,11 +289,16 @@ for asset in ti :
     #Save the edited dataframe as a new .csv file
     trades_global = trades_global.append(trades)
     
+trades_global = trades_global.sort_values(by=['entry_date'])
+
 # region Stats
 stats = pd.DataFrame(columns=['stat', 'value'])
 
-wins = [i for i in trades_global['y'] if i > 0]
+wins = [i for i in trades_global['y'] if i >= 0]
 loses = [i for i in trades_global['y'] if i < 0]
+
+stats.loc[len(stats)] = ['Start date', trades_global['entry_date'].values[0]]
+stats.loc[len(stats)] = ['End date', trades_global['exit_date'].values[-1]]
 
 stats.loc[len(stats)] = ['Net profit', trades_global['y'].sum()]
 stats.loc[len(stats)] = ['Total # of trades', len(trades_global)]
@@ -326,7 +326,6 @@ stats.loc[len(stats)] = ['Worst trade', min(loses)]
 stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable) * -avg_lose)]
 
 #Drawdown 
-#Sort by entry_date
 #Analysis chart
 #Max losing in a row
 #Max winnging in a row
