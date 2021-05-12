@@ -97,14 +97,14 @@ for asset in tickers :
     historical_win_avg = risk_unit_dir.at[asset, 'avg_win']
     historical_lose_avg = risk_unit_dir.at[asset, 'avg_lose']
 
-    if historical_win_avg == 0 and historical_lose_avg == 0 : 
+    if historical_win_avg == 0 and historical_lose_avg == 0 :
         risk_unit_ind = True
     elif historical_lose_avg == 0 :
         current_avg_lose = historical_win_avg
-    else : 
+    else :
         current_avg_lose = historical_lose_avg
 
-    shares_to_trade = risk_unit / current_avg_lose
+    shares_to_trade = round(abs(risk_unit / current_avg_lose))
     # endregion
 
     # region TRADE_EMULATION
@@ -113,6 +113,8 @@ for asset in tickers :
     stock = []
 
     entry_price = []
+    exit_price = []
+    shares_to_trade_list = []
     #reference_swing_entry = []
 
     #iSMA3_ot = []
@@ -171,7 +173,9 @@ for asset in tickers :
 
         if risk_unit_ind :
             current_avg_lose = df.close[i] * 0.05
-            shares_to_trade = risk_unit / current_avg_lose
+            shares_to_trade = round(abs(risk_unit / current_avg_lose))
+
+        if shares_to_trade == 0 : continue
 
         #trade_point_short = -1
         #trade_point_long = -1
@@ -187,6 +191,7 @@ for asset in tickers :
                     trade_type.append("Long")
                     stock.append(asset)
                     entry_candle = i
+                    shares_to_trade_list.append(shares_to_trade)
                     iSMA1_ot.append(iSMA1[i])
                     iRSI_ot.append(iRSI[i])
 
@@ -212,10 +217,12 @@ for asset in tickers :
                     outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
 
                     y_index.append(df.index[i])
+                    exit_price.append(df.close[i])
                 else :
                     outcome = (df.open[i + 1] - entry_price[-1]) * shares_to_trade
 
                     y_index.append(df.index[i + 1])
+                    exit_price.append(df.open[i + 1])
 
                 y.append(outcome)
                 y2.append((max_income - entry_price[-1]) * shares_to_trade)
@@ -226,6 +233,7 @@ for asset in tickers :
             y2.append((max_income - entry_price[-1]) * shares_to_trade)
             y.append(outcome)
             y_index.append(df.index[i])
+            exit_price.append(df.close[i])
         # endregion
     # endregion
 
@@ -238,6 +246,7 @@ for asset in tickers :
     trades['stock'] = np.array(stock)
 
     trades['entry_price'] = np.array(entry_price)
+    trades['exit_price'] = np.array(exit_price)
     #trades['reference_swing'] = np.array(reference_swing_entry)
 
     """
@@ -278,6 +287,7 @@ for asset in tickers :
 
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
+    trades['shares_to_trade'] = np.array(shares_to_trade_list)
     # endregion
 
     # region BUILD NEW DATASET
