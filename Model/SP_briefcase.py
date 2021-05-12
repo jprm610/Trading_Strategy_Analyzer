@@ -6,7 +6,6 @@ import plotly as py
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from plotly.graph_objs import *
-import finta
 from finta import TA
 from indicators import *
 pd.options.mode.chained_assignment = None
@@ -23,7 +22,7 @@ risk_unit_dir = pd.read_csv('stock_means.csv', sep=';')
 risk_unit = 100
 # endregion
 
-#ti = tickers[0:10].copy()
+ti = tickers[0:10].copy()
 
 asset_count = 1
 for asset in tickers :
@@ -50,43 +49,8 @@ for asset in tickers :
 
     # region INDICATOR CALCULATIONS
     #Get all indicator lists
-    """
-    iSwing1 = MySwing(4)
-    iSwing1.swingHigh, iSwing1.swingLow = MySwing.Swing(MySwing, df, iSwing1.strength)
-
-    iATR = ATR(df, 100)
-
-    iSMA3  = SMA(df, 20)
-    iSMA2  = SMA(df, 50)
-    """
-
     iSMA1 = TA.SMA(df, 200)
-
-    """
-    iEMA3  = EMA(df, 20)
-    iEMA2  = EMA(df, 50)
-    iEMA1 = EMA(df, 200)
-
-    iMACD1 = MACD(df)
-
-    iBB_Upper_1, iBB_Lower_1 = Bollinger_Bands(df, 20)
-
-    iROC3 = ROC(df, 20)
-    iROC2 = ROC(df, 50)
-    iROC1 = ROC(df, 200)
-    """
-
     iRSI = TA.RSI(df, 10)
-
-    """
-    iTIH = TI(df, 10, True)
-    iTIL = TI(df, 10, False)
-    iRIH = RI(df, 10, True)
-    iRIL = RI(df, 10, False)
-    iVIH = VI(df, 10, True)
-    iVIL = VI(df, 10, False)
-    iOBV = OBV(df, 10)
-    """
     # endregion
     
     # region Risk_Unit_Calculation
@@ -115,31 +79,11 @@ for asset in tickers :
     entry_price = []
     exit_price = []
     shares_to_trade_list = []
-    #reference_swing_entry = []
 
-    #iSMA3_ot = []
-    #iSMA2_ot = [] 
     iSMA1_ot = []
-
-    #iATR_ot = []
-
-    #iMACD1_ot = []
-
-    #iBB_Upper_1_ot = []
-    #iBB_Lower_1_ot = []
-
-    """
-    iROC3_ot = []
-    iROC2_ot = []
-    iROC1_ot = []
-
-    iEMA3_ot = []
-    iEMA2_ot = []
-    iEMA1_ot = []
-    """
-
     iRSI_ot = []
 
+    perc_avg_lose = []
     #Dimensions
     """
     recoil_x = []
@@ -155,19 +99,10 @@ for asset in tickers :
     y2 = []
     y_index = []
 
-    #is_upward = False
-    #is_downward = False
     on_trade = False
-
     for i in range(len(df)) :
 
         if i == 0 : continue
-
-        #if iSwing1.swingHigh[i] == 0 or iSwing1.swingLow[i] == 0 : continue
-
-        #if iSwing1.Swing_Bar(iSwing1.swingHigh[0:i], 1, iSwing1.strength) == -1 or iSwing1.Swing_Bar(iSwing1.swingLow[0:i], 1, iSwing1.strength) == -1 : continue
-
-        #if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iATR[i] == -1 or iRSI[i] == -1 : continue
 
         if iSMA1[i] == -1 or iRSI[i] == -1 : continue
 
@@ -176,11 +111,6 @@ for asset in tickers :
             shares_to_trade = round(abs(risk_unit / current_avg_lose))
 
         if shares_to_trade == 0 : continue
-
-        #trade_point_short = -1
-        #trade_point_long = -1
-
-        #current_stop = iATR[i] * 3
         
         # region TRADE CALCULATION
         if not on_trade :
@@ -194,6 +124,7 @@ for asset in tickers :
                     shares_to_trade_list.append(shares_to_trade)
                     iSMA1_ot.append(iSMA1[i])
                     iRSI_ot.append(iRSI[i])
+                    perc_avg_lose.append(abs(current_avg_lose / df.close[i] * 100))
 
                     if i == len(df) - 1 :
                         max_income = df.high[i]
@@ -239,6 +170,7 @@ for asset in tickers :
 
     # region TRADES_DF
     trades = pd.DataFrame()
+
     #Añadir reference swing y close de entrada
     trades['entry_date'] = np.array(dates)
     trades['exit_date'] = np.array(y_index)
@@ -247,102 +179,15 @@ for asset in tickers :
 
     trades['entry_price'] = np.array(entry_price)
     trades['exit_price'] = np.array(exit_price)
-    #trades['reference_swing'] = np.array(reference_swing_entry)
-
-    """
-    trades['iATR']  = np.array(iATR_ot)
-
-    trades['iSMA3']  = np.array(iSMA3_ot)
-    trades['iSMA2']  = np.array(iSMA2_ot)
-    """
 
     trades['iSMA1']  = np.array(iSMA1_ot)
-
-    """
-    trades['iROC3'] = np.array(iROC3_ot)
-    trades['iROC2'] = np.array(iROC2_ot)
-    trades['iROC1'] = np.array(iROC1_ot)
-
-    trades['iEMA3'] = np.array(iEMA3_ot)
-    trades['iEMA2'] = np.array(iEMA2_ot)
-    trades['iEMA1'] = np.array(iEMA1_ot)
-
-    trades['iBBUpper20'] = np.array(iBB_Upper_1_ot)
-    trades['iBBLower20'] = np.array(iBB_Lower_1_ot)
-
-    trades['iMACD1226'] = np.array(iMACD1_ot)
-    """
-
     trades['iRSI'] = np.array(iRSI_ot)
-
-    """
-    trades['recoil_x'] = np.array(recoil_x)
-    trades['init_x'] = np.array(init_x)
-
-    trades['iOBV'] = np.array(iOBV_ot)
-    trades['iRI'] = np.array(iRI_ot)
-    trades['iVI'] = np.array(iVI_ot)
-    trades['iTI'] = np.array(iTI_ot)
-    """
 
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
     trades['shares_to_trade'] = np.array(shares_to_trade_list)
+    trades['compared_avg_lose'] = np.array(perc_avg_lose)
     # endregion
-
-    # region BUILD NEW DATASET
-    #Attach those lists to columns
-    """
-    df['ATR100'] = np.array(iATR)
-
-    df['SMA20']  = np.array(iSMA3)
-    df['SMA50']  = np.array(iSMA2)
-    """
-
-    df['SMA200'] = np.array(iSMA1)
-
-    """
-    df['ROC20'] = np.array(iROC3)
-    df['ROC50'] = np.array(iROC2)
-    df['ROC200'] = np.array(iROC1)
-
-    df['EMA20'] = np.array(iEMA3)
-    df['EMA50'] = np.array(iEMA2)
-    df['EMA200'] = np.array(iEMA1)
-
-    df['MACD1226'] = np.array(iMACD1)
-
-    df['BBLower20'] = np.array(iBB_Lower_1)
-    df['BBUpper20'] = np.array(iBB_Upper_1)
-
-    df['swing4high'] = np.array(iSwing1.swingHigh)
-    df['swing4low'] = np.array(iSwing1.swingLow)
-    """
-
-    df["RSI"] = np.array(iRSI)
-
-    """
-    df['TIH'] = np.array(TIH)
-    df['TIL'] = np.array(TIL)
-    df['RIH'] = np.array(RIH)
-    df['RIL'] = np.array(RIL)
-    df['VIH'] = np.array(VIH)
-    df['VIL'] = np.array(VIL)
-    df['MACD']   = np.array(MACD)
-    df["BB_Upper"] = np.array(BB_Upper)
-    df["BB_Lower"] = np.array(BB_Lower)
-    df["OBV"] = np.array(OBV)
-    """
-    # endregion
-
-    wins = [e for e in trades['y'] if e >= 0]
-    loses = [e for e in trades['y'] if e < 0]
-
-    if len(wins) == 0 : avg_win = 0
-    else : avg_win = statistics.mean(wins)
-
-    if len(loses) == 0 : avg_lose = 0
-    else : avg_lose = statistics.mean(loses)
 
     #Save the edited dataframe as a new .csv file
     trades_global = trades_global.append(trades)
@@ -413,7 +258,9 @@ accumulate_y.reset_index(drop=True, inplace=True)
 fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
 
 fig.add_trace(
-	go.Scatter(x=accumulate_y.index, y=accumulate_y['acc_y'], line=dict(color='green', width=1)),
+	go.Scatter(x=accumulate_y.index, y=accumulate_y['acc_y'], 
+    line=dict(color='rgba(26,148,49)', width=1),
+    fill='tozeroy'),
 	row=1, col=1
 )
 
@@ -442,7 +289,9 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 
 #adj close instead of close
 #Define the portfolio
-#avg lose for each stock and risk unit parameter
+#Review strange avg loses
+#Compare avg to current price
+#Add raw profit
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
