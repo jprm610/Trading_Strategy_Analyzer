@@ -17,6 +17,12 @@ tickers = actives['Symbol'].to_list()
 tickers = [i.replace('.','-') for i in tickers]
 
 trades_global = pd.DataFrame()
+risk_unit_dir = pd.read_csv('stock_means.csv', sep=';')
+avg_df = pd.DataFrame(columns=['stock', 'avg_win', 'avg_lose'])
+
+# region PARAMETERS
+risk_unit = 100
+# endregion
 
 asset_count = 1
 for asset in tickers :
@@ -39,11 +45,6 @@ for asset in tickers :
     #Drop duplicates leaving only the first value
     df = df.drop_duplicates(keep=False)
     trades = pd.DataFrame()
-    # endregion
-
-    # region PARAMETERS
-    IncipientTrendFactor = 3
-    distance_to_BO = 0.0001
     # endregion
 
     # region INDICATOR CALCULATIONS
@@ -86,6 +87,12 @@ for asset in tickers :
     iOBV = OBV(df, 10)
     """
     # endregion
+    
+    """
+    historical_win_avg = risk_unit_dir[]
+
+    shares_to_trade = risk_unit / avg_loss
+    """
 
     # region TRADE_EMULATION
     dates = []
@@ -303,6 +310,19 @@ for asset in tickers :
     """
     # endregion
 
+    wins = [e for e in trades['y'] if e >= 0]
+    loses = [e for e in trades['y'] if e < 0]
+
+    if len(wins) == 0 : avg_win = 0
+    else : avg_win = statistics.mean(wins)
+
+    if len(loses) == 0 : avg_lose = 0
+    else : avg_lose = statistics.mean(loses)
+
+    avg_df.loc[len(avg_df)] = [str(asset), avg_win, avg_lose]
+
+    avg_df.set_index(avg_df['stock'], drop=True, inplace=True)
+
     #Save the edited dataframe as a new .csv file
     trades_global = trades_global.append(trades)
     
@@ -311,35 +331,35 @@ trades_global = trades_global.sort_values(by=['entry_date'])
 # region Stats
 stats = pd.DataFrame(columns=['stat', 'value'])
 
-wins = [i for i in trades_global['y'] if i >= 0]
-loses = [i for i in trades_global['y'] if i < 0]
+global_wins = [i for i in trades_global['y'] if i >= 0]
+global_loses = [i for i in trades_global['y'] if i < 0]
 
 stats.loc[len(stats)] = ['Start date', trades_global['entry_date'].values[0]]
 stats.loc[len(stats)] = ['End date', trades_global['exit_date'].values[-1]]
 
 stats.loc[len(stats)] = ['Net profit', trades_global['y'].sum()]
 stats.loc[len(stats)] = ['Total # of trades', len(trades_global)]
-stats.loc[len(stats)] = ['# of winning trades', len(wins)]
-stats.loc[len(stats)] = ['# of losing trades', len(loses)]
+stats.loc[len(stats)] = ['# of winning trades', len(global_wins)]
+stats.loc[len(stats)] = ['# of losing trades', len(global_loses)]
 
-total_win = sum(wins)
-total_lose = sum(loses)
+total_win = sum(global_wins)
+total_lose = sum(global_loses)
 stats.loc[len(stats)] = ['Total win', total_win]
 stats.loc[len(stats)] = ['Total lose', total_lose]
 
 stats.loc[len(stats)] = ['Profit factor', total_win / abs(total_lose)]
 
-profitable = len(wins) / len(trades_global)
+profitable = len(global_wins) / len(trades_global)
 stats.loc[len(stats)] = ['Winning Weight', profitable * 100]
 
-avg_win = statistics.mean(wins)
-avg_lose = statistics.mean(loses)
+avg_win = statistics.mean(global_wins)
+avg_lose = statistics.mean(global_loses)
 stats.loc[len(stats)] = ['Avg win', avg_win]
 stats.loc[len(stats)] = ['Avg lose', avg_lose]
 
 stats.loc[len(stats)] = ['Reward to risk ratio', avg_win / abs(avg_lose)]
-stats.loc[len(stats)] = ['Best trade', max(wins)]
-stats.loc[len(stats)] = ['Worst trade', min(loses)]
+stats.loc[len(stats)] = ['Best trade', max(global_wins)]
+stats.loc[len(stats)] = ['Worst trade', min(global_loses)]
 stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable) * -avg_lose)]
 
 # region Streaks
@@ -401,7 +421,8 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 
 #adj close instead of close
 #Define the portfolio
-#avg lose for each stock and unit risk parameter
+#avg lose for each stock and risk unit parameter
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
+avg_df.to_csv('stock_means.csv', sep=';')
