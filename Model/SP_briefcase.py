@@ -18,11 +18,12 @@ tickers = [i.replace('.','-') for i in tickers]
 
 trades_global = pd.DataFrame()
 risk_unit_dir = pd.read_csv('stock_means.csv', sep=';')
-avg_df = pd.DataFrame(columns=['stock', 'avg_win', 'avg_lose'])
 
 # region PARAMETERS
 risk_unit = 100
 # endregion
+
+#ti = tickers[0:10].copy()
 
 asset_count = 1
 for asset in tickers :
@@ -88,11 +89,23 @@ for asset in tickers :
     """
     # endregion
     
-    """
-    historical_win_avg = risk_unit_dir[]
+    # region Risk_Unit_Calculation
+    risk_unit_dir.set_index(risk_unit_dir['stock'], inplace=True)
 
-    shares_to_trade = risk_unit / avg_loss
-    """
+    risk_unit_ind = False
+
+    historical_win_avg = risk_unit_dir.at[asset, 'avg_win']
+    historical_lose_avg = risk_unit_dir.at[asset, 'avg_lose']
+
+    if historical_win_avg == 0 and historical_lose_avg == 0 : 
+        risk_unit_ind = True
+    elif historical_lose_avg == 0 :
+        current_avg_lose = historical_win_avg
+    else : 
+        current_avg_lose = historical_lose_avg
+
+    shares_to_trade = risk_unit / current_avg_lose
+    # endregion
 
     # region TRADE_EMULATION
     dates = []
@@ -143,8 +156,6 @@ for asset in tickers :
     #is_upward = False
     #is_downward = False
     on_trade = False
-    trade_point_long = -1
-    trade_point_short = -1
 
     for i in range(len(df)) :
 
@@ -157,6 +168,10 @@ for asset in tickers :
         #if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iATR[i] == -1 or iRSI[i] == -1 : continue
 
         if iSMA1[i] == -1 or iRSI[i] == -1 : continue
+
+        if risk_unit_ind :
+            current_avg_lose = df.close[i] * 0.05
+            shares_to_trade = risk_unit / current_avg_lose
 
         #trade_point_short = -1
         #trade_point_long = -1
@@ -194,21 +209,21 @@ for asset in tickers :
                 on_trade = False
 
                 if i == len(df) - 1 :
-                    outcome = (df.close[i] - entry_price[-1])
+                    outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
 
                     y_index.append(df.index[i])
                 else :
-                    outcome = (df.open[i + 1] - entry_price[-1])
+                    outcome = (df.open[i + 1] - entry_price[-1]) * shares_to_trade
 
                     y_index.append(df.index[i + 1])
 
                 y.append(outcome)
-                y2.append(max_income - entry_price[-1])
+                y2.append((max_income - entry_price[-1]) * shares_to_trade)
 
         if i == len(df) - 1 and on_trade :
-            outcome = df.close[i] - entry_price[-1]
+            outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
 
-            y2.append(max_income - entry_price[-1])
+            y2.append((max_income - entry_price[-1]) * shares_to_trade)
             y.append(outcome)
             y_index.append(df.index[i])
         # endregion
@@ -319,10 +334,6 @@ for asset in tickers :
     if len(loses) == 0 : avg_lose = 0
     else : avg_lose = statistics.mean(loses)
 
-    avg_df.loc[len(avg_df)] = [str(asset), avg_win, avg_lose]
-
-    avg_df.set_index(avg_df['stock'], drop=True, inplace=True)
-
     #Save the edited dataframe as a new .csv file
     trades_global = trades_global.append(trades)
     
@@ -425,4 +436,3 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
-avg_df.to_csv('stock_means.csv', sep=';')
