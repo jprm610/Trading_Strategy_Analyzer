@@ -58,7 +58,7 @@ for asset in tickers :
     iSMA2  = SMA(df, 50)
     """
 
-    iSMA1 = SMA(df, 200)
+    iSMA1 = TA.SMA(df, 200)
 
     """
     iEMA3  = EMA(df, 20)
@@ -92,7 +92,7 @@ for asset in tickers :
     trade_type = []
     stock = []
 
-    entry_close = []
+    entry_price = []
     #reference_swing_entry = []
 
     #iSMA3_ot = []
@@ -161,15 +161,19 @@ for asset in tickers :
             if df.close[i] > iSMA1[i] :
                 if iRSI[i] < 30 :
                     on_trade = True
-                    max_income = df.high[i]
                     dates.append(df.index[i])
                     trade_type.append("Long")
                     stock.append(asset)
-                    entry_close.append(df.close[i])
                     entry_candle = i
-
                     iSMA1_ot.append(iSMA1[i])
                     iRSI_ot.append(iRSI[i])
+
+                    if i == len(df) - 1 :
+                        max_income = df.high[i]
+                        entry_price.append(df.close[i])
+                    else :
+                        max_income = df.high[i + 1]
+                        entry_price.append(df.open[i + 1])
         # endregion
 
         # region TRADE MANAGEMENT
@@ -181,16 +185,23 @@ for asset in tickers :
 
             if iRSI[i] > 40 or i == entry_candle + 10 :
                 on_trade = False
-                outcome = (df.close[i] - entry_close[-1])
-                
+
+                if i == len(df) - 1 :
+                    outcome = (df.close[i] - entry_price[-1])
+
+                    y_index.append(df.index[i])
+                else :
+                    outcome = (df.open[i + 1] - entry_price[-1])
+
+                    y_index.append(df.index[i + 1])
+
                 y.append(outcome)
-                y_index.append(df.index[i])
-                y2.append(max_income - entry_close[-1])
+                y2.append(max_income - entry_price[-1])
 
         if i == len(df) - 1 and on_trade :
-            outcome = df.close[i] - entry_close[-1]
+            outcome = df.close[i] - entry_price[-1]
 
-            y2.append(max_income - entry_close[-1])
+            y2.append(max_income - entry_price[-1])
             y.append(outcome)
             y_index.append(df.index[i])
         # endregion
@@ -204,7 +215,7 @@ for asset in tickers :
     trades['trade_type']  = np.array(trade_type)
     trades['stock'] = np.array(stock)
 
-    trades['entry_close'] = np.array(entry_close)
+    trades['entry_price'] = np.array(entry_price)
     #trades['reference_swing'] = np.array(reference_swing_entry)
 
     """
@@ -389,7 +400,6 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 # endregion
 
 #adj close instead of close
-#Fix entry date and open
 #Define the portfolio
 #avg lose for each stock and unit risk parameter
 
