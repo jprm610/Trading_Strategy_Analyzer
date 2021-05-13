@@ -23,15 +23,16 @@ df = df.set_index(df.date)
 del df['date']
 
 #Drop duplicates leaving only the first value
-df = df.drop_duplicates(keep = 'last')
+df = df.drop_duplicates(keep=False)
+
+df = df[:2000].copy()
+
 # endregion
 
 # region PARAMETERS
 IncipientTrendFactor = 3
 distance_to_BO = 0.0001
 # endregion
-
-#ti = TI(df[0:260], 10, False)
 
 # region INDICATOR CALCULATIONS
 #Get all indicator lists
@@ -56,6 +57,8 @@ iROC20 = ROC(df, 20)
 iROC50 = ROC(df, 50)
 iROC200 = ROC(df, 200)
 
+iRSI = RSI(df, 20)
+
 """
 iTIH = TI(df, 10, True)
 iTIL = TI(df, 10, False)
@@ -64,14 +67,15 @@ iRIL = RI(df, 10, False)
 iVIH = VI(df, 10, True)
 iVIL = VI(df, 10, False)
 iOBV = OBV(df, 10)
-
-RSI = RSI(df, 14)
 """
 # endregion
 
 # region TRADE_EMULATION
 dates = []
 trade_type = []
+
+entry_close = []
+reference_swing_entry = []
 
 iSMA20_ot = []
 iSMA50_ot = [] 
@@ -91,6 +95,12 @@ iROC200_ot = []
 iEMA20_ot = []
 iEMA50_ot = []
 iEMA200_ot = []
+
+iRSI_ot = []
+
+#Dimensions
+recoil_x = []
+init_x = []
 
 iTI_ot = []
 iVI_ot = []
@@ -122,6 +132,7 @@ for i in range(len(df)) :
 
 	current_stop = iATR100[i] * 3
 	
+	# region TRADE CALCULATION
 	if not on_trade :
 
 		if Swing_Found(df[0:i], iSwing4.swingLow[0:i], iSwing4.Swing_Bar(iSwing4.swingHigh[0:i], 1, iSwing4.strength), True, distance_to_BO) :
@@ -135,28 +146,36 @@ for i in range(len(df)) :
 			if df.close[i] >= trade_point_long and trade_point_long - iSMA50[i] > 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
 					on_trade = True
-					entry_close = df.close[i]
 					max_income = df.high[i]
 
 					dates.append(df.index[i])
 					trade_type.append("Long")
-					iSMA20_ot.append(iSMA20[i - 1])
-					iSMA50_ot.append(iSMA50[i - 1])
-					iSMA200_ot.append(iSMA200[i - 1])
-					iATR100_ot.append(iATR100[i - 1])
-					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
-					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
-					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
-					iROC20_ot.append(iROC20[i - 1])
-					iROC50_ot.append(iROC50[i - 1])
-					iROC200_ot.append(iROC200[i - 1])
-					iEMA20_ot.append(iEMA20[i - 1])
-					iEMA50_ot.append(iEMA50[i - 1])
-					iEMA200_ot.append(iEMA200[i - 1])
+					entry_close.append(df.close[i])
+					reference_swing_entry.append(iSwing4.swingHigh[i])
+					iSMA20_ot.append(iSMA20[i])
+					iSMA50_ot.append(iSMA50[i])
+					iSMA200_ot.append(iSMA200[i])
+					iATR100_ot.append(iATR100[i])
+					iMACD_12_26_ot.append(iMACD_12_26[i])
+					iBB_Upper_20_ot.append(iBB_Upper_20[i])
+					iBB_Lower_20_ot.append(iBB_Lower_20[i])
+					iROC20_ot.append(iROC20[i])
+					iROC50_ot.append(iROC50[i])
+					iROC200_ot.append(iROC200[i])
+					iEMA20_ot.append(iEMA20[i])
+					iEMA50_ot.append(iEMA50[i])
+					iEMA200_ot.append(iEMA200[i])
+					iRSI_ot.append(iRSI[i])
+
+					dimensions = Swing_Dimensions(df[0:i], iSwing4.swingHigh[0:i], iSwing4.swingLow[0:i], iSwing4.strength)
+					recoil_x.append(dimensions["pullback_x"])
+					init_x.append(dimensions["init_x"])
+
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, True))
 					iVI_ot.append(VI(df[0:i], 10 ,True))
 					iTI_ot.append(TI(df[0:i], 10, True))
+
 		# endregion
 
 		# region ENTRY_MARKET_SHORT
@@ -164,29 +183,39 @@ for i in range(len(df)) :
 			if df.close[i] <= trade_point_short and trade_point_short - iSMA50[i] < 0 :
 				if abs(df.close[i] - iSMA50[i]) <= current_stop :
 					on_trade = True
-					entry_close = df.close[i]
 					max_income = df.low[i]
 
 					dates.append(df.index[i])
 					trade_type.append("Short")
-					iSMA20_ot.append(iSMA20[i - 1])
-					iSMA50_ot.append(iSMA50[i - 1])
-					iSMA200_ot.append(iSMA200[i - 1])
-					iATR100_ot.append(iATR100[i - 1])
-					iMACD_12_26_ot.append(iMACD_12_26[i - 1])
-					iBB_Upper_20_ot.append(iBB_Upper_20[i - 1])
-					iBB_Lower_20_ot.append(iBB_Lower_20[i - 1])
-					iROC20_ot.append(iROC20[i - 1])
-					iROC50_ot.append(iROC50[i - 1])
-					iROC200_ot.append(iROC200[i - 1])
-					iEMA20_ot.append(iEMA20[i - 1])
-					iEMA50_ot.append(iEMA50[i - 1])
-					iEMA200_ot.append(iEMA200[i - 1])
+					entry_close.append(df.close[i])
+					reference_swing_entry.append(iSwing4.swingLow[i])
+					iSMA20_ot.append(iSMA20[i])
+					iSMA50_ot.append(iSMA50[i])
+					iSMA200_ot.append(iSMA200[i])
+					iATR100_ot.append(iATR100[i])
+					iMACD_12_26_ot.append(iMACD_12_26[i])
+					iBB_Upper_20_ot.append(iBB_Upper_20[i])
+					iBB_Lower_20_ot.append(iBB_Lower_20[i])
+					iROC20_ot.append(iROC20[i])
+					iROC50_ot.append(iROC50[i])
+					iROC200_ot.append(iROC200[i])
+					iEMA20_ot.append(iEMA20[i])
+					iEMA50_ot.append(iEMA50[i])
+					iEMA200_ot.append(iEMA200[i])
+					iRSI_ot.append(iRSI[i])
+
+					dimensions = Swing_Dimensions(df[0:i], iSwing4.swingLow[0:i], iSwing4.swingHigh[0:i], iSwing4.strength)
+					recoil_x.append(dimensions["pullback_x"])
+					init_x.append(dimensions["init_x"])
+
 					iOBV_ot.append(OBV(df[0:i], 10))
 					iRI_ot.append(RI(df[0:i], 10, False))
 					iVI_ot.append(VI(df[0:i], 10 ,False))
 					iTI_ot.append(TI(df[0:i], 10, False))
 		# endregion
+	# endregion
+	
+	# region TRADE MANAGEMENT
 	else :
 		if len(trade_type) == 0 : continue
 
@@ -196,20 +225,20 @@ for i in range(len(df)) :
 			
 			if df.close[i] <= iSMA50[i] :
 				on_trade = False
-				outcome = df.close[i] - entry_close
+				outcome = df.close[i] - entry_close[-1]
 				trade_point_long = -1
 				trade_point_short = -1
 
 				y.append(outcome)
 				y_index.append(df.index[i])
-				y2.append(max_income - entry_close)
+				y2.append(max_income - entry_close[-1])
 		else :
 			if df.low[i] < max_income :
 				max_income = df.low[i]
 
 			if df.close[i] >= iSMA50[i] :
 				on_trade = False
-				outcome = df.close[i] - entry_close
+				outcome = df.close[i] - entry_close[-1]
 				trade_point_long = -1
 				trade_point_short = -1
 
@@ -218,18 +247,23 @@ for i in range(len(df)) :
 				else :
 					y.append(abs(outcome))
 				y_index.append(df.index[i])
-				y2.append(abs(max_income - entry_close))
+				y2.append(abs(max_income - entry_close[-1]))
 	
 	if i == len(df) - 1 and on_trade :
 		y.append(-1)
 		y_index.append(df.index[i])
+	# endregion
 # endregion
 
 # region TRADES_DF
 trades = pd.DataFrame()
-
+#Añadir reference swing y close de entrada
 trades['entry_date'] = np.array(dates)
+trades['exit_date'] = np.array(y_index)
 trades['trade_type']  = np.array(trade_type)
+
+trades['entry_close'] = np.array(entry_close)
+trades['reference_swing'] = np.array(reference_swing_entry)
 
 trades['iATR100']  = np.array(iATR100_ot)
 
@@ -250,6 +284,11 @@ trades['iBBLower20'] = np.array(iBB_Lower_20_ot)
 
 trades['iMACD1226'] = np.array(iMACD_12_26_ot)
 
+trades['iRSI'] = np.array(iRSI_ot)
+
+trades['recoil_x'] = np.array(recoil_x)
+trades['init_x'] = np.array(init_x)
+
 trades['iOBV'] = np.array(iOBV_ot)
 trades['iRI'] = np.array(iRI_ot)
 trades['iVI'] = np.array(iVI_ot)
@@ -257,7 +296,6 @@ trades['iTI'] = np.array(iTI_ot)
 
 trades['y']  = np.array(y)
 trades['y2'] = np.array(y2)
-trades['exit_date'] = np.array(y_index)
 # endregion
 
 # region BUILD NEW DATASET
@@ -284,6 +322,8 @@ df['BBUpper20'] = np.array(iBB_Upper_20)
 df['swing4high'] = np.array(iSwing4.swingHigh)
 df['swing4low'] = np.array(iSwing4.swingLow)
 
+df["RSI"] = np.array(iRSI)
+
 """
 df['TIH'] = np.array(TIH)
 df['TIL'] = np.array(TIL)
@@ -291,7 +331,6 @@ df['RIH'] = np.array(RIH)
 df['RIL'] = np.array(RIL)
 df['VIH'] = np.array(VIH)
 df['VIL'] = np.array(VIL)
-df["RSI"] = np.array(RSI)
 df['MACD']   = np.array(MACD)
 df["BB_Upper"] = np.array(BB_Upper)
 df["BB_Lower"] = np.array(BB_Lower)
@@ -300,7 +339,7 @@ df["OBV"] = np.array(OBV)
 # endregion
 
 # region PLOT CANDLES
-fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
+fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
 
 fig.add_trace(
 	go.Candlestick(x=df.index[201:1000],
@@ -331,16 +370,11 @@ fig.add_trace(
 	row=1, col=1
 )
 
-fig.add_trace(
-    go.Scatter(x=df.index[201:1000], y=df.ROC200[201:1000], line=dict(color='white', width=1)),
-	row=2, col=1
-)
-
 fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
 py.offline.plot(fig, filename = "main.html")
 # endregion
 
 #Save the edited dataframe as a new .csv file
-df.to_csv('Final_frame.csv')
-trades.to_csv('trades.csv')
+df.to_csv('Final_frame.csv', sep=';')
+trades.to_csv('trades.csv', sep=';')

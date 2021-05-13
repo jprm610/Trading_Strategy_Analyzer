@@ -96,6 +96,35 @@ class MySwing(object) :
         #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
         return bars_ago[instance - 1]
 
+    """
+    def Swing_Bar_by_Value(self, swing_list, instance, strength) :
+
+        #In the first iteration return -1 in order to avoid bugs 
+        #when trying to access a value in a list without values.
+        if len(swing_list) == 0 :
+            return -1
+
+        #Create a list in which the function values are going to be saved.
+        bars_ago = {}
+
+        #For each candle, always keeping in track the changes of swing, 
+        #compute the number of candles ago (bars_ago) when the swing last changed.
+        #The candles are walked backwards.
+        #Always add the strength keeping in track the real point in where a swing comes up. 
+        last_swing = swing_list[-1]
+        for i in reversed(range(len(swing_list))) :
+            if swing_list[i] != last_swing :
+                bars_ago[swing_list[i]] = len(swing_list) + strength - i - 1
+                last_swing = swing_list[i]
+
+        #If there isn't enoug swings charged, return -1
+        if bars_ago[j] < instance :
+            return -1
+
+        #Else, return the instance bars_ago, (instance - 1 according to lists comprenhension).
+        return bars_ago[instance - 1]
+    """
+
 #Price Rate of Change (ROC)
 def ROC(prices, period) :
     """
@@ -326,52 +355,37 @@ def Bollinger_Bands(prices, period, standard_deviations = 2) :
 #Relative Strength Index (RSI)
 def RSI(prices, period) :
     """
-    Isn't working!!!!!!!!!!!!
+    INPUTS:
+    *prices: The df with opens, highs, lows and closes.
+    *period: The period used to calculate indicator (int).
+
+    OUTPUTS:
+    *RSIs: A list of all RSI values according to the dataframe.
     """
+    
+    #Create a df in order to manipulate the data easily.
+    df = pd.DataFrame()
 
-    #Create a list in which the RSI values are going to be saved.
+    #Define a column in which the diference between the Highs and Lows is saved.
+    df['Price Change'] = prices['close'].pct_change()
+
+    #Determine the Upmoves and Downmoves using the price change.
+    df['Upmove'] = df['Price Change'].apply(lambda x : x if x > 0 else 0)
+    df['Downmove'] = df['Price Change'].apply(lambda x : abs(x) if x < 0 else 0)
+
+    #Calculate the Avg Up and Down with an EMA smoothing factor.
+    df['avg Up'] = df['Upmove'].ewm(span = period - 1).mean()
+    df['avg Down'] = df['Downmove'].ewm(span = period - 1).mean()
+
+    #Calculate the Relative Strength.
+    df['RS'] = df['avg Up'] / df['avg Down']
+
+    #Calculate the final RSI value using the formula.
+    df['RSI'] = df['RS'].apply(lambda x : 100 - (100 / (x + 1)))
+
+    #Create a list in which only the RSI values are going to be saved.
     RSIs = []
-
-    #For each candle:
-    for i in range(len(prices)) :
-        #If there isn't enough data, 
-        #set the current RSI value to -1.
-        if i < period - 1 :
-            RSIs.append(-1)
-        else :
-            #Create 2 lists in which the positive and negative candles are going to be saved. 
-            gains = []
-            loses = []
-
-            #Reviews the last n candles (n == period).
-            for j in range(period + 1) :
-                #Find the type of candle (gain or lose) and save it in the 2 lists.
-                c = prices.close[i - j]
-                o = prices.open[i - j]
-                difference = prices.close[i - j] - prices.open[i - j]
-                if difference >= 0 :
-                    gains.append(difference)
-                else :
-                    loses.append(difference)
-            
-            #Check the corner cases in which there isn't gains or loses, 
-            #so arbitrary values are set to avoid indeterminations 
-            #in the RS and RSI formulas calculations.
-            if len(gains) == 0 :
-                gain_avg = 0
-            else :
-                gain_avg = sum(gains) / len(gains)
-
-            if len(loses) == 0 :
-                lose_avg = 1
-            else :
-                lose_avg = abs(sum(loses) / len(loses))
-
-            #Calculate the Relative Strength.
-            RS = gain_avg / lose_avg
-            
-            #And finally calculate the current RSI value in a range between 0 and 100 inclusive.
-            RSIs.append(100 - (100 / (1 + RS)))
+    RSIs = df['RSI'].tolist()
 
     return RSIs
 
@@ -421,6 +435,7 @@ def RI(prices, period, is_long) :
 
     NOTE:
     If the period isn't coherent with the DF portion given, -1 is set in the list.
+    If there is an indetermination returns -2.
     """
 
     #If the period parameter isn't coherent, return -1.
@@ -447,8 +462,8 @@ def RI(prices, period, is_long) :
             loses.append(ranges[-(i + 1)])
 
     #If the calculation will truncate, 
-    #set the current value to 0.
-    if sum(gains) == 0 or sum(loses) == 0 : return 0
+    #set the current value to -2.
+    if sum(gains) == 0 or sum(loses) == 0 : return -2
     
     #Calculate the range index.
     range_index = sum(gains) / sum(loses)
@@ -475,6 +490,7 @@ def VI(prices, period, is_long) :
 
     NOTE:
     If the period isn't coherent with the DF portion given, -1 is set in the list.
+    If there is an indetermination returns -2.
     """
 
     #If the period parameter isn't coherent, return -1.
@@ -493,8 +509,8 @@ def VI(prices, period, is_long) :
             loses.append(prices.volume[-(i + 1)])
 
     #If the calculation will truncate, 
-    #set the current value to 0.
-    if sum(gains) == 0 or sum(loses) == 0 : return 0
+    #set the current value to -2.
+    if sum(gains) == 0 or sum(loses) == 0 : return -2
         
     #Calculate the volume index
     volume_index = sum(gains) / sum(loses)
@@ -521,6 +537,7 @@ def TI(prices, period, is_long) :
 
     NOTE:
     If the period isn't coherent with the DF portion given, -1 is set in the list.
+    If there is an indetermination returns -2.
     """
 
     #If the period parameter isn't coherent, return -1.
@@ -542,7 +559,7 @@ def TI(prices, period, is_long) :
 
     #If the calculation will truncate, 
     #set the current value to 0.
-    if sum(upper_tails) == 0 or sum(lower_tails) == 0 : return 0
+    if sum(upper_tails) == 0 or sum(lower_tails) == 0 : return -2
         
     #Calculate the tails index
     tail_index = sum(upper_tails) / sum(lower_tails)
@@ -553,6 +570,24 @@ def TI(prices, period, is_long) :
         tail_index = 1 / tail_index
 
     return tail_index
+
+def Swing_Dimensions(prices, reference_swings_list, opposite_swings_list, swing_strength) :
+
+    dimensions = {}
+
+    # X variables
+    pullback_movement_x = MySwing.Swing_Bar(MySwing, reference_swings_list, 1, swing_strength)
+    dimensions["pullback_x"] = pullback_movement_x
+
+    init_movement_x = MySwing.Swing_Bar(MySwing, opposite_swings_list[:-(pullback_movement_x + 2)], 1, swing_strength) + 2
+    dimensions["init_x"] = init_movement_x
+
+    #Limits Range (Y)
+    #range = abs(reference_swings_list[-1] - opposite_swings_list[-(MySwing.Swing_Bar(reference_swings_list, 1, swing_strength) + 2)]
+
+    #Length (X)
+
+    return dimensions
 
 #----------------------------------------------TRADE FUNCTIONS----------------------------------------------------
 def Swing_Found(prices, opposite_swing, reference_swing_bar, is_swingHigh, distance_to_BO = 0.0001) :
