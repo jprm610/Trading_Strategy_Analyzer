@@ -23,10 +23,10 @@ risk_unit = 100
 perc_in_risk = 4
 # endregion
 
-ti = tickers[0:10].copy()
+#ti = tickers[0:10].copy()
 
 asset_count = 1
-for asset in ti :
+for asset in tickers :
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
@@ -76,6 +76,8 @@ for asset in ti :
     iOBV_ot = []
     """
 
+    y_raw = []
+    y2_raw = []
     y = []
     y2 = []
     y_index = []
@@ -136,12 +138,16 @@ for asset in ti :
 
                 y.append(outcome)
                 y2.append((max_income - entry_price[-1]) * shares_to_trade)
+                y_raw.append(outcome / shares_to_trade)
+                y2_raw.append(y2[-1] / shares_to_trade)
 
         if i == len(df) - 1 and on_trade :
             outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
 
             y2.append((max_income - entry_price[-1]) * shares_to_trade)
             y.append(outcome)
+            y_raw.append(outcome / shares_to_trade)
+            y2_raw.append(y2[-1] / shares_to_trade)
             y_index.append(df.index[i])
             exit_price.append(df.close[i])
         # endregion
@@ -164,6 +170,8 @@ for asset in ti :
 
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
+    trades['y_raw'] = np.array(y_raw)
+    trades['y2_raw'] = np.array(y2_raw)
     trades['shares_to_trade'] = np.array(shares_to_trade_list)
     # endregion
 
