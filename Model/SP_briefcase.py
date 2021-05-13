@@ -41,7 +41,7 @@ for asset in tickers :
     if len(df) == 0 : continue
 
     #Rename df columns for cleaning porpuses
-    df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+    df.columns = ['open', 'high', 'low', 'adj close', 'close', 'volume']
 
     #Drop duplicates leaving only the first value
     df = df.drop_duplicates(keep=False)
@@ -265,11 +265,8 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 # endregion
 # endregion
 
-#adj close instead of close
 #Define the portfolio
-#Review strange avg loses
 #Add raw profit
-#Risk unit as 4% of the current price.
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
