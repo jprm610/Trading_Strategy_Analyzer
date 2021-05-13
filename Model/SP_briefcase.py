@@ -23,10 +23,10 @@ risk_unit = 100
 perc_in_risk = 4
 # endregion
 
-#ti = tickers[0:10].copy()
+ti = tickers[0:10].copy()
 
 asset_count = 1
-for asset in tickers :
+for asset in ti :
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
@@ -41,7 +41,7 @@ for asset in tickers :
     if len(df) == 0 : continue
 
     #Rename df columns for cleaning porpuses
-    df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+    df.columns = ['open', 'high', 'low', 'adj close', 'close', 'volume']
 
     #Drop duplicates leaving only the first value
     df = df.drop_duplicates(keep=False)
@@ -87,7 +87,7 @@ for asset in tickers :
 
         if iSMA1[i] == -1 or iRSI[i] == -1 : continue
         
-        # region TRADE CALCULATION
+        # region TRADE CALCULATION biennnn, pense que iba a ser peor
         if not on_trade :
             if df.close[i] > iSMA1[i] :
                 if iRSI[i] < 30 :
@@ -265,11 +265,8 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 # endregion
 # endregion
 
-#adj close instead of close
 #Define the portfolio
-#Review strange avg loses
 #Add raw profit
-#Risk unit as 4% of the current price.
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
