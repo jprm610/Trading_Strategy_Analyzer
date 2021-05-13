@@ -23,10 +23,10 @@ risk_unit = 100
 perc_in_risk = 4
 # endregion
 
-#ti = tickers[0:10].copy()
+ti = tickers[0:10].copy()
 
 asset_count = 1
-for asset in tickers :
+for asset in ti :
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
@@ -87,7 +87,7 @@ for asset in tickers :
 
         if iSMA1[i] == -1 or iRSI[i] == -1 : continue
         
-        # region TRADE CALCULATION
+        # region TRADE CALCULATION biennnn, pense que iba a ser peor
         if not on_trade :
             if df.close[i] > iSMA1[i] :
                 if iRSI[i] < 30 :
