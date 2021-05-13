@@ -20,9 +20,10 @@ risk_unit_dir = pd.read_csv('stock_means.csv', sep=';')
 
 # region PARAMETERS
 risk_unit = 100
+perc_in_risk = 4
 # endregion
 
-ti = tickers[0:10].copy()
+#ti = tickers[0:10].copy()
 
 asset_count = 1
 for asset in tickers :
@@ -52,24 +53,6 @@ for asset in tickers :
     iSMA1 = TA.SMA(df, 200)
     iRSI = TA.RSI(df, 10)
     # endregion
-    
-    # region Risk_Unit_Calculation
-    risk_unit_dir.set_index(risk_unit_dir['stock'], inplace=True)
-
-    risk_unit_ind = False
-
-    historical_win_avg = risk_unit_dir.at[asset, 'avg_win']
-    historical_lose_avg = risk_unit_dir.at[asset, 'avg_lose']
-
-    if historical_win_avg == 0 and historical_lose_avg == 0 :
-        risk_unit_ind = True
-    elif historical_lose_avg == 0 :
-        current_avg_lose = historical_win_avg
-    else :
-        current_avg_lose = historical_lose_avg
-
-    shares_to_trade = round(abs(risk_unit / current_avg_lose))
-    # endregion
 
     # region TRADE_EMULATION
     dates = []
@@ -82,8 +65,6 @@ for asset in tickers :
 
     iSMA1_ot = []
     iRSI_ot = []
-
-    perc_avg_lose = []
     #Dimensions
     """
     recoil_x = []
@@ -105,17 +86,16 @@ for asset in tickers :
         if i == 0 : continue
 
         if iSMA1[i] == -1 or iRSI[i] == -1 : continue
-
-        if risk_unit_ind :
-            current_avg_lose = df.close[i] * 0.05
-            shares_to_trade = round(abs(risk_unit / current_avg_lose))
-
-        if shares_to_trade == 0 : continue
         
         # region TRADE CALCULATION
         if not on_trade :
             if df.close[i] > iSMA1[i] :
                 if iRSI[i] < 30 :
+                    current_avg_lose = df.close[i] * (perc_in_risk / 100)
+                    shares_to_trade = round(abs(risk_unit / current_avg_lose))
+
+                    if shares_to_trade == 0 : continue
+
                     on_trade = True
                     dates.append(df.index[i])
                     trade_type.append("Long")
@@ -124,7 +104,6 @@ for asset in tickers :
                     shares_to_trade_list.append(shares_to_trade)
                     iSMA1_ot.append(iSMA1[i])
                     iRSI_ot.append(iRSI[i])
-                    perc_avg_lose.append(abs(current_avg_lose / df.close[i] * 100))
 
                     if i == len(df) - 1 :
                         max_income = df.high[i]
@@ -186,7 +165,6 @@ for asset in tickers :
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
     trades['shares_to_trade'] = np.array(shares_to_trade_list)
-    trades['compared_avg_lose'] = np.array(perc_avg_lose)
     # endregion
 
     #Save the edited dataframe as a new .csv file
@@ -290,8 +268,8 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 #adj close instead of close
 #Define the portfolio
 #Review strange avg loses
-#Compare avg to current price
 #Add raw profit
+#Risk unit as 4% of the current price.
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
