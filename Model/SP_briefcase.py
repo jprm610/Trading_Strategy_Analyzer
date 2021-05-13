@@ -23,7 +23,7 @@ risk_unit = 100
 perc_in_risk = 4
 # endregion
 
-#ti = tickers[0:10].copy()
+#tickers = tickers[0:10].copy()
 
 asset_count = 1
 for asset in tickers :
@@ -259,6 +259,7 @@ py.offline.plot(fig, filename = "Analysis_chart.html")
 
 # region Drawdown
 piecks = []
+dd_piecks = []
 drawdowns = []
 for i in range(len(trades_global)) :
     if i == 0 : 
@@ -270,8 +271,17 @@ for i in range(len(trades_global)) :
 
     if accumulate_y['acc_y'].values[i] < piecks[i] : 
         drawdowns.append(piecks[i] - accumulate_y['acc_y'].values[i])
+        dd_piecks.append(piecks[i])
 
-stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
+perc_max_dd = 0
+max_dd = 0
+for i in range(len(drawdowns)) :
+    if drawdowns[i] > max_dd :
+        max_dd = drawdowns[i]
+        perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
+
+stats.loc[len(stats)] = ['Max drawdown', max_dd]
+stats.loc[len(stats)] = ['Max drawdown %', perc_max_dd]
 # endregion
 # endregion
 
