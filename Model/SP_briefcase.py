@@ -179,6 +179,7 @@ for asset in tickers :
     trades_global = trades_global.append(trades)
     
 trades_global = trades_global.sort_values(by=['entry_date'])
+trades_global.set_index(trades_global['entry_date'], drop=True, inplace=True)
 
 # region Stats
 stats = pd.DataFrame(columns=['stat', 'value'])
@@ -194,15 +195,15 @@ stats.loc[len(stats)] = ['Total # of trades', len(trades_global)]
 stats.loc[len(stats)] = ['# of winning trades', len(global_wins)]
 stats.loc[len(stats)] = ['# of losing trades', len(global_loses)]
 
+profitable = len(global_wins) / len(trades_global)
+stats.loc[len(stats)] = ['Winning Weight', profitable * 100]
+
 total_win = sum(global_wins)
 total_lose = sum(global_loses)
 stats.loc[len(stats)] = ['Total win', total_win]
 stats.loc[len(stats)] = ['Total lose', total_lose]
 
 stats.loc[len(stats)] = ['Profit factor', total_win / abs(total_lose)]
-
-profitable = len(global_wins) / len(trades_global)
-stats.loc[len(stats)] = ['Winning Weight', profitable * 100]
 
 avg_win = statistics.mean(global_wins)
 avg_lose = statistics.mean(global_loses)
@@ -239,7 +240,8 @@ stats.loc[len(stats)] = ['Worst streak', max(losing_streaks)]
 # region Analysis_chart
 accumulate_y = pd.DataFrame()
 accumulate_y['acc_y'] = np.cumsum(trades_global['y'])
-accumulate_y.reset_index(drop=True, inplace=True)
+accumulate_y['dates'] = trades_global['entry_date']
+accumulate_y.set_index(accumulate_y['dates'], drop=True, inplace=True)
 
 fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
 
@@ -252,7 +254,7 @@ fig.add_trace(
 
 fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
-py.offline.plot(fig, filename = "Accumulate.html")
+py.offline.plot(fig, filename = "Analysis_chart.html")
 # endregion
 
 # region Drawdown
@@ -274,7 +276,6 @@ stats.loc[len(stats)] = ['Max drawdown', max(drawdowns)]
 # endregion
 
 #Define the portfolio
-#Add raw profit
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
