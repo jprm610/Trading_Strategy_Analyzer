@@ -23,7 +23,7 @@ risk_unit = 100
 perc_in_risk = 4
 # endregion
 
-#tickers = tickers[0:10].copy()
+tickers = tickers[0:10].copy()
 
 asset_count = 1
 for asset in tickers :
@@ -180,6 +180,7 @@ for asset in tickers :
     
 trades_global = trades_global.sort_values(by=['entry_date'])
 trades_global.set_index(trades_global['entry_date'], drop=True, inplace=True)
+del trades_global['entry_date']
 
 # region Stats
 stats = pd.DataFrame(columns=['stat', 'value'])
@@ -187,7 +188,7 @@ stats = pd.DataFrame(columns=['stat', 'value'])
 global_wins = [i for i in trades_global['y'] if i >= 0]
 global_loses = [i for i in trades_global['y'] if i < 0]
 
-stats.loc[len(stats)] = ['Start date', trades_global['entry_date'].values[0]]
+stats.loc[len(stats)] = ['Start date', trades_global.index.values[0]]
 stats.loc[len(stats)] = ['End date', trades_global['exit_date'].values[-1]]
 
 stats.loc[len(stats)] = ['Net profit', trades_global['y'].sum()]
@@ -240,7 +241,7 @@ stats.loc[len(stats)] = ['Worst streak', max(losing_streaks)]
 # region Analysis_chart
 accumulate_y = pd.DataFrame()
 accumulate_y['acc_y'] = np.cumsum(trades_global['y'])
-accumulate_y['dates'] = trades_global['entry_date']
+accumulate_y['dates'] = trades_global.index
 accumulate_y.set_index(accumulate_y['dates'], drop=True, inplace=True)
 
 fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
@@ -284,8 +285,6 @@ stats.loc[len(stats)] = ['Max drawdown', max_dd]
 stats.loc[len(stats)] = ['Max drawdown %', perc_max_dd]
 # endregion
 # endregion
-
-#Define the portfolio
 
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
