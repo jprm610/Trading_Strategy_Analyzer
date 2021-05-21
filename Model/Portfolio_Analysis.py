@@ -26,7 +26,7 @@ Number_of_trades['# of trades'] = np.array(Number_Trades_per_Date)
 Number_of_trades['# of closed trades'] = np.array(Number_Closed_Trades_per_Date)
 Number_of_trades.set_index(Number_of_trades['date'], drop=True, inplace=True)
 del Number_of_trades['date']
-""" Number_of_trades.to_csv('Number_of_trades.csv', sep=';') """
+Number_of_trades.to_csv('Number_of_trades.csv', sep=';')
 
 # Here is build a df just with the trades that can be entered
 # taking into account the portfolio rules
@@ -49,10 +49,16 @@ for i in range(len(Number_of_trades)) :
     Acum_Total = Acum_Opened - Acum_Closed
     if Counter <= Slots :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
+            Filtered_Trades = pd.DataFrame()
+            Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
+            Filtered_Trades = Filtered_Trades.sort_values(by=['iRSI'])
+            """ trades_global.set_index(trades_global['entry_date'], drop=True, inplace=True)
+            del trades_global['entry_date'] """
         #print(Number_of_trades.index.values[i])
         #print(trades_global['entry_date'])
         #print(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]])
-            Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]][0:Slots - Counter], ignore_index=True)
+            """ Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[Filtered_Trades['entry_date'] == Number_of_trades.index.values[i]][0:Slots - Counter], ignore_index=True) """
+            Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[0:Slots - Counter], ignore_index=True)
         else :
             Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
 
