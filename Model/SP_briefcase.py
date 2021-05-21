@@ -126,7 +126,7 @@ for asset in tickers :
             # this in purpose of determining whether the stock is in an up trend.
             if df.close[i] > iSMA1[i] :
                 # Then, if the RSI is below 5, enter the trade in the next open.
-                if iRSI[i] < 5 :
+                if iRSI[i] < 10 :
 
                     # Before entering the trade,
                     # calculate the shares_to_trade,
@@ -173,7 +173,7 @@ for asset in tickers :
                     max_income = df.high[i]
 
             # If the RSI is over 15 or 10 days have passed:
-            if iRSI[i] > 15 or i == entry_candle + 10 :
+            if iRSI[i] > 50 or i == entry_candle + 10 :
 
                 # The trade is exited.
                 # First updating the on_trade flag.
