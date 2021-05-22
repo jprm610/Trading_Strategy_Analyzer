@@ -80,7 +80,7 @@ for asset in tickers :
     # Get all indicator lists,
     # for this strategy we only need SMA 200 and RSI 10.
     iSMA1 = TA.SMA(df, 200)
-    iRSI = TA.RSI(df, 3)
+    iRSI = TA.RSI(df, 10)
 
     # endregion
 
@@ -126,44 +126,43 @@ for asset in tickers :
             # this in purpose of determining whether the stock is in an up trend.
             if df.close[i] > iSMA1[i] :
                 # Then, if the RSI is below 10, enter the trade in the next open.
-                if iRSI[i] < 10 :
-                    if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
+                if iRSI[i] < 30 :
 
-                        # Before entering the trade,
-                        # calculate the shares_to_trade,
-                        # in order to risk the perc_in_risk of the stock,
-                        # finally make sure that we can afford those shares to trade.
-                        if i == len(df) - 1 : current_avg_lose = df.close[i] * (perc_in_risk / 100)
-                        else : current_avg_lose = df.open[i + 1] * (perc_in_risk / 100)
+                    # Before entering the trade,
+                    # calculate the shares_to_trade,
+                    # in order to risk the perc_in_risk of the stock,
+                    # finally make sure that we can afford those shares to trade.
+                    if i == len(df) - 1 : current_avg_lose = df.close[i] * (perc_in_risk / 100)
+                    else : current_avg_lose = df.open[i + 1] * (perc_in_risk / 100)
 
-                        shares_to_trade = round(abs(risk_unit / current_avg_lose))
-                        if shares_to_trade == 0 : continue
+                    shares_to_trade = round(abs(risk_unit / current_avg_lose))
+                    if shares_to_trade == 0 : continue
 
-                        # Here the order is set, saving all variables 
-                        # that characterizes the operation.
-                        # The on_trade flag is updated 
-                        # in order to avoid more than one operation calculation in later candles, 
-                        # until the operation is exited.
-                        on_trade = True
-                        trade_type.append("Long")
-                        stock.append(asset)
-                        entry_candle = i
-                        shares_to_trade_list.append(shares_to_trade)
-                        iSMA1_ot.append(iSMA1[i])
-                        iRSI_ot.append(iRSI[i])
+                    # Here the order is set, saving all variables 
+                    # that characterizes the operation.
+                    # The on_trade flag is updated 
+                    # in order to avoid more than one operation calculation in later candles, 
+                    # until the operation is exited.
+                    on_trade = True
+                    trade_type.append("Long")
+                    stock.append(asset)
+                    entry_candle = i
+                    shares_to_trade_list.append(shares_to_trade)
+                    iSMA1_ot.append(iSMA1[i])
+                    iRSI_ot.append(iRSI[i])
 
-                        # To simulate that the order is executed in the next day, 
-                        # the entry price is taken in the next candle open. 
-                        # Nevertheless, when we are in the last candle that can't be done, 
-                        # that's why the current close is saved in that case.
-                        if i == len(df) - 1 :
-                            dates.append(df.index[i])
-                            max_income = df.high[i]
-                            entry_price.append(df.close[i])
-                        else :
-                            dates.append(df.index[i + 1])
-                            max_income = df.high[i + 1]
-                            entry_price.append(df.open[i + 1])
+                    # To simulate that the order is executed in the next day, 
+                    # the entry price is taken in the next candle open. 
+                    # Nevertheless, when we are in the last candle that can't be done, 
+                    # that's why the current close is saved in that case.
+                    if i == len(df) - 1 :
+                        dates.append(df.index[i])
+                        max_income = df.high[i]
+                        entry_price.append(df.close[i])
+                    else :
+                        dates.append(df.index[i + 1])
+                        max_income = df.high[i + 1]
+                        entry_price.append(df.open[i + 1])
         # endregion
 
         # region TRADE MANAGEMENT
@@ -177,7 +176,7 @@ for asset in tickers :
                     max_income = df.high[i]
 
             # If the RSI is over 50 or 10 days have passed:
-            if iRSI[i] > 50 or i == entry_candle + 11 :
+            if iRSI[i] > 40 or i == entry_candle + 11 :
 
                 # The trade is exited.
                 # First updating the on_trade flag.
