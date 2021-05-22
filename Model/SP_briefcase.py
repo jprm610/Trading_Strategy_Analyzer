@@ -80,7 +80,7 @@ for asset in tickers :
     # Get all indicator lists,
     # for this strategy we only need SMA 200 and RSI 10.
     iSMA1 = TA.SMA(df, 200)
-    iRSI = TA.RSI(df, 10)
+    iRSI = TA.RSI(df, 3)
 
     # endregion
 
@@ -126,7 +126,7 @@ for asset in tickers :
             # this in purpose of determining whether the stock is in an up trend.
             if df.close[i] > iSMA1[i] :
                 # Then, if the RSI is below 10, enter the trade in the next open.
-                if iRSI[i] < 30 :
+                if iRSI[i] < 5 :
 
                     # Before entering the trade,
                     # calculate the shares_to_trade,
@@ -176,7 +176,7 @@ for asset in tickers :
                     max_income = df.high[i]
 
             # If the RSI is over 50 or 10 days have passed:
-            if iRSI[i] > 40 or i == entry_candle + 11 :
+            if iRSI[i] > 15 or i == entry_candle + 11 :
 
                 # The trade is exited.
                 # First updating the on_trade flag.
