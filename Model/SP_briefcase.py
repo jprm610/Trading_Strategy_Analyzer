@@ -81,6 +81,7 @@ for asset in tickers :
     # for this strategy we only need SMA 200 and RSI 10.
     iSMA1 = TA.SMA(df, 200)
     iRSI = TA.RSI(df, 3)
+    iMSD = TA.MSD(df, 100)
 
     # endregion
 
@@ -98,6 +99,8 @@ for asset in tickers :
 
     iSMA1_ot = []
     iRSI_ot = []
+    iMSD_ot = []
+    volatity_ot = []
 
     y_raw = []
     y2_raw = []
@@ -127,42 +130,46 @@ for asset in tickers :
             if df.close[i] > iSMA1[i] :
                 # Then, if the RSI is below 10, enter the trade in the next open.
                 if iRSI[i] < 10 :
+                    # Review wheter there are 3 consecutive lower lows.
+                    if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
 
-                    # Before entering the trade,
-                    # calculate the shares_to_trade,
-                    # in order to risk the perc_in_risk of the stock,
-                    # finally make sure that we can afford those shares to trade.
-                    if i == len(df) - 1 : current_avg_lose = df.close[i] * (perc_in_risk / 100)
-                    else : current_avg_lose = df.open[i + 1] * (perc_in_risk / 100)
+                        # Before entering the trade,
+                        # calculate the shares_to_trade,
+                        # in order to risk the perc_in_risk of the stock,
+                        # finally make sure that we can afford those shares to trade.
+                        if i == len(df) - 1 : current_avg_lose = df.close[i] * (perc_in_risk / 100)
+                        else : current_avg_lose = df.open[i + 1] * (perc_in_risk / 100)
 
-                    shares_to_trade = round(abs(risk_unit / current_avg_lose))
-                    if shares_to_trade == 0 : continue
+                        shares_to_trade = round(abs(risk_unit / current_avg_lose))
+                        if shares_to_trade == 0 : continue
 
-                    # Here the order is set, saving all variables 
-                    # that characterizes the operation.
-                    # The on_trade flag is updated 
-                    # in order to avoid more than one operation calculation in later candles, 
-                    # until the operation is exited.
-                    on_trade = True
-                    trade_type.append("Long")
-                    stock.append(asset)
-                    entry_candle = i
-                    shares_to_trade_list.append(shares_to_trade)
-                    iSMA1_ot.append(iSMA1[i])
-                    iRSI_ot.append(iRSI[i])
-
-                    # To simulate that the order is executed in the next day, 
-                    # the entry price is taken in the next candle open. 
-                    # Nevertheless, when we are in the last candle that can't be done, 
-                    # that's why the current close is saved in that case.
-                    if i == len(df) - 1 :
-                        dates.append(df.index[i])
-                        max_income = df.high[i]
-                        entry_price.append(df.close[i])
-                    else :
-                        dates.append(df.index[i + 1])
-                        max_income = df.high[i + 1]
-                        entry_price.append(df.open[i + 1])
+                        # Here the order is set, saving all variables 
+                        # that characterizes the operation.
+                        # The on_trade flag is updated 
+                        # in order to avoid more than one operation calculation in later candles, 
+                        # until the operation is exited.
+                        on_trade = True
+                        trade_type.append("Long")
+                        stock.append(asset)
+                        entry_candle = i
+                        shares_to_trade_list.append(shares_to_trade)
+                        iSMA1_ot.append(iSMA1[i])
+                        iRSI_ot.append(iRSI[i])
+                        iMSD_ot.append(iMSD[i])
+                        volatity_ot.append(iMSD[i] / df.close[i] * 100)
+                        
+                        # To simulate that the order is executed in the next day, 
+                        # the entry price is taken in the next candle open. 
+                        # Nevertheless, when we are in the last candle that can't be done, 
+                        # that's why the current close is saved in that case.
+                        if i == len(df) - 1 :
+                            dates.append(df.index[i])
+                            max_income = df.high[i]
+                            entry_price.append(df.close[i])
+                        else :
+                            dates.append(df.index[i + 1])
+                            max_income = df.high[i + 1]
+                            entry_price.append(df.open[i + 1])
         # endregion
 
         # region TRADE MANAGEMENT
@@ -235,6 +242,8 @@ for asset in tickers :
 
     trades['iSMA1']  = np.array(iSMA1_ot)
     trades['iRSI'] = np.array(iRSI_ot)
+    trades['iMSD'] = np.array(iMSD_ot)
+    trades['volatility'] = np.array(volatity_ot)
 
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
@@ -308,7 +317,7 @@ for i in range(len(Number_of_trades)) :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
             Filtered_Trades = pd.DataFrame()
             Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
-            Filtered_Trades = Filtered_Trades.sort_values(by=['iRSI'])
+            Filtered_Trades = Filtered_Trades.sort_values(by=['volatility'], ascending=False)
             Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[0:Slots - Counter], ignore_index=True)
         else :
             Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
