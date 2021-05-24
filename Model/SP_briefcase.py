@@ -47,7 +47,7 @@ ATR_period = 10
 
 # Entry and Exit conditions
 entry_RSI = 10
-exit_RSI = 50
+exit_RSI = 70
 
 risk_unit = 100
 perc_in_risk = 4
