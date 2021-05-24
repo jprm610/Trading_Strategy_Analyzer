@@ -37,12 +37,22 @@ trades_global = pd.DataFrame()
 
 # region PARAMETERS
 use_last_candle_weakness = False
-use_tradepoint_check = True
+use_tradepoint_check = False
+
+# Indicators
+SMA_period = 200
+MSD_period = 100
+RSI_period = 3
+ATR_period = 10
+
+# Entry and Exit conditions
+entry_RSI = 10
+exit_RSI = 50
 
 risk_unit = 100
 perc_in_risk = 4
 last_candle_weakness = 25
-trades_at_the_same_time = 10
+trade_slots = 10
 # endregion
 
 #tickers = tickers[0:10].copy()
@@ -83,11 +93,11 @@ for asset in tickers :
 
     # Get all indicator lists,
     # for this strategy we only need SMA 200 and RSI 10.
-    iSMA1 = TA.SMA(df, 200)
-    iRSI = TA.RSI(df, 3)
-    iMSD = TA.MSD(df, 100)
+    iSMA1 = TA.SMA(df, SMA_period)
+    iRSI = TA.RSI(df, RSI_period)
+    iMSD = TA.MSD(df, MSD_period)
     iTR = TA.TR(df)
-    iATR = TA.ATR(df, 10)
+    iATR = TA.ATR(df, ATR_period)
 
     # endregion
 
@@ -140,7 +150,7 @@ for asset in tickers :
             # Check if the current price is above the SMA1,
             # this in purpose of determining whether the stock is in an up trend
             # and if the RSI is below 10, enter the trade in the next open.
-            if df.close[i] > iSMA1[i] and iRSI[i] < 10 :
+            if df.close[i] > iSMA1[i] and iRSI[i] < entry_RSI :
                 # Review wheter there are 3 consecutive lower lows.
                 if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
                     
@@ -293,7 +303,7 @@ for asset in tickers :
                     max_income = df.high[i]
 
             # If the RSI is over 50 or 10 days have passed:
-            if iRSI[i] > 50 or i == entry_candle + 11 :
+            if iRSI[i] > exit_RSI or i == entry_candle + 11 :
 
                 # The trade is exited.
                 # First updating the on_trade flag.
@@ -419,7 +429,7 @@ Acum_Opened = Number_of_trades['# of trades'].values[0]
 Acum_Total = 0
 Acum_Closed = 0
 Counter = 0
-Slots = trades_at_the_same_time
+Slots = trade_slots
 for i in range(len(Number_of_trades)) :
     if i != 0 :
         Acum_Closed = sum(1 for x in Portfolio_Trades['exit_date'] if x <= Number_of_trades.index.values[i])
