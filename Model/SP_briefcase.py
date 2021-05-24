@@ -42,12 +42,12 @@ use_tradepoint_check = False
 # Indicators
 SMA_period = 200
 MSD_period = 100
-RSI_period = 3
+RSI_period = 5
 ATR_period = 10
 
 # Entry and Exit conditions
 entry_RSI = 10
-exit_RSI = 70
+exit_RSI = 50
 
 risk_unit = 100
 perc_in_risk = 4
