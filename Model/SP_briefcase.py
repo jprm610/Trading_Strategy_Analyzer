@@ -42,17 +42,17 @@ use_tradepoint_check = False
 # Indicators
 SMA_period = 200
 MSD_period = 100
-RSI_period = 5
+RSI_period = 3
 ATR_period = 10
 
 # Entry and Exit conditions
 entry_RSI = 10
-exit_RSI = 70
+exit_RSI = 50
 
 risk_unit = 100
 perc_in_risk = 4
 last_candle_weakness = 25
-trade_slots = 10
+trade_slots = 5
 # endregion
 
 #tickers = tickers[0:10].copy()
