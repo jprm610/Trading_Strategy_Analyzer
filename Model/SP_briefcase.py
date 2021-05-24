@@ -36,8 +36,11 @@ tickers = [i.replace('.','-') for i in tickers]
 trades_global = pd.DataFrame()
 
 # region PARAMETERS
+use_last_candle_weakness = True
+
 risk_unit = 100
 perc_in_risk = 4
+last_candle_weakness = 25
 trades_at_the_same_time = 10
 # endregion
 
@@ -67,7 +70,7 @@ for asset in tickers :
 
     # Rename df columns for cleaning porpuses 
     # and applying recommended "adjusted close" info.
-    df.columns = ['open', 'high', 'low', 'adj close', 'close', 'volume']
+    df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 
     # Drop duplicates leaving only the first value,
     # this due to the resting dates in which the market is not moving.
@@ -82,6 +85,7 @@ for asset in tickers :
     iSMA1 = TA.SMA(df, 200)
     iRSI = TA.RSI(df, 3)
     iMSD = TA.MSD(df, 100)
+    iTR = TA.TR(df)
 
     # endregion
 
@@ -100,7 +104,12 @@ for asset in tickers :
     iSMA1_ot = []
     iRSI_ot = []
     iMSD_ot = []
+    iTR_ot = []
     volatity_ot = []
+    candle_weakness_ot = []
+
+    close_ot = []
+    low_ot = []
 
     y_raw = []
     y2_raw = []
@@ -126,12 +135,19 @@ for asset in tickers :
         # If there isn't a trade in progress:
         if not on_trade :
             # Check if the current price is above the SMA1,
-            # this in purpose of determining whether the stock is in an up trend.
-            if df.close[i] > iSMA1[i] :
-                # Then, if the RSI is below 10, enter the trade in the next open.
-                if iRSI[i] < 10 :
-                    # Review wheter there are 3 consecutive lower lows.
-                    if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
+            # this in purpose of determining whether the stock is in an up trend
+            # and if the RSI is below 10, enter the trade in the next open.
+            if df.close[i] > iSMA1[i] and iRSI[i] < 10 :
+                # Review wheter there are 3 consecutive lower lows.
+                if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
+                    
+                    if use_last_candle_weakness :
+                        lower_tail = df.close[i] - df.low[i]
+                        close_proportion = (lower_tail / iTR[i]) * 100
+                    else :
+                        close_proportion = last_candle_weakness
+
+                    if close_proportion <= last_candle_weakness :
 
                         # Before entering the trade,
                         # calculate the shares_to_trade,
@@ -156,7 +172,10 @@ for asset in tickers :
                         iSMA1_ot.append(iSMA1[i])
                         iRSI_ot.append(iRSI[i])
                         iMSD_ot.append(iMSD[i])
+                        iTR_ot.append(iTR[i])
                         volatity_ot.append(iMSD[i] / df.close[i] * 100)
+
+                        candle_weakness_ot.append(close_proportion)
                         
                         # To simulate that the order is executed in the next day, 
                         # the entry price is taken in the next candle open. 
@@ -243,7 +262,11 @@ for asset in tickers :
     trades['iSMA1']  = np.array(iSMA1_ot)
     trades['iRSI'] = np.array(iRSI_ot)
     trades['iMSD'] = np.array(iMSD_ot)
+    trades['iTR'] = np.array(iTR_ot)
+   
     trades['volatility'] = np.array(volatity_ot)
+
+    if use_last_candle_weakness : trades['candle_weakness'] = np.array(candle_weakness_ot)
 
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
