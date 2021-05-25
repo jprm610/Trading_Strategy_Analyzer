@@ -21,6 +21,8 @@ from plotly.graph_objs import *
 # functions that have proved to be correct.
 from finta import TA
 from indicators import *
+
+import os
 # endregion
 
 # read_html() allows as to read tables in any webpage,
@@ -38,7 +40,7 @@ trades_global = pd.DataFrame()
 # region PARAMETERS
 use_last_candle_weakness = False
 use_tradepoint_check = False
-use_pre_charged_data = True
+use_pre_charged_data = False
 
 # Indicators
 SMA_period = 200
@@ -46,7 +48,7 @@ MSD_period = 100
 RSI_period = 3
 ATR_period = 10
 
-# Entry and Exit conditions
+# Entry and Exit conditionss
 entry_RSI = 10
 exit_RSI = 50
 
@@ -57,7 +59,7 @@ trade_slots = 10
 
 # endregion
 
-#tickers = tickers[0:10].copy()
+tickers = tickers[0:10].copy()
 
 # In this loop the evaluation of all stocks is done.
 asset_count = 1
@@ -97,6 +99,12 @@ for asset in tickers :
         # this due to the resting dates in which the market is not moving.
         df = df.drop_duplicates(keep=False)
 
+        if asset_count == 2 :
+            try :
+                os.mkdir('SP_data')
+            except :
+                df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
+                
         df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
 
         # endregion
