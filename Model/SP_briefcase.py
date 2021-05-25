@@ -40,7 +40,7 @@ trades_global = pd.DataFrame()
 # region PARAMETERS
 use_last_candle_weakness = False
 use_tradepoint_check = False
-use_pre_charged_data = False
+use_pre_charged_data = True
 
 # Indicators
 SMA_period = 200
@@ -59,7 +59,7 @@ trade_slots = 10
 
 # endregion
 
-tickers = tickers[0:10].copy()
+#tickers = tickers[0:10].copy()
 
 # In this loop the evaluation of all stocks is done.
 asset_count = 1
@@ -75,8 +75,8 @@ for asset in tickers :
         try :
             df = pd.read_csv('SP_data/' + str(asset) + '.csv', sep=';')
         except :
-            print('ERROR: Not pre-charged data, turn use_pre_charged_data flag to False.')
-            exit()
+            print('ERROR: Not available data for ' + str(asset) + '.')
+            continue
     else :
         # region DATA CLEANING
 
@@ -104,7 +104,7 @@ for asset in tickers :
                 os.mkdir('SP_data')
             except :
                 df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
-                
+
         df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
 
         # endregion
