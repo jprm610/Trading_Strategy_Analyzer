@@ -71,12 +71,16 @@ for asset in tickers :
     print(asset)
     asset_count += 1
 
+    # If there is pre-charged data, use that data for the strategy,
+    # this in order to save time while evaluating features and parameters.
     if use_pre_charged_data :
         try :
             df = pd.read_csv('SP_data/' + str(asset) + '.csv', sep=';')
         except :
             print('ERROR: Not available data for ' + str(asset) + '.')
             continue
+    # Otherwise, download the data from Yahoo, clean it, and save it 
+    # so that it can be used for further review.
     else :
         # region DATA CLEANING
 
@@ -99,12 +103,17 @@ for asset in tickers :
         # this due to the resting dates in which the market is not moving.
         df = df.drop_duplicates(keep=False)
 
+        # If this is the first ticker to save, create a folder to save all the data, 
+        # if there isn't one available yet.
         if asset_count == 2 :
             try :
+                # Create dir.
                 os.mkdir('SP_data')
             except :
+                # Save the data.
                 df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
 
+        # Save the data.
         df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
 
         # endregion
