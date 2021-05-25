@@ -38,9 +38,10 @@ tickers = [i.replace('.','-') for i in tickers]
 trades_global = pd.DataFrame()
 
 # region PARAMETERS
+use_pre_charged_data = True
+
 use_last_candle_weakness = False
 use_tradepoint_check = False
-use_pre_charged_data = True
 
 # Indicators
 SMA_period = 200
@@ -48,7 +49,7 @@ MSD_period = 100
 RSI_period = 3
 ATR_period = 10
 
-# Entry and Exit conditionss
+# Entry and Exit conditions
 entry_RSI = 10
 exit_RSI = 50
 
@@ -79,6 +80,16 @@ for asset in tickers :
         except :
             print('ERROR: Not available data for ' + str(asset) + '.')
             continue
+
+        #Reformat the date column
+        df.Date = pd.to_datetime(df.Date, format='%Y-%m-%d %H:%M:%S.%f')
+
+        #Set the date column as the index
+        df = df.set_index(df.Date)
+
+        #Delete the old date column
+        del df['Date']
+
     # Otherwise, download the data from Yahoo, clean it, and save it 
     # so that it can be used for further review.
     else :
