@@ -52,7 +52,7 @@ exit_RSI = 50
 risk_unit = 100
 perc_in_risk = 4
 last_candle_weakness = 25
-trade_slots = 20
+trade_slots = 10
 
 # endregion
 
@@ -153,7 +153,7 @@ for asset in tickers :
             # and if the RSI is below 10, enter the trade in the next open.
             if df.close[i] > iSMA1[i] and iRSI[i] < entry_RSI :
                 # Review wheter there are 3 consecutive lower lows.
-                if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
+                if df.low[i] < df.low[i - 1] :
                     
                     if use_last_candle_weakness :
                         lower_tail = df.close[i] - df.low[i]
