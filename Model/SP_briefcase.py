@@ -52,7 +52,7 @@ exit_RSI = 50
 risk_unit = 100
 perc_in_risk = 4
 last_candle_weakness = 25
-trade_slots = 5
+trade_slots = 15
 # endregion
 
 #tickers = tickers[0:10].copy()
