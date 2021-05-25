@@ -38,6 +38,7 @@ trades_global = pd.DataFrame()
 # region PARAMETERS
 use_last_candle_weakness = False
 use_tradepoint_check = False
+use_pre_charged_data = True
 
 # Indicators
 SMA_period = 200
@@ -61,34 +62,44 @@ trade_slots = 10
 # In this loop the evaluation of all stocks is done.
 asset_count = 1
 for asset in tickers :
+
     # This section is only for front-end purposes,
     # in order to show the current progress of the program when is running.
     print(str(asset_count) + '/' + str(len(tickers)))
     print(asset)
     asset_count += 1
 
-    # region DATA CLEANING
+    if use_pre_charged_data :
+        try :
+            df = pd.read_csv('SP_data/' + str(asset) + '.csv', sep=';')
+        except :
+            print('ERROR: Not pre-charged data, turn use_pre_charged_data flag to False.')
+            exit()
+    else :
+        # region DATA CLEANING
 
-    # Here is read the historical data provided by Yahoo Finance,
-    # this also has an error handling in case the ticker historical info
-    # couldn't be downloaded, in which is skipped.
-    try :
-        df = yf.download(asset,'2011-01-01')
-    except ValueError :
-        continue
-    
-    # If the ticker df doesn't have any information skip it.
-    if len(df) == 0 : continue
+        # Here is read the historical data provided by Yahoo Finance,
+        # this also has an error handling in case the ticker historical info
+        # couldn't be downloaded, in which is skipped.
+        try :
+            df = yf.download(asset,'2011-01-01')
+        except ValueError :
+            continue
+        
+        # If the ticker df doesn't have any information skip it.
+        if len(df) == 0 : continue
 
-    # Rename df columns for cleaning porpuses 
-    # and applying recommended "adjusted close" info.
-    df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+        # Rename df columns for cleaning porpuses 
+        # and applying recommended "adjusted close" info.
+        df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 
-    # Drop duplicates leaving only the first value,
-    # this due to the resting dates in which the market is not moving.
-    df = df.drop_duplicates(keep=False)
+        # Drop duplicates leaving only the first value,
+        # this due to the resting dates in which the market is not moving.
+        df = df.drop_duplicates(keep=False)
 
-    # endregion
+        df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
+
+        # endregion
 
     # region INDICATOR CALCULATIONS
 
