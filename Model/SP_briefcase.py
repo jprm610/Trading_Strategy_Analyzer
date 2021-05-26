@@ -101,7 +101,7 @@ for asset in tickers :
         # this also has an error handling in case the ticker historical info
         # couldn't be downloaded, in which is skipped.
         try :
-            df = yf.download(asset,'2020-01-01')
+            df = yf.download(asset,'2011-01-01')
         except ValueError :
             continue
         
@@ -553,6 +553,8 @@ avg_lose = statistics.mean(global_loses)
 stats.loc[len(stats)] = ['Avg win', avg_win]
 stats.loc[len(stats)] = ['Avg lose', avg_lose]
 stats.loc[len(stats)] = ['Reward to risk ratio', avg_win / abs(avg_lose)]
+stats.loc[len(stats)] = ['Avg max win', statistics.mean(trades_global['y2'])]
+stats.loc[len(stats)] = ['Avg max lose', statistics.mean(trades_global['y3'])]
 
 # Best and worst trades, includin the expectancy are saved.
 stats.loc[len(stats)] = ['Best trade', max(global_wins)]
