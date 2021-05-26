@@ -72,6 +72,8 @@ for asset in tickers :
     print(asset)
     asset_count += 1
 
+    # region Get Data
+
     # If there is pre-charged data, use that data for the strategy,
     # this in order to save time while evaluating features and parameters.
     if use_pre_charged_data :
@@ -128,6 +130,7 @@ for asset in tickers :
         df.to_csv('SP_data/' + str(asset) + '.csv', sep=';')
 
         # endregion
+    # endregion
 
     # region INDICATOR CALCULATIONS
 
@@ -166,8 +169,10 @@ for asset in tickers :
 
     y_raw = []
     y2_raw = []
+    y3_raw = []
     y = []
     y2 = []
+    y3 = []
     y_index = []
 
     # Here occurs the OnBarUpdate() in which all strategie calculations happen.
@@ -324,10 +329,12 @@ for asset in tickers :
                             if i == len(df) - 1 :
                                 dates.append(df.index[i])
                                 max_income = df.high[i]
+                                min_income = df.low[i]
                                 entry_price.append(df.close[i])
                             else :
                                 dates.append(df.index[i + 1])
                                 max_income = df.high[i + 1]
+                                min_income = df.low[i + 1]
                                 entry_price.append(df.open[i + 1])
                             # endregion
         # endregion
@@ -339,8 +346,11 @@ for asset in tickers :
             if len(trade_type) == 0 : continue
             
             # Here the max_income variable is updated.
-            if df.high[i] > max_income :
-                    max_income = df.high[i]
+            if df.high[i] > max_income and i != entry_candle :
+                max_income = df.high[i]
+
+            if df.low[i] < min_income and i != entry_candle :
+                min_income = df.low[i]
 
             # If the RSI is over 50 or 10 days have passed:
             if iRSI[i] > exit_RSI or i == entry_candle + 11 :
@@ -367,8 +377,10 @@ for asset in tickers :
                 # Saving all missing trade characteristics.
                 y.append(outcome)
                 y2.append((max_income - entry_price[-1]) * shares_to_trade)
+                y3.append((min_income - entry_price[-1]) * shares_to_trade)
                 y_raw.append(outcome / shares_to_trade)
                 y2_raw.append(y2[-1] / shares_to_trade)
+                y3_raw.append(y3[-1] / shares_to_trade)
 
         # If a trade is in progress in the last candle:
         if i == len(df) - 1 and on_trade :
@@ -377,10 +389,12 @@ for asset in tickers :
             # as if the trade was exited in this moment.
             outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
 
-            y2.append((max_income - entry_price[-1]) * shares_to_trade)
             y.append(outcome)
+            y2.append((max_income - entry_price[-1]) * shares_to_trade)
+            y3.append((min_income - entry_price[-1]) * shares_to_trade)
             y_raw.append(outcome / shares_to_trade)
             y2_raw.append(y2[-1] / shares_to_trade)
+            y3_raw.append(y3[-1] / shares_to_trade)
             y_index.append(df.index[i])
             exit_price.append(df.close[i])
         # endregion
@@ -413,8 +427,10 @@ for asset in tickers :
 
     trades['y']  = np.array(y)
     trades['y2'] = np.array(y2)
+    trades['y3'] = np.array(y3)
     trades['y_raw'] = np.array(y_raw)
     trades['y2_raw'] = np.array(y2_raw)
+    trades['y3_raw'] = np.array(y3_raw)
     trades['shares_to_trade'] = np.array(shares_to_trade_list)
 
     # endregion
