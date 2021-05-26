@@ -51,7 +51,7 @@ ATR_period = 10
 
 # Entry and Exit conditions
 entry_RSI = 10
-exit_RSI = 50
+exit_RSI = 70
 
 risk_unit = 100
 perc_in_risk = 4
@@ -99,7 +99,7 @@ for asset in tickers :
         # this also has an error handling in case the ticker historical info
         # couldn't be downloaded, in which is skipped.
         try :
-            df = yf.download(asset,'2011-01-01')
+            df = yf.download(asset,'2020-01-01')
         except ValueError :
             continue
         
@@ -192,7 +192,7 @@ for asset in tickers :
             # and if the RSI is below 10, enter the trade in the next open.
             if df.close[i] > iSMA1[i] and iRSI[i] < entry_RSI :
                 # Review wheter there are 3 consecutive lower lows.
-                if df.low[i] < df.low[i - 1] :
+                if df.low[i] < df.low[i - 1] and df.low[i - 1] < df.low[i - 2] :
                     
                     if use_last_candle_weakness :
                         lower_tail = df.close[i] - df.low[i]
@@ -296,7 +296,7 @@ for asset in tickers :
                             if i == len(df) - 1 : current_avg_lose = df.close[i] * (perc_in_risk / 100)
                             else : current_avg_lose = df.open[i + 1] * (perc_in_risk / 100)
 
-                            shares_to_trade = round(abs(risk_unit / current_avg_lose))
+                            shares_to_trade = round(abs(risk_unit / current_avg_lose), 1)
                             if shares_to_trade == 0 : continue
 
                             # Here the order is set, saving all variables 
@@ -426,6 +426,7 @@ for asset in tickers :
 # Here the trades_global df is edited 
 # in order to set the entry_date characteristic as the index.
 trades_global = trades_global.sort_values(by=['entry_date'])
+trades_global.to_csv('SP_trades_raw.csv', sep=';')
 
 # region Portfolio
 
@@ -494,7 +495,7 @@ trades_global = Portfolio_Trades
 
 # endregion
 
-trades_global.set_index(trades_global['entry_date'], drop=True, inplace=True)
+trades_global.set_index(trades_global['entry_date'], inplace=True)
 del trades_global['entry_date']
 
 # region Stats
