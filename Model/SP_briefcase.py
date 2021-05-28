@@ -269,6 +269,9 @@ for asset in tickers :
                             # region Backtest_Mode
 
                             if df.low[i + 1] <= tradepoint :
+                                
+                                if df.open[i + 1] < tradepoint : tradepoint = df.open[i + 1]
+
                                 # Before entering the trade,
                                 # calculate the shares_to_trade,
                                 # in order to risk the Perc_In_Risk of the stock,
