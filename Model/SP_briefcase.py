@@ -60,6 +60,7 @@ risk_unit = 100
 perc_in_risk = 4
 last_candle_weakness = 25
 trade_slots = 10
+Commission_Perc = 0.05
 
 # endregion
 
@@ -395,12 +396,12 @@ for asset in tickers :
                 # Nevertheless, when we are in the last candle that can't be done, 
                 # that's why the current close is saved in that case.
                 if i == len(df) - 1 :
-                    outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
+                    outcome = ((df.close[i] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                     y_index.append(df.index[i])
                     exit_price.append(df.close[i])
                 else :
-                    outcome = (df.open[i + 1] - entry_price[-1]) * shares_to_trade
+                    outcome = ((df.open[i + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                     y_index.append(df.index[i + 1])
                     exit_price.append(df.open[i + 1])
@@ -418,7 +419,7 @@ for asset in tickers :
 
             # All characteristics are saved 
             # as if the trade was exited in this moment.
-            outcome = (df.close[i] - entry_price[-1]) * shares_to_trade
+            outcome = ((df.close[i] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
             y.append(outcome)
             y2.append((max_income - entry_price[-1]) * shares_to_trade)
@@ -546,32 +547,30 @@ trades_global = Portfolio_Trades
 
 # Here the trades_global df is edited 
 # in order to sart the df by exit_date.
-trades_global['exit_date'] =  pd.to_datetime(trades_global['exit_date'], format='%d/%m/%Y')
-trades_global = trades_global.sort_values(by=['exit_date'])
-trades_global.set_index(trades_global['entry_date'], drop=True, inplace=True)
+trades_global_rt = trades_global.copy()
+trades_global_rt['exit_date'] =  pd.to_datetime(trades_global_rt['exit_date'], format='%d/%m/%Y')
+trades_global_rt = trades_global_rt.sort_values(by=['exit_date'])
+trades_global_rt.set_index(trades_global_rt['entry_date'], drop=True, inplace=True)
 
 # Here is built the return_table df with the number of trades by every date.
 Profit_perc = []
-for i in range(len(trades_global)) :
-    Profit_perc.append(round(((trades_global['y_raw'].values[i] / trades_global['entry_price'].values[i]) / 10) * 100, 2))
-trades_global['Profit_perc'] = np.array(Profit_perc)
-trades_global['year'] = pd.DatetimeIndex(trades_global['exit_date']).year
-trades_global['month'] = pd.DatetimeIndex(trades_global['exit_date']).month
+for i in range(len(trades_global_rt)) :
+    Profit_perc.append(round(((trades_global_rt['y_raw'].values[i] / trades_global_rt['entry_price'].values[i]) / 10) * 100, 2))
+trades_global_rt['Profit_perc'] = np.array(Profit_perc)
+trades_global_rt['year'] = pd.DatetimeIndex(trades_global_rt['exit_date']).year
+trades_global_rt['month'] = pd.DatetimeIndex(trades_global_rt['exit_date']).month
 
 return_table = pd.DataFrame()
 df1 = pd.DataFrame()
-return_table = trades_global.groupby([trades_global['year'], trades_global['month']])['Profit_perc'].sum().unstack(fill_value=0)
+return_table = trades_global_rt.groupby([trades_global_rt['year'], trades_global_rt['month']])['Profit_perc'].sum().unstack(fill_value=0)
 df1 = return_table/100 + 1
 df1.columns = return_table.columns.map(str)
 return_table['Y%'] = round(((df1['1'] * df1['2'] * df1['3'] * df1['4'] * df1['5'] * df1['6'] *df1['7'] * df1['8'] * df1['9'] * df1['10'] * df1['11'] * df1['12'])-1)*100,2)
 return_table.to_csv('Return Table.csv', sep=';')
 
-del trades_global['Profit_perc']
-del trades_global['year']
-del trades_global['month']
-
 # endregion
 
+trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
 trades_global.set_index(trades_global['entry_date'], inplace=True)
 del trades_global['entry_date']
 
