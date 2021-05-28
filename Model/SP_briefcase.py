@@ -216,11 +216,13 @@ for asset in tickers :
                 if df.close[i] > iSMA1[i] and df.close[i] < iSMA2[i] :
 
                     # Review wheter there are the required consecutive lower lows.
-                    is_consecutive_check = True
-                    for j in range(Consecutive_Lower_Lows) :
-                        if df.low[i - j] > df.low[i - j - 1] : 
-                            is_consecutive_check = False
-                            break
+                    if Consecutive_Lower_Lows <= 0 : is_consecutive_check = True
+                    else :
+                        is_consecutive_check = True
+                        for j in range(Consecutive_Lower_Lows - 1) :
+                            if df.low[i - j] > df.low[i - j - 1] :
+                                is_consecutive_check = False
+                                break
 
                     if is_consecutive_check :
                         # region Limit Operation
