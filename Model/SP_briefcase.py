@@ -47,6 +47,7 @@ SMA_period = 200
 MSD_period = 100
 RSI_period = 3
 ATR_period = 10
+Max_Days_On_Trade = 10
 
 Consecutive_Lower_Lows = 3
 
@@ -385,7 +386,7 @@ for asset in tickers :
                 min_income = df.low[i]
 
             # If the RSI is over 50 or 10 days have passed:
-            if iRSI[i] > exit_RSI or i == entry_candle + 11 :
+            if iRSI[i] > exit_RSI or i == entry_candle + Max_Days_On_Trade :
 
                 # The trade is exited.
                 # First updating the on_trade flag.
