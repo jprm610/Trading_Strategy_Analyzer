@@ -1,4 +1,5 @@
 # region LIBRARIES
+
 # Pandas and numpy are the base libraries in order to manipulate
 # all data for analysis and strategies development.
 import pandas as pd
@@ -21,7 +22,10 @@ from plotly.graph_objs import *
 # functions that have proved to be correct.
 from finta import TA
 
+# os library allows us to create directories, 
+# will be useful in the Get Data region.
 import os
+
 # endregion
 
 # read_html() allows as to read tables in any webpage,
@@ -44,27 +48,30 @@ SMA1_Period = 100
 SMA2_Period = 5
 MSD_Period = 100
 ATR_Period = 10
+Tradepoint_Factor = 0.5
 
 SPY_SMA_Period = 200
 
-Consecutive_Lower_Lows = 3
+Consecutive_Lower_Lows = 2
 
 # Entry and Exit conditions
 Risk_Unit = 100
 Perc_In_Risk = 2.3
 Trade_Slots = 10
-Commission_Perc = 0.05
+Commission_Perc = 0.5
 # endregion
 
 #tickers = tickers[0:10].copy()
 
 # region SPY df
+
+# Here the SPY data is downloaded 
 print('SPY')
 
 SPY_global = yf.download('SPY','2011-01-01')
 
 # Rename df columns for cleaning porpuses 
-# and applying recommended "adjusted close" info.
+# and applying recommended.
 SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 
 # Drop duplicates leaving only the first value,
@@ -141,6 +148,8 @@ for asset in tickers :
 
         # endregion
     
+    # This check is done in order that the SPY 
+    # information coincides with the current ticker info.
     if len(SPY_global) != len(df) : SPY = SPY_global[-len(df):].copy()
     else : SPY = SPY_global
 
@@ -208,29 +217,40 @@ for asset in tickers :
 
         # If there isn't a trade in progress:
         if not on_trade :
-            # Regime filter
+            # Here the Regime Filter is done, 
+            # checking that the current SPY close is above the SPY's SMA.
             if SPY.close[i] > iSPY_SMA[i] :
                 # Check if the current price is above the SMA1,
                 # this in purpose of determining whether the stock is in an up trend
-                # and if the RSI is below 10, enter the trade in the next open.
+                # and if that same close is below the SMA2, 
+                # reflecting a recoil movement.
                 if df.close[i] > iSMA1[i] and df.close[i] < iSMA2[i] :
 
-                    # Review wheter there are the required consecutive lower lows.
+                    # Review wheter there are the required consecutive lower lows,
+                    # first checking the given parameter.
                     if Consecutive_Lower_Lows <= 0 : is_consecutive_check = True
                     else :
                         is_consecutive_check = True
-                        for j in range(Consecutive_Lower_Lows - 1) :
+                        for j in range(Consecutive_Lower_Lows) :
                             if df.low[i - j] > df.low[i - j - 1] :
                                 is_consecutive_check = False
                                 break
 
                     if is_consecutive_check :
                         # region Limit Operation
-                        tradepoint = df.close[i] - 0.5 * iATR[i]
 
+                        # Here the tradepoint for the Limit Operation is calculated, 
+                        # taking into account the ATR.
+                        tradepoint = df.close[i] - Tradepoint_Factor * iATR[i]
+
+                        # If there is going to be a signal for the next day.
                         if i == len(df) - 1 :
                             # region Signal Mode
 
+                            # Before entering the trade,
+                            # calculate the shares_to_trade,
+                            # in order to risk the Perc_In_Risk of the stock,
+                            # finally make sure that we can afford those shares to trade.
                             current_avg_lose = tradepoint * (Perc_In_Risk / 100)
 
                             shares_to_trade = round(abs(Risk_Unit / current_avg_lose), 1)
@@ -250,10 +270,8 @@ for asset in tickers :
                             iATR_ot.append(iATR[i])
                             volatity_ot.append(iMSD[i] / df.close[i] * 100)
                             
-                            # To simulate that the order is executed in the next day, 
-                            # the entry price is taken in the next candle open. 
-                            # Nevertheless, when we are in the last candle that can't be done, 
-                            # that's why the current close is saved in that case.
+                            # Here all y variables are set to 0, 
+                            # in order to differentiate the signal operation in the trdes df.
                             entry_dates.append(df.index[i])
                             entry_price.append(tradepoint)
                             y.append(0)
@@ -270,8 +288,12 @@ for asset in tickers :
                         else :
                             # region Backtest_Mode
 
+                            # Here is reviewed if the tradepoint is triggered.
                             if df.low[i + 1] <= tradepoint :
                                 
+                                # If the open is below the tradepoint, 
+                                # the tradepoint is set as that open, 
+                                # adding more reality to te operation.
                                 if df.open[i + 1] < tradepoint : tradepoint = df.open[i + 1]
 
                                 # Before entering the trade,
@@ -322,10 +344,11 @@ for asset in tickers :
             if df.high[i] > max_income and i >= entry_candle :
                 max_income = df.high[i]
 
+            # Here the min_income variable is updated.
             if df.low[i] < min_income and i >= entry_candle :
                 min_income = df.low[i]
 
-            # If the RSI is over 50 or 10 days have passed:
+            # If the current close is above the last close:
             if df.close[i] > df.close[i - 1] and i > entry_candle :
 
                 # The trade is exited.
@@ -448,30 +471,23 @@ del Number_of_trades['date']
 # Here is built a df just with the trades that can be entered
 # taking into account the portfolio rules and the Number_of_trades df.
 Portfolio_Trades = pd.DataFrame()
-Newest_closes = [0]
-Closed_Trades_per_Date = 0
-Acum_Opened = Number_of_trades['# of trades'].values[0]
-Acum_Total = 0
-Acum_Closed = 0
 Counter = 0
 Slots = Trade_Slots
+Acum_Opened = 0
+Acum_Closed = 0
 for i in range(len(Number_of_trades)) :
     if i != 0 :
         Acum_Closed = sum(1 for x in Portfolio_Trades['exit_date'] if x <= Number_of_trades.index.values[i])
-        Closed_Trades_per_Date = Acum_Closed - sum(Newest_closes)
-        Newest_closes.append(Closed_Trades_per_Date)
-        Acum_Opened = sum(1 for x in Portfolio_Trades['entry_date'] if x == Number_of_trades.index.values[i-1]) + Acum_Opened
-
-    Counter = Acum_Total - Closed_Trades_per_Date
-    Acum_Total = Acum_Opened - Acum_Closed
-    if Counter <= Slots :
+    Counter = Acum_Opened - Acum_Closed
+    if Counter < Slots :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
             Filtered_Trades = pd.DataFrame()
             Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
             Filtered_Trades = Filtered_Trades.sort_values(by=['volatility'], ascending=False)
-            Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[0:Slots - Counter], ignore_index=True)
+            Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[: Slots - Counter], ignore_index=True)
         else :
             Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
+    Acum_Opened = sum(1 for x in Portfolio_Trades['entry_date'] if x == Number_of_trades.index.values[i]) + Acum_Opened
 
 # endregion
 
