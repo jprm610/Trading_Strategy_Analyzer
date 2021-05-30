@@ -61,7 +61,7 @@ risk_unit = 100
 perc_in_risk = 4
 last_candle_weakness = 25
 trade_slots = 10
-Commission_Perc = 0.05
+Commission_Perc = 0.5
 
 # endregion
 
@@ -227,7 +227,7 @@ for asset in tickers :
                     if Consecutive_Lower_Lows <= 0 : is_consecutive_check = True
                     else :
                         is_consecutive_check = True
-                        for j in range(Consecutive_Lower_Lows - 1) :
+                        for j in range(Consecutive_Lower_Lows) :
                             if df.low[i - j] > df.low[i - j - 1] :
                                 is_consecutive_check = False
                                 break
@@ -515,23 +515,15 @@ del Number_of_trades['date']
 # Here is built a df just with the trades that can be entered
 # taking into account the portfolio rules and the Number_of_trades df.
 Portfolio_Trades = pd.DataFrame()
-Newest_closes = [0]
-Closed_Trades_per_Date = 0
-Acum_Opened = Number_of_trades['# of trades'].values[0]
-Acum_Total = 0
-Acum_Closed = 0
 Counter = 0
-Slots = trade_slots
+Slots = 10
+Acum_Opened = 0
+Acum_Closed = 0
 for i in range(len(Number_of_trades)) :
     if i != 0 :
         Acum_Closed = sum(1 for x in Portfolio_Trades['exit_date'] if x <= Number_of_trades.index.values[i])
-        Closed_Trades_per_Date = Acum_Closed - sum(Newest_closes)
-        Newest_closes.append(Closed_Trades_per_Date)
-        Acum_Opened = sum(1 for x in Portfolio_Trades['entry_date'] if x == Number_of_trades.index.values[i-1]) + Acum_Opened
-
-    Counter = Acum_Total - Closed_Trades_per_Date
-    Acum_Total = Acum_Opened - Acum_Closed
-    if Counter <= Slots :
+    Counter = Acum_Opened - Acum_Closed
+    if Counter < Slots :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
             Filtered_Trades = pd.DataFrame()
             Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
@@ -539,6 +531,7 @@ for i in range(len(Number_of_trades)) :
             Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[0:Slots - Counter], ignore_index=True)
         else :
             Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
+    Acum_Opened = sum(1 for x in Portfolio_Trades['entry_date'] if x == Number_of_trades.index.values[i]) + Acum_Opened
 
 # endregion
 
