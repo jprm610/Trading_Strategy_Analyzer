@@ -55,10 +55,10 @@ SPY_SMA_Period = 200
 Consecutive_Lower_Lows = 2
 
 # Entry and Exit conditions
-Risk_Unit = 100
+Risk_Unit = 50
 Perc_In_Risk = 2.3
 Trade_Slots = 10
-Commission_Perc = 0.5
+Commission_Perc = 0.1
 # endregion
 
 #tickers = tickers[0:10].copy()
