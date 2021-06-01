@@ -37,7 +37,7 @@ tickers = [i.replace('.','-') for i in tickers]
 trades_global = pd.DataFrame()
 
 # region PARAMETERS
-use_pre_charged_data = True
+use_pre_charged_data = False
 
 use_last_candle_weakness = False
 use_tradepoint_check = False
@@ -57,11 +57,11 @@ SPY_SMA_Period = 200
 entry_RSI = 10
 exit_RSI = 70
 
-risk_unit = 100
+risk_unit = 50
 perc_in_risk = 4
 last_candle_weakness = 25
 trade_slots = 10
-Commission_Perc = 0.5
+Commission_Perc = 0.1
 
 # endregion
 
