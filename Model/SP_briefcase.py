@@ -54,7 +54,7 @@ Tradepoint_Factor = 0.5
 
 SPY_SMA_Period = 200
 
-Consecutive_Lower_Lows = 3
+Consecutive_Lower_Lows = 2
 
 # Entry and Exit conditions
 Start_Date = '2011-01-01'
@@ -89,7 +89,7 @@ Start_Date = pd.to_datetime(Start_Date)
 tickers_df = pd.read_csv('SP500_historical.csv', sep=';')
 
 tickers_df['date'] = [i.replace('/','-') for i in tickers_df['date']]
-tickers_df['date'] = [pd.to_datetime(i) for i in tickers_df['date']]
+tickers_df['date'] = [pd.to_datetime(i, format='%d-%m-%Y') for i in tickers_df['date']]
 
 tickers_df1 = pd.DataFrame(columns=['start_date', 'end_date', 'symbols'])
 for i in range(len(tickers_df)) :
