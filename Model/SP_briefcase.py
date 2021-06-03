@@ -106,6 +106,7 @@ for i in range(len(tickers_df)) :
         ticks.append(tickers_df[j].values[i])
 
     ticks = [x for x in ticks if x == x]
+    ticks = [x.replace('.','_') for x in ticks]
     ticks.sort()
     tickers['symbols'] = ticks
 
@@ -129,6 +130,32 @@ cleaned_tickers = pd.DataFrame(columns=['start_date', 'symbols', 'end_date'])
 for i in range(len(tickers_df2)) :
     if tickers_df2['start_date'].values[i] >= Start_Date :
         cleaned_tickers.loc[len(cleaned_tickers)] = tickers_df2.iloc[i]
+
+# endregion
+
+# region Tickers_Periods
+
+tick_dict = {}
+for i in range(len(cleaned_tickers)) :
+    for asset in cleaned_tickers['symbols'].values[i] :
+        if asset not in tick_dict :
+            tick_dict[asset] = []
+        tick_dict[asset].append(tuple((cleaned_tickers['start_date'].values[i], cleaned_tickers['end_date'].values[i])))
+
+for e in tick_dict.keys() :
+    clean_dates = []
+    for i in range(len(tick_dict[e])) :
+        if len(tick_dict[e]) == 1 :
+            clean_dates.append(tick_dict[e][i][0])
+            clean_dates.append(tick_dict[e][i][1])
+        elif i == 0 : clean_dates.append(tick_dict[e][i][0])
+        elif i == len(tick_dict[e]) - 1 : clean_dates.append(tick_dict[e][i][1])
+        else :
+            if tick_dict[e][i - 1][1] != tick_dict[e][i][0] - np.timedelta64(1,'D') :
+                clean_dates.append(tick_dict[e][i - 1][1])
+                clean_dates.append(tick_dict[e][i][0])
+            
+    tick_dict[e] = clean_dates
 
 # endregion
 
