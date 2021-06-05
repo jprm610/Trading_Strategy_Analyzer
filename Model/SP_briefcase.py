@@ -1,4 +1,5 @@
 # region LIBRARIES
+
 # Pandas and numpy are the base libraries in order to manipulate
 # all data for analysis and strategies development.
 import pandas as pd
@@ -27,16 +28,8 @@ import datetime
 
 import quandl
 quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
-# endregion
 
-# read_html() allows as to read tables in any webpage,
-# in this case we are reading a wikipedia article in which
-# are listed all current stocks of S&P500.
-# Then only the symbols are extracted and cleaned.
-sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
-actives = sp500[0]
-tickers = actives['Symbol'].to_list()
-tickers = [i.replace('.','-') for i in tickers]
+# endregion
 
 # Here we create a df in which all trades are going to be saved.
 trades_global = pd.DataFrame()
@@ -71,8 +64,6 @@ Trade_Slots = 10
 Commission_Perc = 0.1
 
 # endregion
-
-#tickers = tickers[0:10].copy()
 
 # region SPY df
 print('SPY')
@@ -176,6 +167,7 @@ for asset in tick_dict.keys() :
 
     its = int(len(tick_dict[asset]) / 2)
     for a in range(its) :
+        # region GET DATA
         if Use_Pre_Charged_Data :
                 current_date = a * 2
                 try :
@@ -229,6 +221,10 @@ for asset in tick_dict.keys() :
         SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
         SPY = SPYa.loc[SPYa.index <= df.index[-1]]
 
+        # endregion
+        
+        # region INDICATOR CALCULATIONS
+
         # Get all indicator lists,
         # for this strategy we only need SMA 200 and RSI 10.
         iSPY_SMA = TA.SMA(SPY, SPY_SMA_Period)
@@ -239,6 +235,12 @@ for asset in tick_dict.keys() :
         iMSD = TA.MSD(df, MSD_Period)
         iTR = TA.TR(df)
         iATR = TA.ATR(df, ATR_Period)
+
+        # Clean indicators data
+        iSMA1[0 : SMA_Period] = -1
+        iRSI[0 : RSI_Period] = -1
+        iMSD[0 : MSD_Period] = -1
+        iATR[0 : ATR_Period] = -1
 
         # endregion
 
