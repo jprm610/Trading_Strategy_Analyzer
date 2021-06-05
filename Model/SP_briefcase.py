@@ -22,6 +22,8 @@ from plotly.graph_objs import *
 from finta import TA
 
 import os
+
+import datetime
 # endregion
 
 # read_html() allows as to read tables in any webpage,
@@ -37,6 +39,8 @@ tickers = [i.replace('.','-') for i in tickers]
 trades_global = pd.DataFrame()
 
 # region PARAMETERS
+Start_Date = '2011-01-01'
+
 use_pre_charged_data = False
 
 use_last_candle_weakness = False
@@ -70,7 +74,7 @@ Commission_Perc = 0.1
 # region SPY df
 print('SPY')
 
-SPY_global = yf.download('SPY','2011-01-01')
+SPY_global = yf.download('SPY', start=Start_Date)
 
 # Rename df columns for cleaning porpuses 
 # and applying recommended "adjusted close" info.
@@ -79,6 +83,56 @@ SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 # Drop duplicates leaving only the first value,
 # this due to the resting entry_dates in which the market is not moving.
 SPY_global = SPY_global.drop_duplicates(keep=False)
+# endregion
+
+# region Tickers_df
+
+Start_Date = pd.to_datetime(Start_Date)
+
+tickers_df = pd.read_csv('SP500_historical.csv', sep=';')
+
+tickers_df['date'] = [i.replace('/','-') for i in tickers_df['date']]
+tickers_df['date'] = [pd.to_datetime(i) for i in tickers_df['date']]
+
+tickers_df1 = pd.DataFrame(columns=['start_date', 'end_date', 'symbols'])
+for i in range(len(tickers_df)) :
+
+    tickers = {}
+    ticks = []
+    tickers['start_date'] = tickers_df.date[i]
+    if i == len(tickers_df) - 1 :
+        tickers['end_date'] = datetime.datetime.today().strftime('%Y-%m-%d')
+    else :
+        tickers['end_date'] = tickers_df.date[i]
+
+    for j in tickers_df.columns[1:] :
+        ticks.append(tickers_df[j].values[i])
+
+    ticks = [x for x in ticks if x == x]
+    ticks.sort()
+    tickers['symbols'] = ticks
+
+    tickers_df1.loc[len(tickers_df1)] = [tickers['start_date'], tickers['end_date'], tickers['symbols']]
+
+tickers_df2 = pd.DataFrame(columns=['start_date', 'symbols'])
+end_dates = []
+for i in range(len(tickers_df1)) :
+    if i == 0 : tickers_df2.loc[len(tickers_df2)] = tickers_df1.iloc[i]
+    elif i == len(tickers_df1) - 1 :
+        end_dates.append(datetime.datetime.today().strftime('%Y-%m-%d'))
+    else :
+        if tickers_df2['symbols'].values[-1] != tickers_df1['symbols'].values[i] :
+            tickers_df2.loc[len(tickers_df2)] = tickers_df1.iloc[i]
+            end_dates.append(tickers_df1['end_date'].values[i] - datetime.timedelta(days=1))
+
+tickers_df2['end_date'] = np.array(end_dates)
+
+cleaned_tickers = pd.DataFrame(columns=['start_date', 'symbols', 'end_date'])
+
+for i in range(len(tickers_df2)) :
+    if tickers_df2['start_date'].values[i] >= Start_Date :
+        cleaned_tickers.loc[len(cleaned_tickers)] = tickers_df2.iloc[i]
+
 # endregion
 
 # In this loop the evaluation of all stocks is done.
