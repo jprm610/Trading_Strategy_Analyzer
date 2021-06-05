@@ -36,8 +36,10 @@ quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
 # Here we create a df in which all trades are going to be saved.
 trades_global = pd.DataFrame()
 
+unavailable_tickers = []
+
 # region PARAMETERS
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 
 # Indicators
 SMA1_Period = 100
@@ -164,52 +166,55 @@ for asset in tick_dict.keys() :
         # region GET DATA
 
         if Use_Pre_Charged_Data :
-                current_date = a * 2
-                try :
-                    df = pd.read_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
-                except :
-                    print('ERROR: Not available data for ' + str(asset) + '.')
-                    continue
+            current_date = a * 2
+            try :
+                df = pd.read_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+            except :
+                print('ERROR: Not available data for ' + str(asset) + '.')
+                continue
 
-                print('Charged!')
+            print('Charged!')
 
-                df['date'] = [pd.to_datetime(i, format='%Y-%m-%d') for i in df['date']]
-                df.set_index(df['date'], inplace=True)
-                del df['date']
+            df['date'] = [pd.to_datetime(i, format='%Y-%m-%d') for i in df['date']]
+            df.set_index(df['date'], inplace=True)
+            del df['date']
 
-                # If the ticker df doesn't have any information skip it.
-                if len(df) == 0 : continue
+            # If the ticker df doesn't have any information skip it.
+            if len(df) == 0 : continue
         else :
-            for a in range(its) :
-                current_date = a * 2
+            current_date = a * 2
+            try :
+                df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
+            except :
+                print('ERROR: Not available data for ' + str(asset) + '.')
+                unavailable_tickers.append(asset)
+                continue
+
+            # If the ticker df doesn't have any information skip it.
+            if df.empty :
+                print('ERROR: Not available data for ' + str(asset) + '.')
+                unavailable_tickers.append(asset)
+                continue
+
+            print('Downloaded!')
+
+            df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
+            df.sort_values(by=['date'], ignore_index=True, inplace=True)
+            df.set_index(df['date'], inplace=True)
+            del df['date']
+
+            # If this is the first ticker to save, create a folder to save all the data, 
+            # if there isn't one available yet.
+            if asset_count == 2 :
                 try :
-                    df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
+                    # Create dir.
+                    os.mkdir('SP_data')
                 except :
-                    print('ERROR: Not available data for ' + str(asset) + '.')
-                    continue
+                    # Save the data.
+                    df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
 
-                print('Downloaded!')
-
-                df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
-                df.sort_values(by=['date'], ignore_index=True, inplace=True)
-                df.set_index(df['date'], inplace=True)
-                del df['date']
-
-                # If the ticker df doesn't have any information skip it.
-                if len(df) == 0 : continue
-
-                # If this is the first ticker to save, create a folder to save all the data, 
-                # if there isn't one available yet.
-                if asset_count == 2 :
-                    try :
-                        # Create dir.
-                        os.mkdir('SP_data')
-                    except :
-                        # Save the data.
-                        df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
-
-                # Save the data.
-                df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+            # Save the data.
+            df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
 
         # This check is done in order that the SPY 
         # information coincides with the current ticker info.
@@ -721,3 +726,7 @@ stats.loc[len(stats)] = ['Max drawdown %', perc_max_dd]
 # that can be opened with application such as excel for further review.
 stats.to_csv('SP_stats.csv', sep=';')
 trades_global.to_csv('SP_trades.csv', sep=';')
+
+un = pd.DataFrame()
+un['ticks'] = np.array(unavailable_tickers)
+un.to_csv('un.csv', sep=';')
