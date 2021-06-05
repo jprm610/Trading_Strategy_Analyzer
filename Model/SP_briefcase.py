@@ -83,8 +83,6 @@ SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 # Drop duplicates leaving only the first value,
 # this due to the resting entry_dates in which the market is not moving.
 SPY_global = SPY_global.drop_duplicates(keep=False)
-
-SPY_global.reset_index(inplace=True)
 # endregion
 
 # region Tickers_df
@@ -174,43 +172,58 @@ for asset in tick_dict.keys() :
 
     its = int(len(tick_dict[asset]) / 2)
     for a in range(its) :
-        current_date = a * 2
-        try :
-            df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
-        except :
-            print('ERROR: Not available data for ' + str(asset) + '.')
-            continue
+        if Use_Pre_Charged_Data :
+                current_date = a * 2
+                try :
+                    df = pd.read_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+                except :
+                    print('ERROR: Not available data for ' + str(asset) + '.')
+                    continue
 
-        print('Downloaded!')
+                print('Charged!')
 
-        df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
-        df.sort_values(by=['date'], ignore_index=True, inplace=True)
-        df.set_index(df['date'], inplace=True)
-        del df['date']
+                df['date'] = [pd.to_datetime(i, format='%Y-%m-%d') for i in df['date']]
+                df.set_index(df['date'], inplace=True)
+                del df['date']
 
-        # If the ticker df doesn't have any information skip it.
-        if len(df) == 0 : continue
+                # If the ticker df doesn't have any information skip it.
+                if len(df) == 0 : continue
+        else :
+            for a in range(its) :
+                current_date = a * 2
+                try :
+                    df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
+                except :
+                    print('ERROR: Not available data for ' + str(asset) + '.')
+                    continue
 
-        # If this is the first ticker to save, create a folder to save all the data, 
-        # if there isn't one available yet.
-        if asset_count == 2 :
-            try :
-                # Create dir.
-                os.mkdir('SP_data')
-            except :
+                print('Downloaded!')
+
+                df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
+                df.sort_values(by=['date'], ignore_index=True, inplace=True)
+                df.set_index(df['date'], inplace=True)
+                del df['date']
+
+                # If the ticker df doesn't have any information skip it.
+                if len(df) == 0 : continue
+
+                # If this is the first ticker to save, create a folder to save all the data, 
+                # if there isn't one available yet.
+                if asset_count == 2 :
+                    try :
+                        # Create dir.
+                        os.mkdir('SP_data')
+                    except :
+                        # Save the data.
+                        df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+
                 # Save the data.
                 df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
 
-        # Save the data.
-        df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
-
         # This check is done in order that the SPY 
         # information coincides with the current ticker info.
-        SPY = SPY_global.copy()
-        SPY = SPY[0:0]
-        for i in range(len(SPY_global)) :
-            if SPY_global['Date'][i] >= df.index[0] and SPY_global['Date'][i] <= df.index[-1] :
-                SPY.loc[len(SPY)] = SPY_global.iloc[i]
+        SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
+        SPY = SPYa.loc[SPYa.index <= df.index[-1]]
 
         # endregion
 
@@ -408,7 +421,7 @@ for asset in tick_dict.keys() :
                     min_income = df.low[i]
 
                 # If the current close is above the last close:
-                if df.close[i] > df.close[i - 1] and i > entry_candle :
+                if df.close[i] > df.close[i - 1] and i >= entry_candle :
 
                     # The trade is exited.
                     # First updating the on_trade flag.
