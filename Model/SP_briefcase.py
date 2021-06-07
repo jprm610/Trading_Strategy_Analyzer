@@ -171,6 +171,7 @@ for asset in tick_dict.keys() :
                 df = pd.read_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
             except :
                 print('ERROR: Not available data for ' + str(asset) + '.')
+                unavailable_tickers.append(asset)
                 continue
 
             print('Charged!')
@@ -180,11 +181,14 @@ for asset in tick_dict.keys() :
             del df['date']
 
             # If the ticker df doesn't have any information skip it.
-            if len(df) == 0 : continue
+            if df.empty : continue
         else :
             current_date = a * 2
             try :
                 df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
+                df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
+                df.sort_values(by=['date'], ignore_index=True, inplace=True)
+                df.set_index(df['date'], inplace=True)
             except :
                 print('ERROR: Not available data for ' + str(asset) + '.')
                 unavailable_tickers.append(asset)
@@ -192,16 +196,22 @@ for asset in tick_dict.keys() :
 
             # If the ticker df doesn't have any information skip it.
             if df.empty :
+                try :
+                    df = quandl.get('WIKI/' + str(asset), start_date=tick_dict[asset][current_date], end_date=tick_dict[asset][current_date + 1])
+                    df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
+                    df.columns = ['open', 'high', 'low', 'close', 'volume']
+                    df.index.names = ['date']
+                except :
+                    print('ERROR: Not available data for ' + str(asset) + '.')
+                    unavailable_tickers.append(asset)
+                    continue
+            
+            if df.empty :
                 print('ERROR: Not available data for ' + str(asset) + '.')
                 unavailable_tickers.append(asset)
                 continue
 
             print('Downloaded!')
-
-            df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
-            df.sort_values(by=['date'], ignore_index=True, inplace=True)
-            df.set_index(df['date'], inplace=True)
-            del df['date']
 
             # If this is the first ticker to save, create a folder to save all the data, 
             # if there isn't one available yet.
