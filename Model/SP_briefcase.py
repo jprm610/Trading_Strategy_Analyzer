@@ -58,7 +58,10 @@ Risk_Unit = 50
 Perc_In_Risk = 2.3
 Trade_Slots = 10
 Commission_Perc = 0.1
+Account_Size = 10000
 # endregion
+
+print("The current working directory is " + os.getcwd())
 
 # region SPY df
 
@@ -74,13 +77,22 @@ SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 # Drop duplicates leaving only the first value,
 # this due to the resting entry_dates in which the market is not moving.
 SPY_global = SPY_global.drop_duplicates(keep=False)
+
+SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
+SPY_SMA[0 : SPY_SMA_Period] = -1
+
+iSPY_SMA_global = pd.DataFrame()
+iSPY_SMA_global['date'] = np.array(SPY_global.index)
+iSPY_SMA_global['SMA'] = np.array(SPY_SMA)
+iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
 # endregion
 
 # region Tickers_df
 
 Start_Date = pd.to_datetime(Start_Date)
 
-tickers_df = pd.read_csv('SP500_historical.csv', sep=';')
+#tickers_df = pd.read_csv(r"C:\Users\jprmg\Documents\NinjaTrader 8\bin\Custom\Strategies\Trading\Model\SP500_historical.csv", sep=';')
+tickers_df = pd.read_csv("Model/SP500_historical.csv", sep=';')
 
 tickers_df['date'] = [i.replace('/','-') for i in tickers_df['date']]
 tickers_df['date'] = [pd.to_datetime(i, format='%d-%m-%Y') for i in tickers_df['date']]
@@ -168,7 +180,7 @@ for asset in tick_dict.keys() :
         if Use_Pre_Charged_Data :
             current_date = a * 2
             try :
-                df = pd.read_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+                df = pd.read_csv('Model/SP_data/' + str(asset) + str(a) + '.csv', sep=';')
             except :
                 print('ERROR: Not available data for ' + str(asset) + '.')
                 unavailable_tickers.append(asset)
@@ -218,24 +230,25 @@ for asset in tick_dict.keys() :
             if asset_count == 2 :
                 try :
                     # Create dir.
-                    os.mkdir('SP_data')
+                    os.mkdir('Model/SP_data')
                 except :
                     # Save the data.
-                    df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+                    df.to_csv('Model/SP_data/' + str(asset) + str(a) + '.csv', sep=';')
 
             # Save the data.
-            df.to_csv('SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+            df.to_csv('Model/SP_data/' + str(asset) + str(a) + '.csv', sep=';')
 
         # This check is done in order that the SPY 
         # information coincides with the current ticker info.
+        iSPY_SMAa = iSPY_SMA_global.loc[iSPY_SMA_global.index >= df.index[0]]
+        iSPY_SMA = iSPY_SMAa.loc[iSPY_SMAa.index <= df.index[-1]]
+
         SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
         SPY = SPYa.loc[SPYa.index <= df.index[-1]]
 
         # endregion
 
         # region INDICATOR CALCULATIONS
-        iSPY_SMA = TA.SMA(SPY, SPY_SMA_Period)
-        iSPY_SMA[0 : SPY_SMA_Period] = -1
 
         # Get all indicator lists,
         # for this strategy we only need SMA 200 and RSI 10.
@@ -287,7 +300,7 @@ for asset in tick_dict.keys() :
             # Here we make sure that we have enough info to work with.
             if i == 0 : continue
 
-            if iSMA1[i] == -1 or iSMA2[i] == -1 or iMSD[i] == -1 or iATR[i] == -1 or iSPY_SMA[i] == -1 : continue
+            if iSMA1[i] == -1 or iSMA2[i] == -1 or iMSD[i] == -1 or iATR[i] == -1 or iSPY_SMA['SMA'].values[i] == -1 : continue
 
             # endregion
             
@@ -297,7 +310,7 @@ for asset in tick_dict.keys() :
             if not on_trade :
                 # Here the Regime Filter is done, 
                 # checking that the current SPY close is above the SPY's SMA.
-                if SPY.close[i] > iSPY_SMA[i] :
+                if SPY.close[i] > iSPY_SMA['SMA'].values[i] :
                     # Check if the current price is above the SMA1,
                     # this in purpose of determining whether the stock is in an up trend
                     # and if that same close is below the SMA2, 
@@ -511,7 +524,7 @@ for asset in tick_dict.keys() :
 # Here the trades_global df is edited 
 # in order to set the entry_date characteristic as the index.
 trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
-trades_global.to_csv('SP_trades_raw.csv', sep=';')
+trades_global.to_csv('Model/SP_trades_raw.csv', sep=';')
 
 # region Portfolio
 
@@ -596,7 +609,7 @@ return_table = trades_global_rt.groupby([trades_global_rt['year'], trades_global
 df1 = return_table/100 + 1
 df1.columns = return_table.columns.map(str)
 return_table['Y%'] = round(((df1['1'] * df1['2'] * df1['3'] * df1['4'] * df1['5'] * df1['6'] *df1['7'] * df1['8'] * df1['9'] * df1['10'] * df1['11'] * df1['12'])-1)*100,2)
-return_table.to_csv('Return Table.csv', sep=';')
+return_table.to_csv('Model/Return Table.csv', sep=';')
 
 # endregion
 
@@ -684,6 +697,8 @@ accumulate_y['acc_y'] = np.cumsum(trades_global['y'])
 accumulate_y['entry_dates'] = trades_global.index
 accumulate_y.set_index(accumulate_y['entry_dates'], drop=True, inplace=True)
 
+accumulate_y['acc_y'] = accumulate_y['acc_y'].apply(lambda x : x + Account_Size)
+
 # With this information an analysis chart can be printed 
 # showing the strategy evolution through time.
 fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
@@ -697,7 +712,7 @@ fig.add_trace(
 
 fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
-py.offline.plot(fig, filename = "Analysis_chart.html")
+py.offline.plot(fig, filename = "Model/Analysis_chart.html")
 
 # endregion
 
@@ -734,9 +749,9 @@ stats.loc[len(stats)] = ['Max drawdown %', perc_max_dd]
 
 # Finally stats and trades_global df are exported as .csv files 
 # that can be opened with application such as excel for further review.
-stats.to_csv('SP_stats.csv', sep=';')
-trades_global.to_csv('SP_trades.csv', sep=';')
+stats.to_csv('Model/SP_stats.csv', sep=';')
+trades_global.to_csv('Model/SP_trades.csv', sep=';')
 
 un = pd.DataFrame()
 un['ticks'] = np.array(unavailable_tickers)
-un.to_csv('un.csv', sep=';')
+un.to_csv('Model/un.csv', sep=';')
