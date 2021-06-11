@@ -419,6 +419,7 @@ for ticker in tickers_directory.keys() :
         volatity_ot = []
 
         y_raw = []
+        y_perc = []
         y2_raw = []
         y3_raw = []
         y = []
@@ -504,6 +505,7 @@ for ticker in tickers_directory.keys() :
                                 y2.append(0)
                                 y3.append(0)
                                 y_raw.append(0)
+                                y_perc.append(0)
                                 y2_raw.append(0)
                                 y3_raw.append(0)
                                 y_index.append(df.index[i])
@@ -601,6 +603,7 @@ for ticker in tickers_directory.keys() :
                     y2.append((max_income - entry_price[-1]) * shares_to_trade)
                     y3.append((min_income - entry_price[-1]) * shares_to_trade)
                     y_raw.append(outcome / shares_to_trade)
+                    y_perc.append(y_raw[-1] / entry_price[-1] * 100)
                     y2_raw.append(y2[-1] / shares_to_trade)
                     y3_raw.append(y3[-1] / shares_to_trade)
 
@@ -615,6 +618,7 @@ for ticker in tickers_directory.keys() :
                 y2.append((max_income - entry_price[-1]) * shares_to_trade)
                 y3.append((min_income - entry_price[-1]) * shares_to_trade)
                 y_raw.append(outcome / shares_to_trade)
+                y_perc.append(y_raw[-1] / entry_price[-1] * 100)
                 y2_raw.append(y2[-1] / shares_to_trade)
                 y3_raw.append(y3[-1] / shares_to_trade)
                 y_index.append(df.index[i])
@@ -646,6 +650,7 @@ for ticker in tickers_directory.keys() :
         trades['y2'] = np.array(y2)
         trades['y3'] = np.array(y3)
         trades['y_raw'] = np.array(y_raw)
+        trades['y%'] = np.array(y_perc)
         trades['y2_raw'] = np.array(y2_raw)
         trades['y3_raw'] = np.array(y3_raw)
         trades['shares_to_trade'] = np.array(shares_to_trade_list)
@@ -889,4 +894,4 @@ trades_global.to_csv('Model/SP_trades.csv', sep=';')
 
 un = pd.DataFrame()
 un['ticks'] = np.array(unavailable_tickers)
-un.to_csv('Model/un.csv', sep=';')
+un.to_csv('Model/unavailable_tickers.csv', sep=';')
