@@ -47,7 +47,7 @@ unavailable_tickers = []
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 
 # Indicators
 SMA1_Period = 100
@@ -354,8 +354,29 @@ for ticker in tickers_directory.keys() :
                         unavailable_tickers.append(ticker)
                         continue
 
+            # If the ticker df doesn't have any information skip it, 
+            # do a last try to get the data from WIKI.
+            if df.empty :
+                try :
+                    # Get the df and standarize the data.
+                    df = quandl.get('WIKI/' + str(ticker), start_date=tickers_directory[ticker][current_start_date], end_date=tickers_directory[ticker][current_start_date + 1])
+                    df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
+                    df.columns = ['open', 'high', 'low', 'close', 'volume']
+                    df.index.names = ['date']
+                # If none of the above were possible :
+                except :
+                    # If that's not possible, raise an error, 
+                    # save that ticker in unavailable tickers list 
+                    # and skip this ticker calculation.
+                    print('ERROR: Not available data for ' + str(ticker) + '.')
+                    unavailable_tickers.append(ticker)
+                    continue
+            
             # If the ticker df doesn't have any information skip it.
             if df.empty :
+                # Raise an error, 
+                # save that ticker in unavailable tickers list 
+                # and skip this ticker calculation.
                 print('ERROR: Not available data for ' + str(ticker) + '.')
                 unavailable_tickers.append(ticker)
                 continue
@@ -500,7 +521,7 @@ for ticker in tickers_directory.keys() :
                                 # Here all y variables are set to 0, 
                                 # in order to differentiate the signal operation in the trdes df.
                                 entry_dates.append(df.index[i])
-                                entry_price.append(tradepoint)
+                                entry_price.append(round(tradepoint, 2))
                                 y.append(0)
                                 y2.append(0)
                                 y3.append(0)
@@ -509,7 +530,7 @@ for ticker in tickers_directory.keys() :
                                 y2_raw.append(0)
                                 y3_raw.append(0)
                                 y_index.append(df.index[i])
-                                exit_price.append(tradepoint)
+                                exit_price.append(round(tradepoint, 2))
                                 break
                                 
                                 # endregion
@@ -556,7 +577,7 @@ for ticker in tickers_directory.keys() :
                                     entry_dates.append(df.index[i + 1])
                                     max_income = df.high[i + 1]
                                     min_income = df.low[i + 1]
-                                    entry_price.append(tradepoint)
+                                    entry_price.append(round(tradepoint, 2))
                                 
                                 #endregion
                             # endregion
@@ -591,19 +612,19 @@ for ticker in tickers_directory.keys() :
                         outcome = ((df.close[i] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                         y_index.append(df.index[i])
-                        exit_price.append(df.close[i])
+                        exit_price.append(round(df.close[i], 2))
                     else :
                         outcome = ((df.open[i + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                         y_index.append(df.index[i + 1])
-                        exit_price.append(df.open[i + 1])
+                        exit_price.append(round(df.open[i + 1], 2))
 
                     # Saving all missing trade characteristics.
                     y.append(outcome)
                     y2.append((max_income - entry_price[-1]) * shares_to_trade)
                     y3.append((min_income - entry_price[-1]) * shares_to_trade)
                     y_raw.append(outcome / shares_to_trade)
-                    y_perc.append(y_raw[-1] / entry_price[-1] * 100)
+                    y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
                     y2_raw.append(y2[-1] / shares_to_trade)
                     y3_raw.append(y3[-1] / shares_to_trade)
 
@@ -618,11 +639,11 @@ for ticker in tickers_directory.keys() :
                 y2.append((max_income - entry_price[-1]) * shares_to_trade)
                 y3.append((min_income - entry_price[-1]) * shares_to_trade)
                 y_raw.append(outcome / shares_to_trade)
-                y_perc.append(y_raw[-1] / entry_price[-1] * 100)
+                y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
                 y2_raw.append(y2[-1] / shares_to_trade)
                 y3_raw.append(y3[-1] / shares_to_trade)
                 y_index.append(df.index[i])
-                exit_price.append(df.close[i])
+                exit_price.append(round(df.close[i], 2))
             # endregion
         # endregion
 
