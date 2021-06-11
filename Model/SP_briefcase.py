@@ -47,7 +47,7 @@ unavailable_tickers = []
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 SMA1_Period = 100
@@ -448,6 +448,9 @@ for ticker in tickers_directory.keys() :
         y3 = []
         y_index = []
 
+        is_signal = []
+        close_tomorrow = []
+
         # Here occurs the OnBarUpdate() in which all strategie calculations happen.
         on_trade = False
         for i in range(len(df)) :
@@ -509,6 +512,7 @@ for ticker in tickers_directory.keys() :
                                 # The on_trade flag is updated 
                                 # in order to avoid more than one operation calculation in later candles, 
                                 # until the operation is exited.
+                                is_signal.append(True)
                                 trade_type.append("Long")
                                 stock.append(ticker)
                                 shares_to_trade_list.append(shares_to_trade)
@@ -531,6 +535,7 @@ for ticker in tickers_directory.keys() :
                                 y3_raw.append(0)
                                 y_index.append(df.index[i])
                                 exit_price.append(round(tradepoint, 2))
+                                close_tomorrow.append(False)
                                 break
                                 
                                 # endregion
@@ -560,6 +565,7 @@ for ticker in tickers_directory.keys() :
                                     # in order to avoid more than one operation calculation in later candles, 
                                     # until the operation is exited.
                                     on_trade = True
+                                    is_signal.append(False)
                                     trade_type.append("Long")
                                     stock.append(ticker)
                                     entry_candle = i + 1
@@ -613,11 +619,15 @@ for ticker in tickers_directory.keys() :
 
                         y_index.append(df.index[i])
                         exit_price.append(round(df.close[i], 2))
+
+                        close_tomorrow.append(True)
                     else :
                         outcome = ((df.open[i + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                         y_index.append(df.index[i + 1])
                         exit_price.append(round(df.open[i + 1], 2))
+
+                        close_tomorrow.append(False)
 
                     # Saving all missing trade characteristics.
                     y.append(outcome)
@@ -644,6 +654,7 @@ for ticker in tickers_directory.keys() :
                 y3_raw.append(y3[-1] / shares_to_trade)
                 y_index.append(df.index[i])
                 exit_price.append(round(df.close[i], 2))
+                close_tomorrow.append(False)
             # endregion
         # endregion
 
@@ -657,9 +668,14 @@ for ticker in tickers_directory.keys() :
         trades['exit_date'] = np.array(y_index)
         trades['trade_type']  = np.array(trade_type)
         trades['stock'] = np.array(stock)
-
+        trades['is_signal'] = np.array(is_signal)
         trades['entry_price'] = np.array(entry_price)
         trades['exit_price'] = np.array(exit_price)
+        trades['y']  = np.array(y)
+        trades['y_raw'] = np.array(y_raw)
+        trades['y%'] = np.array(y_perc)
+        trades['shares_to_trade'] = np.array(shares_to_trade_list)
+        trades['close_tomorrow'] = np.array(close_tomorrow)
 
         trades['iSMA' + str(SMA1_Period)] = np.array(iSMA1_ot)
         trades['iSMA' + str(SMA2_Period)] = np.array(iSMA2_ot)
@@ -667,14 +683,10 @@ for ticker in tickers_directory.keys() :
         trades['iATR' + str(ATR_Period)] = np.array(iATR_ot)
         trades['volatility'] = np.array(volatity_ot)
 
-        trades['y']  = np.array(y)
         trades['y2'] = np.array(y2)
         trades['y3'] = np.array(y3)
-        trades['y_raw'] = np.array(y_raw)
-        trades['y%'] = np.array(y_perc)
         trades['y2_raw'] = np.array(y2_raw)
         trades['y3_raw'] = np.array(y3_raw)
-        trades['shares_to_trade'] = np.array(shares_to_trade_list)
 
         # endregion
 
