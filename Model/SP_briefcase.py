@@ -98,6 +98,8 @@ iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
 
 # endregion
 
+# region SURVIVORSHIP BIAS
+
 # region Tickers_df
 # In this region, the SP500 historical constitutents file is cleaned, 
 # this in order to avoid the survivorship bias problem.
@@ -198,117 +200,179 @@ cleaned_tickers = tickers_df2.loc[tickers_df2['start_date'] >= Start_Date]
 # endregion
 
 # region Tickers_Periods
+# This is the last step done to avoid Survivorship Bias.
+# Here a tickers directory is created in order to save 
+# each ticker with their periods when they were SP500 constistutents.
 
-tick_dict = {}
+# Here the first ticker directory is created.
+tickers_directory = {}
 for i in range(len(cleaned_tickers)) :
-    for asset in cleaned_tickers['symbols'].values[i] :
-        if asset not in tick_dict :
-            tick_dict[asset] = []
-        tick_dict[asset].append(tuple((cleaned_tickers['start_date'].values[i], cleaned_tickers['end_date'].values[i])))
+    # For every row in cleaned_tickers df :
+    for ticker in cleaned_tickers['symbols'].values[i] :
+        # The directory saves every ticker as a key giving it a list, in case is not a key yet.
+        if ticker not in tickers_directory :
+            tickers_directory[ticker] = []
 
-for e in tick_dict.keys() :
+        # In that ticker list is saved a tuple with it's start_date and end_date.
+        tickers_directory[ticker].append(tuple((cleaned_tickers['start_date'].values[i], cleaned_tickers['end_date'].values[i])))
+
+# Finally the tickers directory is cleaned and simplified.
+
+# For every ticker in tickers_directory :
+for e in tickers_directory.keys() :
+    # Create a list in which cleaned and simplified dates are going to be saved, 
+    # replacing the previous list.
     clean_dates = []
-    for i in range(len(tick_dict[e])) :
-        if len(tick_dict[e]) == 1 :
-            clean_dates.append(tick_dict[e][i][0])
-            clean_dates.append(tick_dict[e][i][1])
-        elif i == 0 : clean_dates.append(tick_dict[e][i][0])
-        elif i == len(tick_dict[e]) - 1 : clean_dates.append(tick_dict[e][i][1])
+
+    # For every element in that previous ticker list :
+    for i in range(len(tickers_directory[e])) :
+
+        # If there's only 1 tuple, save the start_date as the first element 
+        # and it's end_date as the second element, 
+        # completing the period of that ticker.
+        if len(tickers_directory[e]) == 1 :
+            clean_dates.append(tickers_directory[e][i][0])
+            clean_dates.append(tickers_directory[e][i][1])
+        # Or if it's the first iteration, save the first 
+        # element of the tuple as the start_date.
+        elif i == 0 : clean_dates.append(tickers_directory[e][i][0])
+        # Or if it's the last iteration, save the second 
+        # element of the tuple as the end_date.
+        elif i == len(tickers_directory[e]) - 1 : clean_dates.append(tickers_directory[e][i][1])
+        # For everything else :
         else :
-            if tick_dict[e][i - 1][1] != tick_dict[e][i][0] - np.timedelta64(1,'D') :
-                clean_dates.append(tick_dict[e][i - 1][1])
-                clean_dates.append(tick_dict[e][i][0])
-            
-    tick_dict[e] = clean_dates
+            # Check wheter the previous tuple end_date 
+            # is not contiguous to the current tuple start_date.
+            if tickers_directory[e][i - 1][1] != tickers_directory[e][i][0] - np.timedelta64(1,'D') :
+                # If so, close the previous period and open a new one.
+                # NOTE: This process is very similar 
+                # to the tickers_df2 cleaning process.
+                clean_dates.append(tickers_directory[e][i - 1][1])
+                clean_dates.append(tickers_directory[e][i][0])
+    
+    # Finally the old list of dates is replaced with the new one.
+    tickers_directory[e] = clean_dates
+
+# endregion
 
 # endregion
 
 asset_count = 1
-for asset in tick_dict.keys() :
+# For every ticker in the tickers_directory :
+for ticker in tickers_directory.keys() :
+
     # This section is only for front-end purposes,
     # in order to show the current progress of the program when is running.
-    print(str(asset_count) + '/' + str(len(tick_dict.keys())))
-    print(asset)
+    print('------------------------------------------------------------')
+    print(str(asset_count) + '/' + str(len(tickers_directory.keys())))
+    print(ticker)
     asset_count += 1
 
-    its = int(len(tick_dict[asset]) / 2)
+    # For every ticker period.
+    # NOTE: As the tickers come with pairs of start and end dates, 
+    # then when the quiantity of elements is divided by 2, 
+    # it gives us the number of periods of that ticker.
+    its = int(len(tickers_directory[ticker]) / 2)
     for a in range(its) :
         # region GET DATA
 
+        # If we want to use already downloaded data :
         if Use_Pre_Charged_Data :
-            current_date = a * 2
+
+            # Determine the current start date, 
+            # reversing the previous operation.
+            current_start_date = a * 2
+
+            # Then try to get the .csv file of the ticker.
             try :
-                df = pd.read_csv('Model/SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+                df = pd.read_csv('Model/SP_data/' + str(ticker) + str(a) + '.csv', sep=';')
+            # If that's not possible, raise an error, 
+            # save that ticker in unavailable tickers list 
+            # and skip this ticker calculation.
             except :
-                print('ERROR: Not available data for ' + str(asset) + '.')
-                unavailable_tickers.append(asset)
+                print('ERROR: Not available data for ' + str(ticker) + '.')
+                unavailable_tickers.append(ticker)
                 continue
-
-            print('Charged!')
-
+            
+            # Reformat the df, standarizing dates and index.
             df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
             df.set_index(df['date'], inplace=True)
             del df['date']
 
             # If the ticker df doesn't have any information skip it.
             if df.empty : continue
-        else :
-            current_date = a * 2
 
+            print('Charged!')
+        # If we want to downloaded new data :
+        else :
+            # Determine the current start date, 
+            # reversing the previous operation.
+            current_start_date = a * 2
+
+            # Then try to get the data from Yahoo Finance.
             try :
-                start_a = str(tick_dict[asset][current_date])
+                # start_date and end_date is a timestamp and causes problems 
+                # when an object of this type is given as an argument to the yf.download(), 
+                # that's why we have to cast that value as a string and 
+                # then get the first 10 characters that are the date itself.
+                start_a = str(tickers_directory[ticker][current_start_date])
                 start = start_a[:10]
 
-                end_a = tick_dict[asset][current_date + 1] + np.timedelta64(1,'D')
+                end_a = tickers_directory[ticker][current_start_date + 1] + np.timedelta64(1,'D')
                 end_a = str(end_a)
                 end = end_a[:10]
 
-                df = yf.download(str(asset), start=start, end=end)
+                # Then download the information from Yahoo Finance 
+                # and rename the columns for standarizing data.
+                df = yf.download(str(ticker), start=start, end=end)
                 df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
                 df.index.names = ['date']
+            # If that's not possible :
             except :
+                # Try to get the data from SHARADAR data provider.
                 try :
-                    df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
+                    # Get the df and standarize the data.
+                    df = quandl.get_table('SHARADAR/SEP', ticker=str(ticker), date={'gte': tickers_directory[ticker][current_start_date], 'lte': tickers_directory[ticker][current_start_date + 1]})
                     df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
                     df.sort_values(by=['date'], ignore_index=True, inplace=True)
                     df.set_index(df['date'], inplace=True)
+                # If that's not possible :
                 except :
-                    print('ERROR: Not available data for ' + str(asset) + '.')
-                    unavailable_tickers.append(asset)
-                    continue
+                    # Try to get the data from WIKI data provider.
+                    try :
+                        # Get the df and standarize the data.
+                        df = quandl.get('WIKI/' + str(ticker), start_date=tickers_directory[ticker][current_start_date], end_date=tickers_directory[ticker][current_start_date + 1])
+                        df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
+                        df.columns = ['open', 'high', 'low', 'close', 'volume']
+                        df.index.names = ['date']
+                    # If none of the above were possible :
+                    except :
+                        # If that's not possible, raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        print('ERROR: Not available data for ' + str(ticker) + '.')
+                        unavailable_tickers.append(ticker)
+                        continue
 
             # If the ticker df doesn't have any information skip it.
             if df.empty :
-                try :
-                    df = quandl.get('WIKI/' + str(asset), start_date=tick_dict[asset][current_date], end_date=tick_dict[asset][current_date + 1])
-                    df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
-                    df.columns = ['open', 'high', 'low', 'close', 'volume']
-                    df.index.names = ['date']
-                except :
-                    print('ERROR: Not available data for ' + str(asset) + '.')
-                    unavailable_tickers.append(asset)
-                    continue
-            
-            if df.empty :
-                print('ERROR: Not available data for ' + str(asset) + '.')
-                unavailable_tickers.append(asset)
+                print('ERROR: Not available data for ' + str(ticker) + '.')
+                unavailable_tickers.append(ticker)
                 continue
 
             print('Downloaded!')
 
-            # If this is the first ticker to save, create a folder to save all the data, 
+            # Try to create a folder to save all the data, 
             # if there isn't one available yet.
-            if asset_count == 2 :
-                try :
-                    # Create dir.
-                    os.mkdir('Model/SP_data')
-                except :
-                    # Save the data.
-                    df.to_csv('Model/SP_data/' + str(asset) + str(a) + '.csv', sep=';')
+            try :
+                # Create dir.
+                os.mkdir('Model/SP_data')
+            except :
+                # Save the data.
+                df.to_csv('Model/SP_data/' + str(ticker) + str(a) + '.csv', sep=';')
 
-            # Save the data.
-            df.to_csv('Model/SP_data/' + str(asset) + str(a) + '.csv', sep=';')
-
+        # Here both SPY_SMA and SPY information is cut,
+        # in order that the data coincides with the current df period.
         # This check is done in order that the SPY 
         # information coincides with the current ticker info.
         iSPY_SMAa = iSPY_SMA_global.loc[iSPY_SMA_global.index >= df.index[0]]
@@ -316,11 +380,6 @@ for asset in tick_dict.keys() :
 
         SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
         SPY = SPYa.loc[SPYa.index <= df.index[-1]]
-
-
-        if asset == 'BBT' : 
-            print(df)
-            print(iSPY_SMA)
 
         # endregion
 
@@ -429,7 +488,7 @@ for asset in tick_dict.keys() :
                                 # in order to avoid more than one operation calculation in later candles, 
                                 # until the operation is exited.
                                 trade_type.append("Long")
-                                stock.append(asset)
+                                stock.append(ticker)
                                 shares_to_trade_list.append(shares_to_trade)
                                 iSMA1_ot.append(iSMA1[i])
                                 iSMA2_ot.append(iSMA2[i])
@@ -479,7 +538,7 @@ for asset in tick_dict.keys() :
                                     # until the operation is exited.
                                     on_trade = True
                                     trade_type.append("Long")
-                                    stock.append(asset)
+                                    stock.append(ticker)
                                     entry_candle = i + 1
                                     shares_to_trade_list.append(shares_to_trade)
                                     iSMA1_ot.append(iSMA1[i])
