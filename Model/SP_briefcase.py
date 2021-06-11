@@ -26,8 +26,13 @@ from finta import TA
 # will be useful in the Get Data region.
 import os
 
+# datetime library allows us to standarize dates format 
+# for comparisons between them while calculating trades.
 import datetime
 
+# qunadl library allows us to access the api 
+# from where the tickers data is extracted, 
+# either from SHARADAR or WIKI.
 import quandl
 quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
 
@@ -36,10 +41,13 @@ quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
 # Here we create a df in which all trades are going to be saved.
 trades_global = pd.DataFrame()
 
+# Here we create a list in which are going to be saved 
+# those tickers from which we couldn't get historical data.
 unavailable_tickers = []
 
 # region PARAMETERS
-Use_Pre_Charged_Data = False
+
+Use_Pre_Charged_Data = True
 
 # Indicators
 SMA1_Period = 100
@@ -52,13 +60,14 @@ SPY_SMA_Period = 200
 
 Consecutive_Lower_Lows = 2
 
-# Entry and Exit conditions
-Start_Date = '2011-01-01'
-Risk_Unit = 50
+# Overall backtesting parameters
+Start_Date = '2019-01-01'
+Risk_Unit = 10
 Perc_In_Risk = 2.3
 Trade_Slots = 10
 Commission_Perc = 0.1
-Account_Size = 10000
+Account_Size = 5000
+
 # endregion
 
 print("The current working directory is " + os.getcwd())
@@ -67,7 +76,6 @@ print("The current working directory is " + os.getcwd())
 
 # Here the SPY data is downloaded 
 print('SPY')
-
 SPY_global = yf.download('SPY', start=Start_Date)
 
 # Rename df columns for cleaning porpuses 
@@ -78,64 +86,114 @@ SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
 # this due to the resting entry_dates in which the market is not moving.
 SPY_global = SPY_global.drop_duplicates(keep=False)
 
+# Here the SPY SMA is calculated for the Regime filter process,
+# establishing -1 as a value when the SMA is not calculated completely.
 SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
 SPY_SMA[0 : SPY_SMA_Period] = -1
 
-iSPY_SMA_global = pd.DataFrame()
-iSPY_SMA_global['date'] = np.array(SPY_global.index)
-iSPY_SMA_global['SMA'] = np.array(SPY_SMA)
+# The SPY SMA is then saved into a dataframe with it's date, 
+# this in order to "cut" the SMA data needed for a ticker in the backtesting process.
+iSPY_SMA_global = pd.DataFrame({'date' : SPY_global.index, 'SMA' : SPY_SMA})
 iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
+
 # endregion
 
 # region Tickers_df
+# In this region, the SP500 historical constitutents file is cleaned, 
+# this in order to avoid the survivorship bias problem.
 
+# First the Start_Date parameter is formatted and standarized.
 Start_Date = pd.to_datetime(Start_Date)
 
-#tickers_df = pd.read_csv(r"C:\Users\jprmg\Documents\NinjaTrader 8\bin\Custom\Strategies\Trading\Model\SP500_historical.csv", sep=';')
+# Here the SP500 historical constitutents file is read, 
+# then the dates are standarized to avoid dates missinterpretation.
 tickers_df = pd.read_csv("Model/SP500_historical.csv", sep=';')
-
 tickers_df['date'] = [i.replace('/','-') for i in tickers_df['date']]
-tickers_df['date'] = [pd.to_datetime(i, format='%d-%m-%Y') for i in tickers_df['date']]
+tickers_df['date'] = pd.to_datetime(tickers_df['date'], format='%d-%m-%Y')
 
+# region FIRST CLEANING
+# A first cleaning process is done, creating a new df with every list of tickers and its changes.
+
+# The format is:
+#   start_date; end_date; symbols
+
+# Every row means that that list didn't change through that period.
 tickers_df1 = pd.DataFrame(columns=['start_date', 'end_date', 'symbols'])
 for i in range(len(tickers_df)) :
 
+    # For every row, a tickers directory is crated, in order to save start_date, 
+    # end date and the list of symbols for that time period.
     tickers = {}
-    ticks = []
+
+    # Also a symbols list is created in order to save all symbols columns 
+    # as a simplified list.
+    symbols = []
+
+    # The start_date is defined simply as the row date.
     tickers['start_date'] = tickers_df.date[i]
+
+    # The end_date is defined here.
+    # If the last row is being evaluated,
+    # then the end_date is going to be today date.
     if i == len(tickers_df) - 1 :
         tickers['end_date'] = datetime.datetime.today().strftime('%Y-%m-%d')
+    # If not, is defined as the next row date.
     else :
         tickers['end_date'] = tickers_df.date[i]
 
+    # Then all symbols that are presented in the current row as separated columns, 
+    # are saved into a simplified list.
     for j in tickers_df.columns[1:] :
-        ticks.append(tickers_df[j].values[i])
+        symbols.append(tickers_df[j].values[i])
 
-    ticks = [x for x in ticks if x == x]
-    ticks = [x.replace('.','_') for x in ticks]
-    ticks.sort()
-    tickers['symbols'] = ticks
+    # Here the symbols are filtered, filtering "None" values, 
+    # recalling that "None" != "None".
+    # Then "." are replaced by "_" correcting the symbol writing.
+    # Finally they're sorted and saved in the dictionary.
+    symbols = [x for x in symbols if x == x]
+    symbols = [x.replace('.','_') for x in symbols]
+    symbols.sort()
+    tickers['symbols'] = symbols
 
+    # Lastly, a new row is appended with all 3 different column values.
     tickers_df1.loc[len(tickers_df1)] = [tickers['start_date'], tickers['end_date'], tickers['symbols']]
 
+# endregion
+
+# region LAST CLEANING
+
+# Here are eliminated the continouos periods, cleaning the data.
+# For example: if a period is 01-01-2020 - 02-01-2020,
+#              and the next one is 02-01-2020 - 03-02-2020
+#              This period is really 01-01-2020 - 03-02-2020.
 tickers_df2 = pd.DataFrame(columns=['start_date', 'symbols'])
+
+# The real work here is to get the end_dates, 
+# that's why we only create a list for that instance.
 end_dates = []
 for i in range(len(tickers_df1)) :
+
+    # For the first row, we copy the same information from the tickers_df1 df.
     if i == 0 : tickers_df2.loc[len(tickers_df2)] = tickers_df1.iloc[i]
+    # For the last row, today date is appended as end date.
     elif i == len(tickers_df1) - 1 :
         end_dates.append(datetime.datetime.today().strftime('%Y-%m-%d'))
+    # For the rest:
     else :
+        # If to continous list of tickers are different, 
+        # add a new row and append the current end_date.
         if tickers_df2['symbols'].values[-1] != tickers_df1['symbols'].values[i] :
             tickers_df2.loc[len(tickers_df2)] = tickers_df1.iloc[i]
             end_dates.append(tickers_df1['end_date'].values[i] - datetime.timedelta(days=1))
 
+# Append the new end_date list in the df.
 tickers_df2['end_date'] = np.array(end_dates)
 
-cleaned_tickers = pd.DataFrame(columns=['start_date', 'symbols', 'end_date'])
+# Only the tickers in the selected period 
+# are saved in the cleaned_tickers df.
+cleaned_tickers = tickers_df2.loc[tickers_df2['start_date'] >= Start_Date]
 
-for i in range(len(tickers_df2)) :
-    if tickers_df2['start_date'].values[i] >= Start_Date :
-        cleaned_tickers.loc[len(cleaned_tickers)] = tickers_df2.iloc[i]
+# endregion
 
 # endregion
 
@@ -188,7 +246,7 @@ for asset in tick_dict.keys() :
 
             print('Charged!')
 
-            df['date'] = [pd.to_datetime(i, format='%Y-%m-%d') for i in df['date']]
+            df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
             df.set_index(df['date'], inplace=True)
             del df['date']
 
@@ -196,15 +254,28 @@ for asset in tick_dict.keys() :
             if df.empty : continue
         else :
             current_date = a * 2
+
             try :
-                df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
-                df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
-                df.sort_values(by=['date'], ignore_index=True, inplace=True)
-                df.set_index(df['date'], inplace=True)
+                start_a = str(tick_dict[asset][current_date])
+                start = start_a[:10]
+
+                end_a = tick_dict[asset][current_date + 1] + np.timedelta64(1,'D')
+                end_a = str(end_a)
+                end = end_a[:10]
+
+                df = yf.download(str(asset), start=start, end=end)
+                df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+                df.index.names = ['date']
             except :
-                print('ERROR: Not available data for ' + str(asset) + '.')
-                unavailable_tickers.append(asset)
-                continue
+                try :
+                    df = quandl.get_table('SHARADAR/SEP', ticker=str(asset), date={'gte': tick_dict[asset][current_date], 'lte': tick_dict[asset][current_date + 1]})
+                    df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
+                    df.sort_values(by=['date'], ignore_index=True, inplace=True)
+                    df.set_index(df['date'], inplace=True)
+                except :
+                    print('ERROR: Not available data for ' + str(asset) + '.')
+                    unavailable_tickers.append(asset)
+                    continue
 
             # If the ticker df doesn't have any information skip it.
             if df.empty :
@@ -245,6 +316,11 @@ for asset in tick_dict.keys() :
 
         SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
         SPY = SPYa.loc[SPYa.index <= df.index[-1]]
+
+
+        if asset == 'BBT' : 
+            print(df)
+            print(iSPY_SMA)
 
         # endregion
 
