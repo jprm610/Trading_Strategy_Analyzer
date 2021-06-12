@@ -47,7 +47,7 @@ unavailable_tickers = []
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 
 # Indicators
 SMA1_Period = 100
@@ -634,7 +634,7 @@ for ticker in tickers_directory.keys() :
                     y2.append((max_income - entry_price[-1]) * shares_to_trade)
                     y3.append((min_income - entry_price[-1]) * shares_to_trade)
                     y_raw.append(outcome / shares_to_trade)
-                    y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                    y_perc.append(round((exit_price[-1] - entry_price[-1]) / entry_price[-1] * 100, 2))
                     y2_raw.append(y2[-1] / shares_to_trade)
                     y3_raw.append(y3[-1] / shares_to_trade)
 
@@ -649,7 +649,7 @@ for ticker in tickers_directory.keys() :
                 y2.append((max_income - entry_price[-1]) * shares_to_trade)
                 y3.append((min_income - entry_price[-1]) * shares_to_trade)
                 y_raw.append(outcome / shares_to_trade)
-                y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                y_perc.append(round((exit_price[-1] - entry_price[-1]) / entry_price[-1] * 100, 2))
                 y2_raw.append(y2[-1] / shares_to_trade)
                 y3_raw.append(y3[-1] / shares_to_trade)
                 y_index.append(df.index[i])
