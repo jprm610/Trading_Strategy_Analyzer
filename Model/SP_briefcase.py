@@ -47,7 +47,7 @@ unavailable_tickers = []
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 SMA1_Period = 100
@@ -664,19 +664,19 @@ for ticker in tickers_directory.keys() :
         trades = pd.DataFrame()
 
         # Here all trades including their characteristics are saved in a df.
-        trades['entry_date'] = np.array(entry_dates)
-        trades['exit_date'] = np.array(y_index)
-        trades['trade_type']  = np.array(trade_type)
-        trades['stock'] = np.array(stock)
-        trades['is_signal'] = np.array(is_signal)
-        trades['entry_price'] = np.array(entry_price)
-        trades['exit_price'] = np.array(exit_price)
-        trades['y']  = np.array(y)
-        trades['y_raw'] = np.array(y_raw)
-        trades['y%'] = np.array(y_perc)
-        trades['shares_to_trade'] = np.array(shares_to_trade_list)
-        trades['close_tomorrow'] = np.array(close_tomorrow)
-
+        trades['fecha_entrada'] = np.array(entry_dates)
+        trades['fecha_salida'] = np.array(y_index)
+        trades['tipo']  = np.array(trade_type)
+        trades['activo'] = np.array(stock)
+        trades['senal'] = np.array(is_signal)
+        trades['precio_entrada'] = np.array(entry_price)
+        trades['precio_salida'] = np.array(exit_price)
+        trades['PyG']  = np.array(y)
+        trades['PyG_neto'] = np.array(y_raw)
+        trades['PyG%'] = np.array(y_perc)
+        trades['acciones_para_operar'] = np.array(shares_to_trade_list)
+        trades['cerrar_manana'] = np.array(close_tomorrow)
+        
         trades['iSMA' + str(SMA1_Period)] = np.array(iSMA1_ot)
         trades['iSMA' + str(SMA2_Period)] = np.array(iSMA2_ot)
         trades['iMSD' + str(MSD_Period)] = np.array(iMSD_ot)
@@ -695,8 +695,8 @@ for ticker in tickers_directory.keys() :
         trades_global = trades_global.append(trades, ignore_index=True)
     
 # Here the trades_global df is edited 
-# in order to set the entry_date characteristic as the index.
-trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
+# in order to set the fecha_entrada characteristic as the index.
+trades_global = trades_global.sort_values(by=['fecha_entrada'], ignore_index=True)
 trades_global.to_csv('Model/SP_trades_raw.csv', sep=';')
 
 # region Portfolio
@@ -709,16 +709,16 @@ Trading_dates = []
 Number_Trades_per_Date = []
 Number_Closed_Trades_per_Date = []
 Trades_per_date = 0
-last_date = trades_global['entry_date'].values[0]
+last_date = trades_global['fecha_entrada'].values[0]
 for i in range(len(trades_global)) :
-    if trades_global['entry_date'].values[i] == last_date :
+    if trades_global['fecha_entrada'].values[i] == last_date :
         Trades_per_date += 1
     else : 
-        Closed_Trades_per_Date = sum(1 for x in trades_global['exit_date'][0:i-1] if x <= last_date) - sum(Number_Closed_Trades_per_Date)
+        Closed_Trades_per_Date = sum(1 for x in trades_global['fecha_salida'][0:i-1] if x <= last_date) - sum(Number_Closed_Trades_per_Date)
         Trading_dates.append(last_date)
         Number_Trades_per_Date.append(Trades_per_date)
         Number_Closed_Trades_per_Date.append(Closed_Trades_per_Date)
-        last_date = trades_global['entry_date'].values[i]
+        last_date = trades_global['fecha_entrada'].values[i]
         Trades_per_date = 1
 
 Number_of_trades = pd.DataFrame()
@@ -741,17 +741,17 @@ Acum_Opened = 0
 Acum_Closed = 0
 for i in range(len(Number_of_trades)) :
     if i != 0 :
-        Acum_Closed = sum(1 for x in Portfolio_Trades['exit_date'] if x <= Number_of_trades.index.values[i])
+        Acum_Closed = sum(1 for x in Portfolio_Trades['fecha_salida'] if x <= Number_of_trades.index.values[i])
     Counter = Acum_Opened - Acum_Closed
     if Counter < Slots :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
             Filtered_Trades = pd.DataFrame()
-            Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
+            Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['fecha_entrada'] == Number_of_trades.index.values[i]], ignore_index=True)
             Filtered_Trades = Filtered_Trades.sort_values(by=['volatility'], ascending=False)
             Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[: Slots - Counter], ignore_index=True)
         else :
-            Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
-    Acum_Opened = sum(1 for x in Portfolio_Trades['entry_date'] if x == Number_of_trades.index.values[i]) + Acum_Opened
+            Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['fecha_entrada'] == Number_of_trades.index.values[i]], ignore_index=True)
+    Acum_Opened = sum(1 for x in Portfolio_Trades['fecha_entrada'] if x == Number_of_trades.index.values[i]) + Acum_Opened
 
 # endregion
 
@@ -762,19 +762,19 @@ trades_global = Portfolio_Trades
 # region Return Table
 
 # Here the trades_global df is edited 
-# in order to sart the df by exit_date.
+# in order to sart the df by fecha_salida.
 trades_global_rt = trades_global.copy()
-trades_global_rt['exit_date'] =  pd.to_datetime(trades_global_rt['exit_date'], format='%d/%m/%Y')
-trades_global_rt = trades_global_rt.sort_values(by=['exit_date'])
-trades_global_rt.set_index(trades_global_rt['entry_date'], drop=True, inplace=True)
+trades_global_rt['fecha_salida'] =  pd.to_datetime(trades_global_rt['fecha_salida'], format='%d/%m/%Y')
+trades_global_rt = trades_global_rt.sort_values(by=['fecha_salida'])
+trades_global_rt.set_index(trades_global_rt['fecha_entrada'], drop=True, inplace=True)
 
 # Here is built the return_table df with the number of trades by every date.
 Profit_perc = []
 for i in range(len(trades_global_rt)) :
-    Profit_perc.append(round(((trades_global_rt['y_raw'].values[i] / trades_global_rt['entry_price'].values[i]) / 10) * 100, 2))
+    Profit_perc.append(round(((trades_global_rt['PyG_neto'].values[i] / trades_global_rt['precio_entrada'].values[i]) / 10) * 100, 2))
 trades_global_rt['Profit_perc'] = np.array(Profit_perc)
-trades_global_rt['year'] = pd.DatetimeIndex(trades_global_rt['exit_date']).year
-trades_global_rt['month'] = pd.DatetimeIndex(trades_global_rt['exit_date']).month
+trades_global_rt['year'] = pd.DatetimeIndex(trades_global_rt['fecha_salida']).year
+trades_global_rt['month'] = pd.DatetimeIndex(trades_global_rt['fecha_salida']).month
 
 return_table = pd.DataFrame()
 df1 = pd.DataFrame()
@@ -786,9 +786,9 @@ return_table.to_csv('Model/Return Table.csv', sep=';')
 
 # endregion
 
-trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
-trades_global.set_index(trades_global['entry_date'], inplace=True)
-del trades_global['entry_date']
+trades_global = trades_global.sort_values(by=['fecha_entrada'], ignore_index=True)
+trades_global.set_index(trades_global['fecha_entrada'], inplace=True)
+del trades_global['fecha_entrada']
 
 # region Stats
 
@@ -797,15 +797,15 @@ del trades_global['entry_date']
 stats = pd.DataFrame(columns=['stat', 'value'])
 
 # First the winner and loser trades are separated.
-global_wins = [i for i in trades_global['y'] if i >= 0]
-global_loses = [i for i in trades_global['y'] if i < 0]
+global_wins = [i for i in trades_global['PyG'] if i >= 0]
+global_loses = [i for i in trades_global['PyG'] if i < 0]
 
 # Then the time period is written.
 stats.loc[len(stats)] = ['Start date', trades_global.index.values[0]]
-stats.loc[len(stats)] = ['End date', trades_global['exit_date'].values[-1]]
+stats.loc[len(stats)] = ['End date', trades_global['fecha_salida'].values[-1]]
 
 # Then the overall profit is calculated, and the amount of trades is saved.
-stats.loc[len(stats)] = ['Net profit', trades_global['y'].sum()]
+stats.loc[len(stats)] = ['Net profit', trades_global['PyG'].sum()]
 stats.loc[len(stats)] = ['Total # of trades', len(trades_global)]
 stats.loc[len(stats)] = ['# of winning trades', len(global_wins)]
 stats.loc[len(stats)] = ['# of losing trades', len(global_loses)]
@@ -843,7 +843,7 @@ stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable
 winning_streaks = []
 win_streak = 0
 for i in range(len(trades_global)) :
-    if trades_global['y'].values[i] >= 0 :
+    if trades_global['PyG'].values[i] >= 0 :
         win_streak += 1
     else : 
         winning_streaks.append(win_streak)
@@ -854,7 +854,7 @@ stats.loc[len(stats)] = ['Best streak', max(winning_streaks)]
 losing_streaks = []
 lose_streak = 0
 for i in range(len(trades_global)) :
-    if trades_global['y'].values[i] < 0 :
+    if trades_global['PyG'].values[i] < 0 :
         lose_streak += 1
     else : 
         losing_streaks.append(lose_streak)
@@ -866,7 +866,7 @@ stats.loc[len(stats)] = ['Worst streak', max(losing_streaks)]
 
 # A new df is created in order to save accumulated sum of all trades.
 accumulate_y = pd.DataFrame()
-accumulate_y['acc_y'] = np.cumsum(trades_global['y'])
+accumulate_y['acc_y'] = np.cumsum(trades_global['PyG'])
 accumulate_y['entry_dates'] = trades_global.index
 accumulate_y.set_index(accumulate_y['entry_dates'], drop=True, inplace=True)
 
