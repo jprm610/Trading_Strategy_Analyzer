@@ -630,13 +630,13 @@ for ticker in tickers_directory.keys() :
                         close_tomorrow.append(False)
 
                     # Saving all missing trade characteristics.
+                    y_raw.append(exit_price[-1] - entry_price[-1])
+                    y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                    y2_raw.append(max_income - entry_price[-1])
+                    y3_raw.append(min_income - entry_price[-1])
                     y.append(outcome)
-                    y2.append((max_income - entry_price[-1]) * shares_to_trade)
-                    y3.append((min_income - entry_price[-1]) * shares_to_trade)
-                    y_raw.append(outcome / shares_to_trade)
-                    y_perc.append(round((exit_price[-1] - entry_price[-1]) / entry_price[-1] * 100, 2))
-                    y2_raw.append(y2[-1] / shares_to_trade)
-                    y3_raw.append(y3[-1] / shares_to_trade)
+                    y2.append(y2_raw[-1] * shares_to_trade)
+                    y3.append(y3_raw[-1] * shares_to_trade)
 
             # If a trade is in progress in the last candle:
             if i == len(df) - 1 and on_trade :
@@ -644,17 +644,18 @@ for ticker in tickers_directory.keys() :
                 # All characteristics are saved 
                 # as if the trade was exited in this moment.
                 outcome = ((df.close[i] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                y.append(outcome)
-                y2.append((max_income - entry_price[-1]) * shares_to_trade)
-                y3.append((min_income - entry_price[-1]) * shares_to_trade)
-                y_raw.append(outcome / shares_to_trade)
-                y_perc.append(round((exit_price[-1] - entry_price[-1]) / entry_price[-1] * 100, 2))
-                y2_raw.append(y2[-1] / shares_to_trade)
-                y3_raw.append(y3[-1] / shares_to_trade)
-                y_index.append(df.index[i])
                 exit_price.append(round(df.close[i], 2))
+
+                y_index.append(df.index[i])
                 close_tomorrow.append(False)
+
+                y_raw.append(exit_price[-1] - entry_price[-1])
+                y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                y2_raw.append(max_income - entry_price[-1])
+                y3_raw.append(min_income - entry_price[-1])
+                y.append(outcome)
+                y2.append(y2_raw[-1] * shares_to_trade)
+                y3.append(y3_raw[-1] * shares_to_trade)
             # endregion
         # endregion
 
@@ -693,11 +694,18 @@ for ticker in tickers_directory.keys() :
         # Here the current trades df is added to 
         # the end of the global_trades df.
         trades_global = trades_global.append(trades, ignore_index=True)
-    
+
+try :
+    # Create dir.
+    os.mkdir('Model/Files')
+    print('Created!')
+except :
+    print('Created!')
+
 # Here the trades_global df is edited 
 # in order to set the entry_date characteristic as the index.
 trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
-trades_global.to_csv('Model/SP_trades_raw.csv', sep=';')
+trades_global.to_csv('Model/Files/SP_trades_raw.csv', sep=';')
 
 # region Portfolio
 
@@ -782,7 +790,7 @@ return_table = trades_global_rt.groupby([trades_global_rt['year'], trades_global
 df1 = return_table/100 + 1
 df1.columns = return_table.columns.map(str)
 return_table['Y%'] = round(((df1['1'] * df1['2'] * df1['3'] * df1['4'] * df1['5'] * df1['6'] *df1['7'] * df1['8'] * df1['9'] * df1['10'] * df1['11'] * df1['12'])-1)*100,2)
-return_table.to_csv('Model/Return Table.csv', sep=';')
+return_table.to_csv('Model/Files/Return Table.csv', sep=';')
 
 # endregion
 
@@ -885,7 +893,7 @@ fig.add_trace(
 
 fig.update_layout(paper_bgcolor='rgba(0,0,0)', plot_bgcolor='rgba(0,0,0)')
 
-py.offline.plot(fig, filename = "Model/Analysis_chart.html")
+py.offline.plot(fig, filename = "Model/Files/Analysis_chart.html")
 
 # endregion
 
@@ -922,9 +930,9 @@ stats.loc[len(stats)] = ['Max drawdown %', perc_max_dd]
 
 # Finally stats and trades_global df are exported as .csv files 
 # that can be opened with application such as excel for further review.
-stats.to_csv('Model/SP_stats.csv', sep=';')
-trades_global.to_csv('Model/SP_trades.csv', sep=';')
+stats.to_csv('Model/Files/SP_stats.csv', sep=';')
+trades_global.to_csv('Model/Files/SP_trades.csv', sep=';')
 
 un = pd.DataFrame()
 un['ticks'] = np.array(unavailable_tickers)
-un.to_csv('Model/unavailable_tickers.csv', sep=';')
+un.to_csv('Model/Files/unavailable_tickers.csv', sep=';')

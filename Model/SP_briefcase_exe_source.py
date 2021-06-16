@@ -73,7 +73,7 @@ Account_Size = 5000
 
 # endregion
 
-os.chdir(r"C:\Users\jprmg\Desktop\strat")
+os.chdir(os.getcwd())
 print("The current working directory is " + os.getcwd())
 
 # region SPY df
@@ -634,13 +634,13 @@ for ticker in tickers_directory.keys() :
                         close_tomorrow.append(False)
 
                     # Saving all missing trade characteristics.
+                    y_raw.append(exit_price[-1] - entry_price[-1])
+                    y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                    y2_raw.append(max_income - entry_price[-1])
+                    y3_raw.append(min_income - entry_price[-1])
                     y.append(outcome)
-                    y2.append((max_income - entry_price[-1]) * shares_to_trade)
-                    y3.append((min_income - entry_price[-1]) * shares_to_trade)
-                    y_raw.append(outcome / shares_to_trade)
-                    y_perc.append(round((exit_price[-1] - entry_price[-1]) / entry_price[-1] * 100, 2))
-                    y2_raw.append(y2[-1] / shares_to_trade)
-                    y3_raw.append(y3[-1] / shares_to_trade)
+                    y2.append(y2_raw[-1] * shares_to_trade)
+                    y3.append(y3_raw[-1] * shares_to_trade)
 
             # If a trade is in progress in the last candle:
             if i == len(df) - 1 and on_trade :
@@ -649,16 +649,18 @@ for ticker in tickers_directory.keys() :
                 # as if the trade was exited in this moment.
                 outcome = ((df.close[i] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                y.append(outcome)
-                y2.append((max_income - entry_price[-1]) * shares_to_trade)
-                y3.append((min_income - entry_price[-1]) * shares_to_trade)
-                y_raw.append(outcome / shares_to_trade)
-                y_perc.append(round((exit_price[-1] - entry_price[-1]) / entry_price[-1] * 100, 2))
-                y2_raw.append(y2[-1] / shares_to_trade)
-                y3_raw.append(y3[-1] / shares_to_trade)
-                y_index.append(df.index[i])
                 exit_price.append(round(df.close[i], 2))
+
+                y_index.append(df.index[i])
                 close_tomorrow.append(False)
+
+                y_raw.append(exit_price[-1] - entry_price[-1])
+                y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                y2_raw.append(max_income - entry_price[-1])
+                y3_raw.append(min_income - entry_price[-1])
+                y.append(outcome)
+                y2.append(y2_raw[-1] * shares_to_trade)
+                y3.append(y3_raw[-1] * shares_to_trade)
             # endregion
         # endregion
 
@@ -680,12 +682,12 @@ for ticker in tickers_directory.keys() :
         trades['PyG%'] = np.array(y_perc)
         trades['acciones_para_operar'] = np.array(shares_to_trade_list)
         trades['cerrar_manana'] = np.array(close_tomorrow)
+        trades['volatility'] = np.array(volatity_ot)
         
         trades['iSMA' + str(SMA1_Period)] = np.array(iSMA1_ot)
         trades['iSMA' + str(SMA2_Period)] = np.array(iSMA2_ot)
         trades['iMSD' + str(MSD_Period)] = np.array(iMSD_ot)
         trades['iATR' + str(ATR_Period)] = np.array(iATR_ot)
-        trades['volatility'] = np.array(volatity_ot)
 
         trades['y2'] = np.array(y2)
         trades['y3'] = np.array(y3)
