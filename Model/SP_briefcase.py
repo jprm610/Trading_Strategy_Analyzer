@@ -94,7 +94,7 @@ def Buy(new_df, is_a_signal) :
         # Nevertheless, when we are in the last candle that can't be done, 
         # that's why the current close is saved in that case.
         entry_dates.append(df.index[i + 1])
-        entry_price.append(round(df.close[i], 2))
+        entry_price.append(round(df.open[i + 1], 2))
         max_income = df.high[i + 1]
         min_income = df.low[i + 1]
 
@@ -111,7 +111,7 @@ def Buy(new_df, is_a_signal) :
                 min_income = new_df.low[j]
 
             # If the current close is above the last close:
-            if new_df.close[j] < iSMA3[j] :
+            if new_df.close[j] < iSMA3[i + j] :
 
                 # To simulate that the order is executed in the next day, 
                 # the entry price is taken in the next candle open. 
@@ -163,6 +163,7 @@ def Buy(new_df, is_a_signal) :
                 y.append(outcome)
                 y2.append(y2_raw[-1] * shares_to_trade)
                 y3.append(y3_raw[-1] * shares_to_trade)
+                break
 
 # region PARAMETERS
 
@@ -576,11 +577,13 @@ for ticker in tickers_directory.keys() :
             if i == 0 : continue
 
             if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iSPY_SMA['SMA'].values[i] == -1 : continue
+
+            if i < 5 * last_low_week or i < 5 * last_high_week or i < 5 * last_SMA1_week : continue
             # endregion
 
-            low_of_n_week = min(df["close"].values[-(5 * last_low_week):])
-            high_of_n_week = max(df["close"].values[-(5 * last_high_week):])
-            iSMA1_of_n_week = iSMA1[-(5 * last_SMA1_week)]
+            low_of_n_week = min(df["close"].values[i - (5 * last_low_week):i])
+            high_of_n_week = max(df["close"].values[i - (5 * last_high_week):i])
+            iSMA1_of_n_week = iSMA1[i - (5 * last_SMA1_week)]
             
             # region TRADE CALCULATION
             # Here the Regime Filter is done, 
@@ -720,6 +723,7 @@ trades_global = Portfolio_Trades
 
 # region Return Table
 
+"""
 # Here the trades_global df is edited 
 # in order to sart the df by exit_date.
 trades_global_rt = trades_global.copy()
@@ -742,6 +746,7 @@ df1 = return_table/100 + 1
 df1.columns = return_table.columns.map(str)
 return_table['Y%'] = round(((df1['1'] * df1['2'] * df1['3'] * df1['4'] * df1['5'] * df1['6'] *df1['7'] * df1['8'] * df1['9'] * df1['10'] * df1['11'] * df1['12'])-1)*100,2)
 return_table.to_csv('Model/Files/Return Table.csv', sep=';')
+"""
 
 # endregion
 
