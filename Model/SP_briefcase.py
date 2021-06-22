@@ -755,7 +755,7 @@ for i in range(len(Number_of_trades)) :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
             Filtered_Trades = pd.DataFrame()
             Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
-            Filtered_Trades = Filtered_Trades.sort_values(by=['volatility'], ascending=False)
+            Filtered_Trades = Filtered_Trades.sample(frac=1)
             Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[: Slots - Counter], ignore_index=True)
         else :
             Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
