@@ -184,11 +184,11 @@ SPY_SMA_Period = 200
 
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
-Risk_Unit = 10
-Perc_In_Risk = 2.3
+Risk_Unit = 100
+Perc_In_Risk = 3.2
 Trade_Slots = 10
 Commission_Perc = 0
-Account_Size = 5000
+Account_Size = 10000
 
 # endregion
 
