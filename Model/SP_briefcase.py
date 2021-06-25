@@ -61,12 +61,12 @@ SPY_SMA_Period = 200
 Consecutive_Lower_Lows = 2
 
 # Overall backtesting parameters
-Start_Date = '2019-01-01'
-Risk_Unit = 10
+Start_Date = '2011-01-01'
+Risk_Unit = 100
 Perc_In_Risk = 2.3
 Trade_Slots = 10
 Commission_Perc = 0.1
-Account_Size = 5000
+Account_Size = 10000
 
 # endregion
 
@@ -153,7 +153,7 @@ for i in range(len(tickers_df)) :
     # Then "." are replaced by "_" correcting the symbol writing.
     # Finally they're sorted and saved in the dictionary.
     symbols = [x for x in symbols if x == x]
-    symbols = [x.replace('.','_') for x in symbols]
+    symbols = [x.replace('.','-') for x in symbols]
     symbols.sort()
     tickers['symbols'] = symbols
 
@@ -309,35 +309,91 @@ for ticker in tickers_directory.keys() :
             # reversing the previous operation.
             current_start_date = a * 2
 
-            # Then try to get the data from Yahoo Finance.
-            try :
-                # start_date and end_date is a timestamp and causes problems 
-                # when an object of this type is given as an argument to the yf.download(), 
-                # that's why we have to cast that value as a string and 
-                # then get the first 10 characters that are the date itself.
-                start_a = str(tickers_directory[ticker][current_start_date])
-                start = start_a[:10]
+            # Yahoo Finance has improper data from TIE, 
+            # that's why we are skiping this data provider.
+            if ticker == 'TIE' : count = 1
+            else : count = 0
 
-                end_a = tickers_directory[ticker][current_start_date + 1] + np.timedelta64(1,'D')
-                end_a = str(end_a)
-                end = end_a[:10]
+            # We create a loop in which all 3 data providers are going to be evaluated 
+            # in order to get the data, strating with YF, then SHARADAR and finally WIKI.
+            is_downloaded = False
+            while count < 3 :
+                # region YF
+                if count == 0 :
+                    try :
+                        # start_date and end_date is a timestamp and causes problems 
+                        # when an object of this type is given as an argument to the yf.download(), 
+                        # that's why we have to cast that value as a string and 
+                        # then get the first 10 characters that are the date itself.
+                        start_a = str(tickers_directory[ticker][current_start_date])
+                        start = start_a[:10]
 
-                # Then download the information from Yahoo Finance 
-                # and rename the columns for standarizing data.
-                df = yf.download(str(ticker), start=start, end=end)
-                df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
-                df.index.names = ['date']
-            # If that's not possible :
-            except :
-                # Try to get the data from SHARADAR data provider.
-                try :
-                    # Get the df and standarize the data.
-                    df = quandl.get_table('SHARADAR/SEP', ticker=str(ticker), date={'gte': tickers_directory[ticker][current_start_date], 'lte': tickers_directory[ticker][current_start_date + 1]})
-                    df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
-                    df.sort_values(by=['date'], ignore_index=True, inplace=True)
-                    df.set_index(df['date'], inplace=True)
-                # If that's not possible :
-                except :
+                        end_a = tickers_directory[ticker][current_start_date + 1] + np.timedelta64(1,'D')
+                        end_a = str(end_a)
+                        end = end_a[:10]
+
+                        # Then download the information from Yahoo Finance 
+                        # and rename the columns for standarizing data.
+                        df = yf.download(str(ticker), start=start, end=end)
+                        df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+                        df.index.names = ['date']
+                    # If that's not possible :
+                    except :
+                        # If that's not possible, raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        count += 1
+                        print('ERROR: Not available data for ' + str(ticker) + ' in YF.')
+                        unavailable_tickers.append(ticker)
+                        continue
+
+                    if df.empty :
+                        # Raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        count += 1
+                        print('ERROR: Not available data for ' + str(ticker) + ' in YF.')
+                        unavailable_tickers.append(ticker)
+                        continue
+                    else : 
+                        is_downloaded = True
+                        break
+                # endregion
+
+                # region SHARADAR
+                elif count == 1 :
+                    # Try to get the data from SHARADAR data provider.
+                    try :
+                        # Get the df and standarize the data.
+                        df = quandl.get_table('SHARADAR/SEP', ticker=str(ticker), date={'gte': tickers_directory[ticker][current_start_date], 'lte': tickers_directory[ticker][current_start_date + 1]})
+                        df.drop(['closeunadj', 'lastupdated'], axis=1, inplace=True)
+                        df.sort_values(by=['date'], ignore_index=True, inplace=True)
+                        df.set_index(df['date'], inplace=True)
+                    # If that's not possible :
+                    except :
+                        # If that's not possible, raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        count += 1
+                        print('ERROR: Not available data for ' + str(ticker) + ' in SHARADAR.')
+                        unavailable_tickers.append(ticker)
+                        continue
+
+                    if df.empty :
+                        # Raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        count += 1
+                        print('ERROR: Not available data for ' + str(ticker) + ' in SHARADAR.')
+                        unavailable_tickers.append(ticker)
+                        continue
+                    else :
+                        is_downloaded = True 
+                        break
+                # endregion
+                
+                # region WIKI
+                elif count == 2 :
                     # Try to get the data from WIKI data provider.
                     try :
                         # Get the df and standarize the data.
@@ -350,36 +406,25 @@ for ticker in tickers_directory.keys() :
                         # If that's not possible, raise an error, 
                         # save that ticker in unavailable tickers list 
                         # and skip this ticker calculation.
-                        print('ERROR: Not available data for ' + str(ticker) + '.')
+                        count += 1
+                        print('ERROR: Not available data for ' + str(ticker) + ' in WIKI.')
                         unavailable_tickers.append(ticker)
                         continue
 
-            # If the ticker df doesn't have any information skip it, 
-            # do a last try to get the data from WIKI.
-            if df.empty :
-                try :
-                    # Get the df and standarize the data.
-                    df = quandl.get('WIKI/' + str(ticker), start_date=tickers_directory[ticker][current_start_date], end_date=tickers_directory[ticker][current_start_date + 1])
-                    df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
-                    df.columns = ['open', 'high', 'low', 'close', 'volume']
-                    df.index.names = ['date']
-                # If none of the above were possible :
-                except :
-                    # If that's not possible, raise an error, 
-                    # save that ticker in unavailable tickers list 
-                    # and skip this ticker calculation.
-                    print('ERROR: Not available data for ' + str(ticker) + '.')
-                    unavailable_tickers.append(ticker)
-                    continue
+                    if df.empty :
+                        # Raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        count += 1
+                        print('ERROR: Not available data for ' + str(ticker) + ' in WIKI.')
+                        unavailable_tickers.append(ticker)
+                        continue
+                    else :
+                        is_downloaded = True 
+                        break
+                # endregion
             
-            # If the ticker df doesn't have any information skip it.
-            if df.empty :
-                # Raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                print('ERROR: Not available data for ' + str(ticker) + '.')
-                unavailable_tickers.append(ticker)
-                continue
+            if not is_downloaded : continue
 
             print('Downloaded!')
 
@@ -765,6 +810,8 @@ for i in range(len(Number_of_trades)) :
 
 trades_global = Portfolio_Trades
 
+print('Portfolio done!')
+
 # endregion
 
 # region Return Table
@@ -791,6 +838,8 @@ df1 = return_table/100 + 1
 df1.columns = return_table.columns.map(str)
 return_table['Y%'] = round(((df1['1'] * df1['2'] * df1['3'] * df1['4'] * df1['5'] * df1['6'] *df1['7'] * df1['8'] * df1['9'] * df1['10'] * df1['11'] * df1['12'])-1)*100,2)
 return_table.to_csv('Model/Files/Return Table.csv', sep=';')
+
+print('Return Table done!')
 
 # endregion
 
