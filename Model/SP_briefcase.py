@@ -167,7 +167,7 @@ def Buy(new_df, is_a_signal) :
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 SMA1_Period = 200
@@ -178,6 +178,9 @@ Last_High_Week = 52
 Last_SMA1_Week = 4
 Above_Low_Proportion = 1.3
 Above_High_Proportion = 0.75
+Minimum_Yearly_Return = 30
+
+Relative_Strength_Week = 252
 
 SPY_SMA_Period = 200
 
@@ -376,8 +379,16 @@ for e in tickers_directory.keys() :
 
 # endregion
 
+print('------------------------------------------------------------')
+print("Survivorship Bias done!")
+
 # endregion
 
+# region RELATIVE_STRENGTH
+
+# region Yearly_Return
+
+yearly_returns = {}
 asset_count = 1
 # For every ticker in the tickers_directory :
 for ticker in tickers_directory.keys() :
@@ -554,6 +565,69 @@ for ticker in tickers_directory.keys() :
                 # Save the data.
                 df.to_csv('Model/SP_data/' + str(ticker) + str(a) + '.csv', sep=';')
 
+        # endregion
+        
+        strengths = []
+        for i in range(len(df)) :
+            if i < Relative_Strength_Week :
+                strengths.append("Nan")
+                continue
+            else :
+                yearly_return = ((df.close[i] / df.close[i - Relative_Strength_Week]) - 1) * 100
+                strengths.append(yearly_return)
+
+        yearly_returns[str(ticker) + str(a)] = strengths
+# endregion
+
+print("Relative Strength done!")
+# endregion
+
+print('------------------------------------------------------------')
+print("Trade Calculation!")
+asset_count = 1
+# For every ticker in the tickers_directory :
+for ticker in tickers_directory.keys() :
+
+    # This section is only for front-end purposes,
+    # in order to show the current progress of the program when is running.
+    print('------------------------------------------------------------')
+    print(str(asset_count) + '/' + str(len(tickers_directory.keys())))
+    print(ticker)
+    asset_count += 1
+
+    # For every ticker period.
+    # NOTE: As the tickers come with pairs of start and end dates, 
+    # then when the quiantity of elements is divided by 2, 
+    # it gives us the number of periods of that ticker.
+    its = int(len(tickers_directory[ticker]) / 2)
+    for a in range(its) :
+        # region GET DATA
+
+        # Determine the current start date, 
+        # reversing the previous operation.
+        current_start_date = a * 2
+
+        # Then try to get the .csv file of the ticker.
+        try :
+            df = pd.read_csv('Model/SP_data/' + str(ticker) + str(a) + '.csv', sep=';')
+        # If that's not possible, raise an error, 
+        # save that ticker in unavailable tickers list 
+        # and skip this ticker calculation.
+        except :
+            print('ERROR: Not available data for ' + str(ticker) + '.')
+            unavailable_tickers.append(ticker)
+            continue
+        
+        # Reformat the df, standarizing dates and index.
+        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+        df.set_index(df['date'], inplace=True)
+        del df['date']
+
+        # If the ticker df doesn't have any information skip it.
+        if df.empty : continue
+
+        print('Charged!')
+
         # Here both SPY_SMA and SPY information is cut,
         # in order that the data coincides with the current df period.
         # This check is done in order that the SPY 
@@ -618,6 +692,8 @@ for ticker in tickers_directory.keys() :
 
             if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iSPY_SMA['SMA'].values[i] == -1 : continue
 
+            if yearly_returns[str(ticker) + str(a)][i] == 'Nan' : continue
+
             if i < 5 * Last_Low_Week or i < 5 * Last_High_Week or i < 5 * Last_SMA1_Week : continue
             # endregion
 
@@ -633,7 +709,8 @@ for ticker in tickers_directory.keys() :
                     iSMA3[i] > iSMA1[i] and iSMA3[i] > iSMA2[i] and iSMA2[i] > iSMA1[i] and
                     iSMA1[i] > iSMA1_of_n_week and
                     df.close[i] >= Above_Low_Proportion * low_of_n_week and 
-                    df.close[i] > Above_High_Proportion * high_of_n_week) :
+                    df.close[i] > Above_High_Proportion * high_of_n_week and
+                    yearly_returns[str(ticker) + str(a)][i] > Minimum_Yearly_Return) :
 
                     # Before entering the trade,
                     # calculate the shares_to_trade,
