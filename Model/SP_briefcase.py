@@ -4,6 +4,7 @@
 # all data for analysis and strategies development.
 import pandas as pd
 import numpy as np
+from pandas.io.formats.format import format_percentiles
 
 # Thanks to Yahoo Finance library we can get historical data
 # for all tickers without any cost.
@@ -178,9 +179,9 @@ Last_High_Week = 52
 Last_SMA1_Week = 4
 Above_Low_Proportion = 1.3
 Above_High_Proportion = 0.75
-Minimum_Yearly_Return = 30
+Minimum_RS = 70
 
-Relative_Strength_Week = 252
+Relative_Strength_Days = 252
 
 SPY_SMA_Period = 200
 
@@ -567,16 +568,58 @@ for ticker in tickers_directory.keys() :
 
         # endregion
         
-        strengths = []
+        strengths = {}
         for i in range(len(df)) :
-            if i < Relative_Strength_Week :
-                strengths.append("Nan")
+            if i < Relative_Strength_Days :
+                strengths[df.index[i]] = "Nan"
                 continue
             else :
-                yearly_return = ((df.close[i] / df.close[i - Relative_Strength_Week]) - 1) * 100
-                strengths.append(yearly_return)
+                yearly_return = ((df.close[i] / df.close[i - Relative_Strength_Days]) - 1) * 100
+                strengths[df.index[i]] = yearly_return
 
         yearly_returns[str(ticker) + str(a)] = strengths
+
+# endregion
+
+# region RS_df
+dates = SPY_global.index
+returns = []
+for i in SPY_global.index :
+    ticker_ret = {}
+    for ticker in tickers_directory.keys() :
+        its = int(len(tickers_directory[ticker]) / 2)
+        for a in range(its) :
+            if f"{ticker}{a}" not in yearly_returns : continue
+
+            if i not in yearly_returns[f"{ticker}{a}"] or yearly_returns[f"{ticker}{a}"][i] == "Nan" :
+                continue
+            else :
+                ticker_ret[f"{ticker}{a}"] = yearly_returns[f"{ticker}{a}"][i]
+
+    returns.append(ticker_ret)
+
+yearly_return_df = pd.DataFrame()
+yearly_return_df["date"] = np.array(dates)
+yearly_return_df["returns"] = np.array(returns)
+
+RSs = []
+for i in range(len(yearly_return_df)) :
+    current_dict = yearly_return_df['returns'].values[i]
+    current_RS_df = pd.DataFrame()
+    current_RS_df['ticker'] = current_dict.keys()
+    current_RS_df['yr'] = current_dict.values()
+    current_RS_df['RS'] = current_RS_df.yr.rank(pct=True)
+    current_RS_df['RS'] = current_RS_df['RS'].apply(lambda x : x * 100)
+    del current_RS_df['yr']
+    tmp = current_RS_df.to_dict(orient="split")
+    new_RS_dict = dict(tmp['data'])
+    RSs.append(new_RS_dict)
+
+RS_df = pd.DataFrame()
+RS_df["date"] = np.array(dates)
+RS_df["RS"] = np.array(RSs)
+RS_df.set_index(RS_df["date"], inplace=True)
+del RS_df["date"]
 # endregion
 
 print("Relative Strength done!")
@@ -692,7 +735,7 @@ for ticker in tickers_directory.keys() :
 
             if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iSPY_SMA['SMA'].values[i] == -1 : continue
 
-            if yearly_returns[str(ticker) + str(a)][i] == 'Nan' : continue
+            if f"{ticker}{a}" not in RS_df.loc[SPY.index[i], "RS"] : continue
 
             if i < 5 * Last_Low_Week or i < 5 * Last_High_Week or i < 5 * Last_SMA1_Week : continue
             # endregion
@@ -710,7 +753,7 @@ for ticker in tickers_directory.keys() :
                     iSMA1[i] > iSMA1_of_n_week and
                     df.close[i] >= Above_Low_Proportion * low_of_n_week and 
                     df.close[i] > Above_High_Proportion * high_of_n_week and
-                    yearly_returns[str(ticker) + str(a)][i] > Minimum_Yearly_Return) :
+                    RS_df.loc[SPY.index[i], "RS"][f"{ticker}{a}"] > Minimum_RS) :
 
                     # Before entering the trade,
                     # calculate the shares_to_trade,
@@ -840,7 +883,6 @@ trades_global = Portfolio_Trades
 
 # region Return Table
 
-"""
 # Here the trades_global df is edited 
 # in order to sart the df by exit_date.
 trades_global_rt = trades_global.copy()
@@ -863,7 +905,6 @@ df1 = return_table/100 + 1
 df1.columns = return_table.columns.map(str)
 return_table['Y%'] = round(((df1['1'] * df1['2'] * df1['3'] * df1['4'] * df1['5'] * df1['6'] *df1['7'] * df1['8'] * df1['9'] * df1['10'] * df1['11'] * df1['12'])-1)*100,2)
 return_table.to_csv('Model/Files/Return Table.csv', sep=';')
-"""
 
 # endregion
 
