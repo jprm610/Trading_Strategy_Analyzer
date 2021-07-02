@@ -4,7 +4,6 @@
 # all data for analysis and strategies development.
 import pandas as pd
 import numpy as np
-from pandas.io.formats.format import format_percentiles
 
 # Thanks to Yahoo Finance library we can get historical data
 # for all tickers without any cost.
@@ -179,7 +178,7 @@ Last_High_Week = 52
 Last_SMA1_Week = 4
 Above_Low_Proportion = 1.3
 Above_High_Proportion = 0.75
-Minimum_RS = 70
+Minimum_RS = 50
 
 Relative_Strength_Days = 252
 
