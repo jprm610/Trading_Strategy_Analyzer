@@ -334,7 +334,7 @@ for ticker in tickers_directory.keys() :
             # endregion
         
         if not is_downloaded : 
-            unavailable_tickers.append(f"{ticker}{a}")
+            unavailable_tickers.append(f"{ticker}{str(tickers_directory[ticker][current_start_date + 1])[:10]}")
             continue
 
         print('Downloaded!')
@@ -346,10 +346,15 @@ for ticker in tickers_directory.keys() :
             os.mkdir('Model/SP_data')
         except :
             # Save the data.
-            df.to_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
+            df.to_csv(f"Model/SP_data/{ticker}{str(tickers_directory[ticker][current_start_date + 1])[:10]}.csv", sep=';')
 
         # endregion
 
+tickers_dict = pd.DataFrame()
+tickers_dict['tickers'] = np.array(tickers_directory.keys())
+tickers_dict['periods'] = np.array(tickers_directory.values())
+tickers_dict.to_csv("tickers_periods.csv", sep=';')
+ 
 unavailable_df = pd.DataFrame()
 unavailable_df['ticker'] = np.array(unavailable_tickers)
 unavailable_df.to_csv("unavailable_tickers.csv", sep=';')
