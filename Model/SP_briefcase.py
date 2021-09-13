@@ -740,7 +740,7 @@ for ticker in tickers_directory.keys() :
                     iSMA1[i] > iSMA1_of_n_week and
                     df.close[i] >= Above_Low_Proportion * low_of_n_week and 
                     df.close[i] >= Above_High_Proportion * high_of_n_week and
-                    #df.close[i] <= Below_High_Proportion * high_of_n_week and
+                    df.close[i] <= Below_High_Proportion * high_of_n_week and
                     RS_df.loc[SPY.index[i], "RS"][f"{ticker}{a}"] > Minimum_RS) :
 
                     # Before entering the trade,
