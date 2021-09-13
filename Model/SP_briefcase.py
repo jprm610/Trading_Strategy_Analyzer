@@ -47,6 +47,8 @@ unavailable_tickers = []
 
 def Buy(new_df, is_a_signal) :
 
+    RS_ot.append(RS_df.loc[SPY.index[i], "RS"][f"{ticker}{a}"])
+
     if is_a_signal :
         # Here the order is set, saving all variables 
         # that characterizes the operation.
@@ -696,6 +698,7 @@ for ticker in tickers_directory.keys() :
         iSMA1_ot = []
         iSMA2_ot = []
         iSMA3_ot = []
+        RS_ot = []
 
         y_raw = []
         y_perc = []
@@ -737,7 +740,7 @@ for ticker in tickers_directory.keys() :
                     iSMA1[i] > iSMA1_of_n_week and
                     df.close[i] >= Above_Low_Proportion * low_of_n_week and 
                     df.close[i] >= Above_High_Proportion * high_of_n_week and
-                    df.close[i] <= Below_High_Proportion * high_of_n_week and
+                    #df.close[i] <= Below_High_Proportion * high_of_n_week and
                     RS_df.loc[SPY.index[i], "RS"][f"{ticker}{a}"] > Minimum_RS) :
 
                     # Before entering the trade,
@@ -782,6 +785,7 @@ for ticker in tickers_directory.keys() :
         trades['iSMA' + str(SMA1_Period)] = np.array(iSMA1_ot)
         trades['iSMA' + str(SMA2_Period)] = np.array(iSMA2_ot)
         trades['iSMA' + str(SMA3_Period)] = np.array(iSMA3_ot)
+        trades['RS'] = np.array(RS_ot)
 
         trades['y2'] = np.array(y2)
         trades['y3'] = np.array(y3)
@@ -854,7 +858,7 @@ for i in range(len(Number_of_trades)) :
         if Number_of_trades['# of trades'].values[i] > Slots - Counter :
             Filtered_Trades = pd.DataFrame()
             Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
-            Filtered_Trades = Filtered_Trades.sample(frac=1)
+            Filtered_Trades = Filtered_Trades.sort_values(by=['RS'], ignore_index=True, ascending=False)
             Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[: Slots - Counter], ignore_index=True)
         else :
             Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
