@@ -178,6 +178,7 @@ Last_High_Week = 52
 Last_SMA1_Week = 4
 Above_Low_Proportion = 1.3
 Above_High_Proportion = 0.75
+Below_High_Proportion = 1.1
 Minimum_RS = 50
 
 Relative_Strength_Days = 252
@@ -189,7 +190,7 @@ Start_Date = '2011-01-01'
 Risk_Unit = 100
 Perc_In_Risk = 3.2
 Trade_Slots = 10
-Commission_Perc = 0
+Commission_Perc = 0.1
 Account_Size = 10000
 
 # endregion
@@ -735,7 +736,8 @@ for ticker in tickers_directory.keys() :
                     iSMA3[i] > iSMA1[i] and iSMA3[i] > iSMA2[i] and iSMA2[i] > iSMA1[i] and
                     iSMA1[i] > iSMA1_of_n_week and
                     df.close[i] >= Above_Low_Proportion * low_of_n_week and 
-                    df.close[i] > Above_High_Proportion * high_of_n_week and
+                    df.close[i] >= Above_High_Proportion * high_of_n_week and
+                    df.close[i] <= Below_High_Proportion * high_of_n_week and
                     RS_df.loc[SPY.index[i], "RS"][f"{ticker}{a}"] > Minimum_RS) :
 
                     # Before entering the trade,
