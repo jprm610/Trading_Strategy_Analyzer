@@ -735,12 +735,12 @@ for ticker in tickers_directory.keys() :
             # Here the Regime Filter is done, 
             # checking that the current SPY close is above the SPY's SMA.
             if SPY.close[i] > iSPY_SMA['SMA'].values[i] :
-                if (df.close[i] > iSMA1[i] and df.close[i] > iSMA2[i] and df.close[i] > iSMA3[i] and 
+                if (df.close[i] > iSMA1[i] and df.close[i] > iSMA2[i] and df.close[i] > iSMA3[i] and
                     iSMA3[i] > iSMA1[i] and iSMA3[i] > iSMA2[i] and iSMA2[i] > iSMA1[i] and
                     iSMA1[i] > iSMA1_of_n_week and
-                    df.close[i] >= Above_Low_Proportion * low_of_n_week and 
+                    df.close[i] >= Above_Low_Proportion * low_of_n_week and
                     df.close[i] >= Above_High_Proportion * high_of_n_week and
-                    df.close[i] <= Below_High_Proportion * high_of_n_week and
+                    df.close[i] <= iSMA3[i] * 1.1 and
                     RS_df.loc[SPY.index[i], "RS"][f"{ticker}{a}"] > Minimum_RS) :
 
                     # Before entering the trade,
