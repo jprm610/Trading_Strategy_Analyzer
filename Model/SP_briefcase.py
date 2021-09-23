@@ -846,6 +846,7 @@ del Number_of_trades['date']
 # Here is built a df just with the trades that can be entered
 # taking into account the portfolio rules and the Number_of_trades df.
 Portfolio_Trades = pd.DataFrame()
+ticker_cache = []
 Counter = 0
 Slots = Trade_Slots
 Acum_Opened = 0
