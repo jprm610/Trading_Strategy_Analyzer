@@ -14,6 +14,7 @@ git checkout -b <nombre de la rama> (crear rama)
 before switching between brnaches perform a commit of the current work to save it
 git switch <wanted branch> (to change the branch)
 git branch -d <localBranchName> (delete a barnch locally)
+git checkout --orphan <orphan_name>
 
 git merge --abort (cancel a merge action)
 
