@@ -36,7 +36,7 @@ import math
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 
@@ -89,7 +89,7 @@ def main() :
         its = int(len(tickers_directory[ticker]) / 2)
         for a in range(its) :
             # region GET DATA
-
+        
             # Determine the current start date, 
             # reversing the previous operation.
             current_start_date = a * 2
@@ -118,7 +118,7 @@ def main() :
                 df.set_index(df['date'], inplace=True)
                 del df['date']
 
-                df = df.loc[df.index >= start_date]
+                df = df.loc[df.index >= Start_Date]
 
                 # If the ticker df doesn't have any information skip it.
                 if df.empty : 
@@ -127,26 +127,73 @@ def main() :
 
                 print('Charged!')
             else :
-                # Then try to get the .csv file of the ticker.
-                try :
-                    df = pd.read_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
-                # If that's not possible, raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                except :
-                    print(f"ERROR: Not available data for {ticker}.")
-                    unavailable_tickers.append(ticker)
-                    continue
-                
-                # Reformat the df, standarizing dates and index.
-                df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-                df.set_index(df['date'], inplace=True)
-                del df['date']
+                # If we want to use already downloaded data :
+                if Use_Pre_Charged_Data :
 
-                # If the ticker df doesn't have any information skip it.
-                if df.empty : continue
+                    # Then try to get the .csv file of the ticker.
+                    try :
+                        df = pd.read_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
+                    # If that's not possible, raise an error, 
+                    # save that ticker in unavailable tickers list 
+                    # and skip this ticker calculation.
+                    except :
+                        print(f"ERROR: Not available data for {ticker}.")
+                        unavailable_tickers.append(ticker)
+                        continue
+                    
+                    # Reformat the df, standarizing dates and index.
+                    df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+                    df.set_index(df['date'], inplace=True)
+                    del df['date']
 
-                print('Charged!')
+                    # If the ticker df doesn't have any information skip it.
+                    if df.empty : continue
+
+                    print('Charged!')
+                # If we want to downloaded new data :
+                else :
+                    try :
+                        # start_date and end_date is a timestamp and causes problems 
+                        # when an object of this type is given as an argument to the yf.download(), 
+                        # that's why we have to cast that value as a string and 
+                        # then get the first 10 characters that are the date itself.
+                        start = str(tickers_directory[ticker][current_start_date])[:10]
+
+                        end_a = tickers_directory[ticker][current_start_date + 1] + np.timedelta64(1,'D')
+                        end = str(end_a)[:10]
+
+                        # Then download the information from Yahoo Finance 
+                        # and rename the columns for standarizing data.
+                        df = yf.download(str(ticker), start=start, end=end)
+                        df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+                        df.index.names = ['date']
+                    # If that's not possible :
+                    except :
+                        # If that's not possible, raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        print(f"ERROR: Not available data for {ticker} in YF.")
+                        unavailable_tickers.append(ticker)
+                        continue
+
+                    if df.empty :
+                        # Raise an error, 
+                        # save that ticker in unavailable tickers list 
+                        # and skip this ticker calculation.
+                        print(f"ERROR: Not available data for {ticker} in YF.")
+                        unavailable_tickers.append(ticker)
+                        continue
+
+                    print('Downloaded!')
+
+                    # Try to create a folder to save all the data, 
+                    # if there isn't one available yet.
+                    try :
+                        # Create dir.
+                        os.mkdir('Model/SP_data')
+                    except :
+                        # Save the data.
+                        df.to_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
 
             # Here both SPY_SMA and SPY information is cut,
             # in order that the data coincides with the current df period.
@@ -635,7 +682,7 @@ def Portfolio(trades_global) :
             if Number_of_trades['# of trades'].values[i] > Slots - Counter :
                 Filtered_Trades = pd.DataFrame()
                 Filtered_Trades = Filtered_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
-                Filtered_Trades = Filtered_Trades.sort_values(by=['RS'], ignore_index=True, ascending=False)
+                Filtered_Trades = Filtered_Trades.sample(frac=1)
                 Portfolio_Trades = Portfolio_Trades.append(Filtered_Trades[: Slots - Counter], ignore_index=True)
             else :
                 Portfolio_Trades = Portfolio_Trades.append(trades_global[trades_global['entry_date'] == Number_of_trades.index.values[i]], ignore_index=True)
