@@ -30,6 +30,8 @@ import os
 # for comparisons between them while calculating trades.
 import datetime
 
+import math
+
 # endregion
 
 # region PARAMETERS
@@ -37,18 +39,10 @@ import datetime
 Use_Pre_Charged_Data = False
 
 # Indicators
-SMA1_Period = 200
-SMA2_Period = 150
-SMA3_Period = 50
-Last_Low_Week = 52
-Last_High_Week = 52
-Last_SMA1_Week = 4
-Above_Low_Proportion = 1.3
-Above_High_Proportion = 0.75
-Below_High_Proportion = 1.1
-Minimum_RS = 50
 
-Relative_Strength_Days = 252
+VPN_period = 10
+
+VPN_to_trade = 40
 
 SPY_SMA_Period = 200
 
@@ -168,16 +162,9 @@ def main() :
 
             # region INDICATOR CALCULATIONS
 
-            # Get all indicator lists,
-            # for this strategy we only need SMA 200 and RSI 10.
-            iSMA1 = TA.SMA(df, SMA1_Period)
-            iSMA2 = TA.SMA(df, SMA2_Period)
-            iSMA3 = TA.SMA(df, SMA3_Period)
+            iVPN = VPN(df, VPN_period)
+            iSMA = TA.SMA(df, 100)
 
-            # Clean indicators data
-            iSMA1[0 : SMA1_Period] = -1
-            iSMA2[0 : SMA2_Period] = -1
-            iSMA3[0 : SMA3_Period] = -1
             # endregion
 
             # region TRADE_EMULATION
@@ -192,9 +179,7 @@ def main() :
             exit_price = []
             shares_to_trade_list = []
 
-            iSMA1_ot = []
-            iSMA2_ot = []
-            iSMA3_ot = []
+            VPN_ot = []
 
             y_raw = []
             y_perc = []
@@ -216,25 +201,14 @@ def main() :
                 # Here we make sure that we have enough info to work with.
                 if i == 0 : continue
 
-                if iSMA1[i] == -1 or iSMA2[i] == -1 or iSMA3[i] == -1 or iSPY_SMA['SMA'].values[i] == -1 : continue
-
-                if i < 5 * Last_Low_Week or i < 5 * Last_High_Week or i < 5 * Last_SMA1_Week : continue
+                if math.isnan(iSPY_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or math.isnan(iSMA[i]) : continue
                 # endregion
-
-                low_of_n_week = min(df["close"].values[i - (5 * Last_Low_Week):i])
-                high_of_n_week = max(df["close"].values[i - (5 * Last_High_Week):i])
-                iSMA1_of_n_week = iSMA1[i - (5 * Last_SMA1_Week)]
                 
                 # region TRADE CALCULATION
                 # Here the Regime Filter is done, 
                 # checking that the current SPY close is above the SPY's SMA.
                 if SPY.close[i] > iSPY_SMA['SMA'].values[i] :
-                    if (df.close[i] > iSMA1[i] and df.close[i] > iSMA2[i] and df.close[i] > iSMA3[i] and
-                        iSMA3[i] > iSMA1[i] and iSMA3[i] > iSMA2[i] and iSMA2[i] > iSMA1[i] and
-                        iSMA1[i] > iSMA1_of_n_week and
-                        df.close[i] >= Above_Low_Proportion * low_of_n_week and
-                        df.close[i] >= Above_High_Proportion * high_of_n_week and
-                        df.close[i] <= iSMA3[i] * 1.1) :
+                    if iVPN[i] >= VPN_to_trade :
 
                         # Before entering the trade,
                         # calculate the shares_to_trade,
@@ -257,9 +231,8 @@ def main() :
                             trade_type.append("Long")
                             stock.append(ticker)
                             shares_to_trade_list.append(shares_to_trade)
-                            iSMA1_ot.append(iSMA1[i])
-                            iSMA2_ot.append(iSMA2[i])
-                            iSMA3_ot.append(iSMA3[i])
+                            
+                            VPN_ot.append(iVPN[i])
                             
                             # Here all y variables are set to 0, 
                             # in order to differentiate the signal operation in the trdes df.
@@ -289,9 +262,8 @@ def main() :
                             trade_type.append("Long")
                             stock.append(ticker)
                             shares_to_trade_list.append(shares_to_trade)
-                            iSMA1_ot.append(iSMA1[i])
-                            iSMA2_ot.append(iSMA2[i])
-                            iSMA3_ot.append(iSMA3[i])
+                            
+                            VPN_ot.append(iVPN[i])
                             
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
@@ -316,7 +288,7 @@ def main() :
                                     min_income = new_df.low[j]
 
                                 # If the current close is above the last close:
-                                if new_df.close[j] < iSMA3[i + j] :
+                                if new_df.close[j] < iSMA[i + j] :
 
                                     # To simulate that the order is executed in the next day, 
                                     # the entry price is taken in the next candle open. 
@@ -392,9 +364,7 @@ def main() :
             trades['shares_to_trade'] = np.array(shares_to_trade_list)
             trades['close_tomorrow'] = np.array(close_tomorrow)
 
-            trades['iSMA' + str(SMA1_Period)] = np.array(iSMA1_ot)
-            trades['iSMA' + str(SMA2_Period)] = np.array(iSMA2_ot)
-            trades['iSMA' + str(SMA3_Period)] = np.array(iSMA3_ot)
+            trades['iVPN' + str(VPN_period)] = np.array(VPN_ot)
 
             trades['y2'] = np.array(y2)
             trades['y3'] = np.array(y3)
@@ -448,7 +418,6 @@ def SPY_df() :
     # Here the SPY SMA is calculated for the Regime filter process,
     # establishing -1 as a value when the SMA is not calculated completely.
     SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
-    SPY_SMA[0 : SPY_SMA_Period] = -1
 
     # The SPY SMA is then saved into a dataframe with it's date, 
     # this in order to "cut" the SMA data needed for a ticker in the backtesting process.
@@ -849,11 +818,12 @@ def Files_Return(trades_global, return_table, stats, unavailable_tickers) :
     unavailable_tickers_df.to_csv('Model/Files/SP_unavailable_tickers.csv')
 
 def VPN(df, period, EMA_period=3) :
+
     """
     Volume Positive Negative (VPN)
     """
 
-    #Calculate relative volume for every period.
+    #Calculate relative volume for every candle.
     VPNs = {}
     for i in range(len(df)) :
         if i < period :
