@@ -30,12 +30,6 @@ import os
 # for comparisons between them while calculating trades.
 import datetime
 
-# qunadl library allows us to access the api 
-# from where the tickers data is extracted, 
-# either from SHARADAR or WIKI.
-import quandl
-quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
-
 # endregion
 
 # region PARAMETERS
@@ -853,5 +847,47 @@ def Files_Return(trades_global, return_table, stats, unavailable_tickers) :
     unavailable_tickers_df = pd.DataFrame()
     unavailable_tickers_df['ticks'] = np.array(unavailable_tickers)
     unavailable_tickers_df.to_csv('Model/Files/SP_unavailable_tickers.csv')
+
+def VPN(df, period, EMA_period=3) :
+    """
+    Volume Positive Negative (VPN)
+    """
+
+    #Calculate relative volume for every period.
+    VPNs = {}
+    for i in range(len(df)) :
+        if i < period :
+            VPNs[df.index[i]] = float('NaN')
+        else :
+            Vp = 0
+            Vn = 0
+            Vtotal = 0
+            for j in range(period) :
+                if df.close[i - j] >= df.close[i - j - 1] :
+                    Vp += df.volume[i - j]
+                else :
+                    Vn += df.volume[i - j]
+
+                Vtotal += df.volume[i - j]
+            VPNs[df.index[i]] = 100 * ((Vp - Vn) / Vtotal)
+
+    # In order to apply EMA to the volumes,
+    # create a new df so that it can be inputed
+    # to the finta's EMA function.
+    VPNs = pd.Series(VPNs)
+    df2 = pd.DataFrame({
+        'date': VPNs.index,
+        'open': -1,
+        'high': -1,
+        'low': -1,
+        'close': VPNs
+    })
+    df2.set_index(df2['date'], inplace=True)
+    del df2['date']
+    
+    # Calculate and return volume's EMA.
+    VPNs = TA.EMA(df2, EMA_period)
+    
+    return VPNs
 
 main()
