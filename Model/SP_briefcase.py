@@ -41,6 +41,7 @@ Use_Pre_Charged_Data = True
 # Indicators
 
 VPN_period = 10
+DO_period = 260
 
 VPN_to_trade = 40
 
@@ -118,7 +119,7 @@ def main() :
                 df.set_index(df['date'], inplace=True)
                 del df['date']
 
-                df = df.loc[df.index >= Start_Date]
+                df = df.loc[df.index >= start_date]
 
                 # If the ticker df doesn't have any information skip it.
                 if df.empty : 
@@ -212,6 +213,12 @@ def main() :
             iVPN = VPN(df, VPN_period)
             iSMA = TA.SMA(df, 100)
 
+            # Flip high and close columns to calculate
+            # Donchian Channels. 
+            DO_df = SPY_global.copy()
+            DO_df.rename(columns={'high': 'close', 'close': 'high'}, inplace=True)
+            iDO = TA.DO(DO_df, DO_period)
+
             # endregion
 
             # region TRADE_EMULATION
@@ -248,14 +255,15 @@ def main() :
                 # Here we make sure that we have enough info to work with.
                 if i == 0 : continue
 
-                if math.isnan(iSPY_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or math.isnan(iSMA[i]) : continue
+                if (math.isnan(iSPY_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or 
+                    math.isnan(iSMA[i]) or math.isnan(iDO.UPPER[i])) : continue
                 # endregion
                 
                 # region TRADE CALCULATION
                 # Here the Regime Filter is done, 
                 # checking that the current SPY close is above the SPY's SMA.
                 if SPY.close[i] > iSPY_SMA['SMA'].values[i] :
-                    if iVPN[i] >= VPN_to_trade :
+                    if df.close[i] > iDO.UPPER[i - 1] and iVPN[i] >= VPN_to_trade :
 
                         # Before entering the trade,
                         # calculate the shares_to_trade,
