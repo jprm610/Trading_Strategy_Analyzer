@@ -40,12 +40,18 @@ Use_Pre_Charged_Data = False
 
 # Indicators
 
+SPY_SMA_Period = 200
+
 VPN_period = 10
 DO_period = 260
 
 VPN_to_trade = 40
 
-SPY_SMA_Period = 200
+signals_after_BO = 15
+
+proportion_gain = 1.25
+proportion_loss = 0.75
+time_stop = 60
 
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
@@ -310,7 +316,7 @@ def main() :
                             # region Backtesting
 
                             # Save next 15 signals.
-                            for k in range(15) :
+                            for k in range(signals_after_BO) :
                                 if i + k > len(df) - 1 :
                                     break
 
@@ -402,7 +408,9 @@ def main() :
                                             min_income = new_df.low[j]
 
                                         # If the current close is below SMA :
-                                        if new_df.close[j] < iSMA[i + k + j] :
+                                        if (new_df.close[j] <= entry_price[-1] * proportion_loss or
+                                            new_df.close[j] >= entry_price[-1] * proportion_gain or
+                                            j > time_stop) :
 
                                             # To simulate that the order is executed in the next day, 
                                             # the entry price is taken in the next candle open. 
