@@ -2,7 +2,6 @@
 
 # Pandas and numpy are the base libraries in order to manipulate
 # all data for analysis and strategies development.
-from typing import Counter
 import pandas as pd
 import numpy as np
 
@@ -37,7 +36,7 @@ import math
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 
 # Indicators
 
@@ -91,7 +90,7 @@ def main() :
         its = int(len(tickers_directory[ticker]) / 2)
         for a in range(its) :
             # region GET DATA
-        
+
             # Determine the current start date, 
             # reversing the previous operation.
             current_start_date = a * 2
@@ -248,14 +247,13 @@ def main() :
             is_signal = []
             close_tomorrow = []
 
-            BO_counter = 0
             # Here occurs the OnBarUpdate() in which all strategie calculations happen.
             for i in range(len(df)) :
 
                 # region CHART INITIALIZATION
 
                 # Here we make sure that we have enough info to work with.
-                if i == 0 : continue
+                if i == 0 or i == len(df) - 1 : continue
 
                 if (math.isnan(iSPY_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or 
                     math.isnan(iSMA[i]) or math.isnan(iDO.UPPER[i])) : continue
@@ -265,13 +263,11 @@ def main() :
                 # Here the Regime Filter is done, 
                 # checking that the current SPY close is above the SPY's SMA.
                 if SPY.close[i] > iSPY_SMA['SMA'].values[i] :
-                    A = iDO.UPPER[i - 1]
-                    D = iDO.index[i - 1]
-                    d = df.index[i]
-                    C = df.close[i]
-                    if df.close[i] > iDO.UPPER[i - 1] and iVPN[i] >= VPN_to_trade :
+                    if df.close[i] > iDO.UPPER[i - 1] :
                         if i == len(df) - 1 :
                             # region Signal
+
+                            if iVPN[i] < VPN_to_trade : continue
 
                             # Before entering the trade,
                             # calculate the shares_to_trade,
@@ -319,6 +315,9 @@ def main() :
                                     break
 
                                 if i + k == len(df) - 1 :
+
+                                    if iVPN[i + k] < VPN_to_trade : continue
+
                                     # Before entering the trade,
                                     # calculate the shares_to_trade,
                                     # in order to risk the Perc_In_Risk of the stock,
@@ -356,6 +355,9 @@ def main() :
                                     close_tomorrow.append(False)
                                     break
                                 else :
+
+                                    if iVPN[i + k] < VPN_to_trade : continue
+
                                     # Before entering the trade,
                                     # calculate the shares_to_trade,
                                     # in order to risk the Perc_In_Risk of the stock,
@@ -454,7 +456,7 @@ def main() :
                                             y3.append(y3_raw[-1] * shares_to_trade)
                                             break
                             # endregion
-                    # endregion
+                # endregion
             # endregion
 
             # region TRADES_DF
