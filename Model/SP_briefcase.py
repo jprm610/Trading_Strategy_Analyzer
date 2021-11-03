@@ -271,7 +271,7 @@ def main() :
                 # checking that the current SPY close is above the SPY's SMA.
                 if df.close[i] > iDO.UPPER[i - 1] :
                     if SPY.close[i] > iSPY_SMA['SMA'].values[i] : 
-                        if i - last_iDO_breakout > 15 :
+                        if i - last_iDO_breakout > 15 and last_iDO_breakout != 0 :
                             if i == len(df) - 1 :
                                 # region Signals
 
