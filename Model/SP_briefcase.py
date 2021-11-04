@@ -47,11 +47,8 @@ DO_period = 260
 
 VPN_to_trade = 40
 
-signals_after_BO = 15
-
-proportion_gain = 1.25
-proportion_loss = 0.75
-time_stop = 60
+TS_proportion_SPY_above_200 = 0.8
+TS_proportion_SPY_below_200 = 0.9
 
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
@@ -248,6 +245,8 @@ def main() :
             y = []
             y2 = []
             y3 = []
+            max_price = []
+            min_price = []
             y_index = []
 
             is_signal = []
@@ -274,7 +273,6 @@ def main() :
                         if i - last_iDO_breakout > 15 and last_iDO_breakout != 0 :
                             if i == len(df) - 1 :
                                 # region Signals
-
                                 if iVPN[i] > VPN_to_trade :
 
                                     # Before entering the trade,
@@ -311,6 +309,8 @@ def main() :
                                     y_perc.append(0)
                                     y2_raw.append(0)
                                     y3_raw.append(0)
+                                    max_price.append(entry_price)
+                                    min_price.append(entry_price)
                                     close_tomorrow.append(False)
 
                                 # endregion
@@ -357,14 +357,17 @@ def main() :
                                         if new_df.high[j] > max_income :
                                             max_income = new_df.high[j]
 
+                                        if SPY.close[i + j] > iSPY_SMA['SMA'].values[i] :
+                                            trailling_stop = max_income * TS_proportion_SPY_above_200
+                                        else :
+                                            trailling_stop = max_income * TS_proportion_SPY_below_200
+
                                         # Here the min_income variable is updated.
                                         if new_df.low[j] < min_income :
                                             min_income = new_df.low[j]
 
                                         # If the current close is below SMA :
-                                        if (new_df.close[j] <= entry_price[-1] * proportion_loss or
-                                            new_df.close[j] >= entry_price[-1] * proportion_gain or
-                                            j > time_stop) :
+                                        if new_df.close[j] < trailling_stop :
 
                                             # To simulate that the order is executed in the next day, 
                                             # the entry price is taken in the next candle open. 
@@ -397,6 +400,8 @@ def main() :
                                             y.append(outcome)
                                             y2.append(y2_raw[-1] * shares_to_trade)
                                             y3.append(y3_raw[-1] * shares_to_trade)
+                                            max_price.append(max_income)
+                                            min_price.append(min_income)
                                             break
                                         
                                         if j == len(new_df) - 1 :
@@ -416,6 +421,8 @@ def main() :
                                             y.append(outcome)
                                             y2.append(y2_raw[-1] * shares_to_trade)
                                             y3.append(y3_raw[-1] * shares_to_trade)
+                                            max_price.append(max_income)
+                                            min_price.append(min_income)
                                             break
                                 
                                 # endregion
@@ -443,7 +450,9 @@ def main() :
             trades['close_tomorrow'] = np.array(close_tomorrow)
 
             trades['iVPN' + str(VPN_period)] = np.array(VPN_ot)
-
+            
+            trades['max'] = np.array(max_price)
+            trades['min'] = np.array(min_price)
             trades['y2'] = np.array(y2)
             trades['y3'] = np.array(y3)
             trades['y2_raw'] = np.array(y2_raw)
