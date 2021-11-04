@@ -36,7 +36,7 @@ import math
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 
@@ -275,148 +275,148 @@ def main() :
                             if i == len(df) - 1 :
                                 # region Signals
 
-                                if iVPN[i] < VPN_to_trade : continue
+                                if iVPN[i] > VPN_to_trade :
 
-                                # Before entering the trade,
-                                # calculate the shares_to_trade,
-                                # in order to risk the Perc_In_Risk of the stock,
-                                # finally make sure that we can afford those shares to trade.
-                                current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
+                                    # Before entering the trade,
+                                    # calculate the shares_to_trade,
+                                    # in order to risk the Perc_In_Risk of the stock,
+                                    # finally make sure that we can afford those shares to trade.
+                                    current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
 
-                                shares_to_trade = round(abs(Risk_Unit / current_avg_lose), 1)
-                                if round(shares_to_trade) == 0 : continue
+                                    shares_to_trade = round(abs(Risk_Unit / current_avg_lose), 1)
+                                    if round(shares_to_trade) == 0 : continue
 
-                                # Here the order is set, saving all variables 
-                                # that characterizes the operation.
-                                # The on_trade flag is updated 
-                                # in order to avoid more than one operation calculation in later candles, 
-                                # until the operation is exited.
-                                is_signal.append(True)
-                                trade_type.append("Long")
-                                stock.append(ticker)
-                                shares_to_trade_list.append(shares_to_trade)
-                                
-                                VPN_ot.append(iVPN[i])
-                                
-                                # Here all y variables are set to 0, 
-                                # in order to differentiate the signal operation in the trdes df.
-                                entry_dates.append(df.index[i])
-                                y_index.append(df.index[i])
-                                entry_price.append(round(df.close[i], 2))
-                                exit_price.append(round(df.close[i], 2))
-                                y.append(0)
-                                y2.append(0)
-                                y3.append(0)
-                                y_raw.append(0)
-                                y_perc.append(0)
-                                y2_raw.append(0)
-                                y3_raw.append(0)
-                                close_tomorrow.append(False)
+                                    # Here the order is set, saving all variables 
+                                    # that characterizes the operation.
+                                    # The on_trade flag is updated 
+                                    # in order to avoid more than one operation calculation in later candles, 
+                                    # until the operation is exited.
+                                    is_signal.append(True)
+                                    trade_type.append("Long")
+                                    stock.append(ticker)
+                                    shares_to_trade_list.append(shares_to_trade)
+                                    
+                                    VPN_ot.append(iVPN[i])
+                                    
+                                    # Here all y variables are set to 0, 
+                                    # in order to differentiate the signal operation in the trdes df.
+                                    entry_dates.append(df.index[i])
+                                    y_index.append(df.index[i])
+                                    entry_price.append(round(df.close[i], 2))
+                                    exit_price.append(round(df.close[i], 2))
+                                    y.append(0)
+                                    y2.append(0)
+                                    y3.append(0)
+                                    y_raw.append(0)
+                                    y_perc.append(0)
+                                    y2_raw.append(0)
+                                    y3_raw.append(0)
+                                    close_tomorrow.append(False)
 
                                 # endregion
                             else :
                                 # region Backtesting
-                                if iVPN[i] < VPN_to_trade : continue
+                                if iVPN[i] > VPN_to_trade :
 
-                                # Before entering the trade,
-                                # calculate the shares_to_trade,
-                                # in order to risk the Perc_In_Risk of the stock,
-                                # finally make sure that we can afford those shares to trade.
-                                current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
+                                    # Before entering the trade,
+                                    # calculate the shares_to_trade,
+                                    # in order to risk the Perc_In_Risk of the stock,
+                                    # finally make sure that we can afford those shares to trade.
+                                    current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
 
-                                shares_to_trade = round(abs(Risk_Unit / current_avg_lose), 1)
-                                if round(shares_to_trade) == 0 : continue
+                                    shares_to_trade = round(abs(Risk_Unit / current_avg_lose), 1)
+                                    if round(shares_to_trade) == 0 : continue
 
-                                # Here the order is set, saving all variables 
-                                # that characterizes the operation.
-                                # The on_trade flag is updated 
-                                # in order to avoid more than one operation calculation in later candles, 
-                                # until the operation is exited.
-                                is_signal.append(False)
-                                trade_type.append("Long")
-                                stock.append(ticker)
-                                shares_to_trade_list.append(shares_to_trade)
-                                
-                                VPN_ot.append(iVPN[i])
-                                
-                                # To simulate that the order is executed in the next day, 
-                                # the entry price is taken in the next candle open. 
-                                # Nevertheless, when we are in the last candle that can't be done, 
-                                # that's why the current close is saved in that case.
-                                entry_dates.append(df.index[i + 1])
-                                entry_price.append(round(df.open[i + 1], 2))
-                                max_income = df.high[i + 1]
-                                min_income = df.low[i + 1]
-
-                                new_df = df.loc[df.index >= df.index[i]]
-                                for j in range(len(new_df)) :
-                                    # Ordinary check to avoid errors.
-                                    if len(trade_type) == 0 : continue
+                                    # Here the order is set, saving all variables 
+                                    # that characterizes the operation.
+                                    # The on_trade flag is updated 
+                                    # in order to avoid more than one operation calculation in later candles, 
+                                    # until the operation is exited.
+                                    is_signal.append(False)
+                                    trade_type.append("Long")
+                                    stock.append(ticker)
+                                    shares_to_trade_list.append(shares_to_trade)
                                     
-                                    # Here the max_income variable is updated.
-                                    if new_df.high[j] > max_income :
-                                        max_income = new_df.high[j]
+                                    VPN_ot.append(iVPN[i])
+                                    
+                                    # To simulate that the order is executed in the next day, 
+                                    # the entry price is taken in the next candle open. 
+                                    # Nevertheless, when we are in the last candle that can't be done, 
+                                    # that's why the current close is saved in that case.
+                                    entry_dates.append(df.index[i + 1])
+                                    entry_price.append(round(df.open[i + 1], 2))
+                                    max_income = df.high[i + 1]
+                                    min_income = df.low[i + 1]
 
-                                    # Here the min_income variable is updated.
-                                    if new_df.low[j] < min_income :
-                                        min_income = new_df.low[j]
+                                    new_df = df.loc[df.index >= df.index[i]]
+                                    for j in range(len(new_df)) :
+                                        # Ordinary check to avoid errors.
+                                        if len(trade_type) == 0 : continue
+                                        
+                                        # Here the max_income variable is updated.
+                                        if new_df.high[j] > max_income :
+                                            max_income = new_df.high[j]
 
-                                    # If the current close is below SMA :
-                                    if (new_df.close[j] <= entry_price[-1] * proportion_loss or
-                                        new_df.close[j] >= entry_price[-1] * proportion_gain or
-                                        j > time_stop) :
+                                        # Here the min_income variable is updated.
+                                        if new_df.low[j] < min_income :
+                                            min_income = new_df.low[j]
 
-                                        # To simulate that the order is executed in the next day, 
-                                        # the entry price is taken in the next candle open. 
-                                        # Nevertheless, when we are in the last candle that can't be done, 
-                                        # that's why the current close is saved in that case.
+                                        # If the current close is below SMA :
+                                        if (new_df.close[j] <= entry_price[-1] * proportion_loss or
+                                            new_df.close[j] >= entry_price[-1] * proportion_gain or
+                                            j > time_stop) :
+
+                                            # To simulate that the order is executed in the next day, 
+                                            # the entry price is taken in the next candle open. 
+                                            # Nevertheless, when we are in the last candle that can't be done, 
+                                            # that's why the current close is saved in that case.
+                                            if j == len(new_df) - 1 :
+                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j])
+                                                exit_price.append(round(new_df.close[j], 2))
+
+                                                close_tomorrow.append(True)
+                                            else :
+                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j + 1])
+                                                exit_price.append(round(new_df.open[j + 1], 2))
+
+                                                close_tomorrow.append(False)
+
+                                            if exit_price[-1] > max_income : max_income = exit_price[-1]
+
+                                            if exit_price[-1] < min_income : min_income = exit_price[-1]
+
+                                            # Saving all missing trade characteristics.
+                                            y_raw.append(exit_price[-1] - entry_price[-1])
+                                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                                            y2_raw.append(max_income - entry_price[-1])
+                                            y3_raw.append(min_income - entry_price[-1])
+                                            y.append(outcome)
+                                            y2.append(y2_raw[-1] * shares_to_trade)
+                                            y3.append(y3_raw[-1] * shares_to_trade)
+                                            break
+                                        
                                         if j == len(new_df) - 1 :
+                                            # All characteristics are saved 
+                                            # as if the trade was exited in this moment.
                                             outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                                            y_index.append(new_df.index[j])
                                             exit_price.append(round(new_df.close[j], 2))
 
-                                            close_tomorrow.append(True)
-                                        else :
-                                            outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                            y_index.append(new_df.index[j + 1])
-                                            exit_price.append(round(new_df.open[j + 1], 2))
-
+                                            y_index.append(new_df.index[j])
                                             close_tomorrow.append(False)
 
-                                        if exit_price[-1] > max_income : max_income = exit_price[-1]
-
-                                        if exit_price[-1] < min_income : min_income = exit_price[-1]
-
-                                        # Saving all missing trade characteristics.
-                                        y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                                        y2_raw.append(max_income - entry_price[-1])
-                                        y3_raw.append(min_income - entry_price[-1])
-                                        y.append(outcome)
-                                        y2.append(y2_raw[-1] * shares_to_trade)
-                                        y3.append(y3_raw[-1] * shares_to_trade)
-                                        break
-                                    
-                                    if j == len(new_df) - 1 :
-                                        # All characteristics are saved 
-                                        # as if the trade was exited in this moment.
-                                        outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                        exit_price.append(round(new_df.close[j], 2))
-
-                                        y_index.append(new_df.index[j])
-                                        close_tomorrow.append(False)
-
-                                        y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                                        y2_raw.append(max_income - entry_price[-1])
-                                        y3_raw.append(min_income - entry_price[-1])
-                                        y.append(outcome)
-                                        y2.append(y2_raw[-1] * shares_to_trade)
-                                        y3.append(y3_raw[-1] * shares_to_trade)
-                                        break
+                                            y_raw.append(exit_price[-1] - entry_price[-1])
+                                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                                            y2_raw.append(max_income - entry_price[-1])
+                                            y3_raw.append(min_income - entry_price[-1])
+                                            y.append(outcome)
+                                            y2.append(y2_raw[-1] * shares_to_trade)
+                                            y3.append(y3_raw[-1] * shares_to_trade)
+                                            break
                                 
                                 # endregion
                     last_iDO_breakout = i
