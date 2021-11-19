@@ -39,7 +39,7 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 
@@ -81,7 +81,7 @@ def main() :
 
     cryptos_bnb = set([i[:-4] for i in bnb_cryptos])
     cryptos_yf = set([i[:-4] for i in yf_cryptos])
-    cryptos = set.intersection(cryptos_yf, cryptos_bnb)
+    cryptos = set.union(cryptos_yf, cryptos_bnb)
     cryptos = list(cryptos)
 
     print('------------------------------------------------------------')
@@ -89,7 +89,7 @@ def main() :
     asset_count = 1
     # For every ticker in the tickers_directory :
     for ticker in cryptos :
-
+        
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
         print('------------------------------------------------------------')
