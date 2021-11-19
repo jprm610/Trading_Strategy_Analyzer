@@ -259,8 +259,8 @@ def main() :
                                 # in order to differentiate the signal operation in the trdes df.
                                 entry_dates.append(df.index[i])
                                 y_index.append(df.index[i])
-                                entry_price.append(round(df.close[i], 2))
-                                exit_price.append(round(df.close[i], 2))
+                                entry_price.append(df.close[i])
+                                exit_price.append(df.close[i])
                                 y.append(0)
                                 y2.append(0)
                                 y3.append(0)
@@ -302,7 +302,7 @@ def main() :
                                 # Nevertheless, when we are in the last candle that can't be done, 
                                 # that's why the current close is saved in that case.
                                 entry_dates.append(df.index[i + 1])
-                                entry_price.append(round(df.open[i + 1], 2))
+                                entry_price.append(df.open[i + 1])
                                 max_income = df.high[i + 1]
                                 min_income = df.low[i + 1]
 
@@ -337,14 +337,14 @@ def main() :
                                             outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                                             y_index.append(new_df.index[j])
-                                            exit_price.append(round(new_df.close[j], 2))
+                                            exit_price.append(new_df.close[j])
 
                                             close_tomorrow.append(True)
                                         else :
                                             outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                                             y_index.append(new_df.index[j + 1])
-                                            exit_price.append(round(new_df.open[j + 1], 2))
+                                            exit_price.append(new_df.open[j + 1])
 
                                             close_tomorrow.append(False)
 
@@ -354,7 +354,7 @@ def main() :
 
                                         # Saving all missing trade characteristics.
                                         y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                                        y_perc.append(y_raw[-1] / entry_price[-1] * 100)
                                         y2_raw.append(max_income - entry_price[-1])
                                         y3_raw.append(min_income - entry_price[-1])
                                         y.append(outcome)
@@ -369,13 +369,13 @@ def main() :
                                         # as if the trade was exited in this moment.
                                         outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                                        exit_price.append(round(new_df.close[j], 2))
+                                        exit_price.append(new_df.close[j])
 
                                         y_index.append(new_df.index[j])
                                         close_tomorrow.append(False)
 
                                         y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                                        y_perc.append(y_raw[-1] / entry_price[-1] * 100)
                                         y2_raw.append(max_income - entry_price[-1])
                                         y3_raw.append(min_income - entry_price[-1])
                                         y.append(outcome)
