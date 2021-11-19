@@ -242,9 +242,6 @@ def main() :
                                 current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
 
                                 shares_to_trade = abs(Risk_Unit / current_avg_lose)
-                                if round(shares_to_trade) == 0 : 
-                                    last_iDO_breakout = i
-                                    continue
 
                                 # Here the order is set, saving all variables 
                                 # that characterizes the operation.
@@ -287,11 +284,6 @@ def main() :
                                 current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
 
                                 shares_to_trade = abs(Risk_Unit / current_avg_lose)
-                                """
-                                if round(shares_to_trade) == 0 : 
-                                    last_iDO_breakout = i
-                                    continue
-                                """
 
                                 # Here the order is set, saving all variables 
                                 # that characterizes the operation.
