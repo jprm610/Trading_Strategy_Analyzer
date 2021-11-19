@@ -39,7 +39,7 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 
 # Indicators
 
@@ -73,9 +73,8 @@ def main() :
 
     BTC_global, iBTC_SMA_global = BTC_regime()
 
-    exchange_info = client.get_exchange_info()
-    cryptos = [i['symbol'] for i in exchange_info['symbols']]
-    cryptos = [i for i in cryptos if i[-4:] == 'USDT']
+    cryptos = pd.read_csv('Model\cryptos_tickers_YF.csv')
+    cryptos = cryptos['tickers']
 
     print('------------------------------------------------------------')
     print("Trade Calculation!")
@@ -120,17 +119,9 @@ def main() :
             try :
                 # Then download the information from Yahoo Finance 
                 # and rename the columns for standarizing data.
-                first_date = client._get_earliest_valid_timestamp(ticker, '1d')
-                historical = client.get_historical_klines(ticker, '1d', first_date)
-                for line in historical :
-                    del line[6:]
-                df = pd.DataFrame(historical, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
-                df.set_index('date', inplace=True)
-                df.index = pd.to_datetime(df.index, unit='ms')
-
-                cols = ['open', 'high', 'low', 'close', 'volume']
-                for col in cols :
-                    df[col] = [float(i) for i in df[col]]
+                df = yf.download(ticker)
+                df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+                df.index.names = ['date']
             # If that's not possible :
             except :
                 # If that's not possible, raise an error, 
@@ -155,6 +146,7 @@ def main() :
             try :
                 # Create dir.
                 os.mkdir('Model/Crypto_data')
+                df.to_csv(f"Model/Crypto_data/{ticker}.csv", sep=';')
             except :
                 # Save the data.
                 df.to_csv(f"Model/Crypto_data/{ticker}.csv", sep=';')
@@ -454,16 +446,9 @@ def BTC_regime() :
     
     # Here the BTC data is downloaded 
     print('BTC')
-    first_date = client._get_earliest_valid_timestamp('BTCUSDT', '1d')
-    historical = client.get_historical_klines('BTCUSDT', '1d', first_date)
-    for line in historical : del line[6:]
-    BTC_global = pd.DataFrame(historical, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
-    BTC_global.set_index('date', inplace=True)
-    BTC_global.index = pd.to_datetime(BTC_global.index, unit='ms')
-
-    cols = ['open', 'high', 'low', 'close', 'volume']
-    for col in cols :
-        BTC_global[col] = [float(i) for i in BTC_global[col]]
+    BTC_global = yf.download('BTC-USD')
+    BTC_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+    BTC_global.index.names = ['date']
 
     # Drop duplicates leaving only the first value,
     # this due to the resting entry_dates in which the market is not moving.
