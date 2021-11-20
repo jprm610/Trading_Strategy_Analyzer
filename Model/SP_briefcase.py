@@ -39,7 +39,7 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 
 # Indicators
 
@@ -76,20 +76,23 @@ def main() :
     exchange_info = client.get_exchange_info()
     bnb_cryptos = [i['symbol'] for i in exchange_info['symbols']]
     bnb_cryptos = [i for i in bnb_cryptos if i[-4:] == 'USDT']
+    bnb_cryptos = set([i[:-4] for i in bnb_cryptos])
+    cryptos = bnb_cryptos
+    """
     yf_cryptos = pd.read_csv('Model\cryptos_tickers_YF.csv')
     yf_cryptos = [i for i in yf_cryptos['tickers']]
-
     cryptos_bnb = set([i[:-4] for i in bnb_cryptos])
     cryptos_yf = set([i[:-4] for i in yf_cryptos])
     cryptos = set.union(cryptos_yf, cryptos_bnb)
     cryptos = list(cryptos)
+    """
 
     print('------------------------------------------------------------')
     print("Trade Calculation!")
     asset_count = 1
     # For every ticker in the tickers_directory :
     for ticker in cryptos :
-        
+   
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
         print('------------------------------------------------------------')
@@ -124,6 +127,7 @@ def main() :
             print('Charged!')
         # If we want to downloaded new data :
         else :
+            """
             try :
                 # Then download the information from Yahoo Finance 
                 # and rename the columns for standarizing data.
@@ -138,6 +142,7 @@ def main() :
                 # and skip this ticker calculation.
                 print(f"ERROR: Not available data for {ticker}USD in YF.")
                 yf_df = pd.DataFrame()
+                """
 
             try :
                 # Then download the information from Yahoo Finance 
@@ -161,29 +166,19 @@ def main() :
                 print(f"ERROR: Not available data for {ticker}USD in BNB.")
                 bnb_df = pd.DataFrame()
 
-            if len(bnb_df) >= len(yf_df) :
+            df = bnb_df.copy()
+            df = df[:-1]
+
+            """if len(bnb_df) >= len(yf_df) :
                 df = bnb_df.copy()
             else :
-                df = yf_df.copy()
+                df = yf_df.copy()"""
 
             if df.empty :
                 print('Failed!')
                 continue
 
             print('Downloaded!')
-
-            df.columns = ['open', 'high', 'low', 'close', 'volume']
-
-            missing = pd.date_range(start=df.index[0], end=df.index[len(df) - 1]).difference(df.index)
-
-            for day in missing :
-                new_open = df['open'].loc[day - datetime.timedelta(days=1)]
-                new_high = df['high'].loc[day - datetime.timedelta(days=1)]
-                new_low = df['low'].loc[day - datetime.timedelta(days=1)]
-                new_close = df['close'].loc[day - datetime.timedelta(days=1)]
-                new_volume = df['volume'].loc[day - datetime.timedelta(days=1)]
-                df.loc[day] = [new_open, new_high, new_low, new_close, new_volume]
-                df = df.sort_index()
 
             # Try to create a folder to save all the data, 
             # if there isn't one available yet.
@@ -194,6 +189,19 @@ def main() :
             except :
                 # Save the data.
                 df.to_csv(f"Model/Crypto_data/{ticker}USD.csv", sep=';')
+
+        df.columns = ['open', 'high', 'low', 'close', 'volume']
+
+        missing = pd.date_range(start=df.index[0], end=df.index[len(df) - 1]).difference(df.index)
+
+        for day in missing :
+            new_open = df['open'].loc[day - datetime.timedelta(days=1)]
+            new_high = df['high'].loc[day - datetime.timedelta(days=1)]
+            new_low = df['low'].loc[day - datetime.timedelta(days=1)]
+            new_close = df['close'].loc[day - datetime.timedelta(days=1)]
+            new_volume = df['volume'].loc[day - datetime.timedelta(days=1)]
+            df.loc[day] = [new_open, new_high, new_low, new_close, new_volume]
+            df = df.sort_index()
 
         # Here both BTC_SMA and BTC information is cut,
         # in order that the data coincides with the current df period.
@@ -255,12 +263,16 @@ def main() :
             # region CHART INITIALIZATION
 
             # Here we make sure that we have enough info to work with.
-            if i == 0 or i == len(df) - 1 : continue
+            if i == 0 : continue
 
             if (math.isnan(iBTC_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or 
                 math.isnan(iSMA[i]) or math.isnan(iDO.UPPER[i])) : continue
             # endregion
             
+            f = df.index[i]
+            c = df.close[i]
+            d = iDO.UPPER[i - 1]
+
             # region TRADE CALCULATION
             # Here the Regime Filter is done,
             # checking that the current BTC close is above the BTC's SMA.
@@ -470,7 +482,7 @@ def main() :
 
     # Here the trades_global df is edited 
     # in order to set the entry_date characteristic as the index.
-    trades_global.drop_duplicates(keep='first', inplace=True)
+    #trades_global.drop_duplicates(keep='first', inplace=True)
     trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
     trades_global.to_csv('Model/Files/Crypto_trades_raw.csv')
 
