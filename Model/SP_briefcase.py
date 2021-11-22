@@ -58,7 +58,7 @@ Stop_Lock = 0.5
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
 Risk_Unit = 100
-Perc_In_Risk = 12
+Perc_In_Risk = 16
 Trade_Slots = 10
 Commission_Perc = 0.1
 Account_Size = 10000
