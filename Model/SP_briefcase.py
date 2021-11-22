@@ -39,7 +39,7 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 
 # Indicators
 
@@ -492,6 +492,7 @@ def main() :
         trades['is_signal'] = np.array(is_signal)
         trades['entry_price'] = np.array(entry_price)
         trades['exit_price'] = np.array(exit_price)
+        trades['stop_price'] = np.array(stop_price)
         trades['y']  = np.array(y)
         trades['y_raw'] = np.array(y_raw)
         trades['y%'] = np.array(y_perc)
