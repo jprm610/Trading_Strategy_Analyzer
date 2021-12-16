@@ -39,8 +39,7 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
-
+Use_Pre_Charged_Data = False
 # Indicators
 
 BTC_SMA_Period = 200
@@ -100,6 +99,8 @@ def main() :
         print(str(asset_count) + '/' + str(len(cryptos)))
         print(ticker)
         asset_count += 1
+
+        if ticker != 'LUNA' : continue
 
         # region GET DATA
 
@@ -300,7 +301,7 @@ def main() :
                                 shares_to_trade_list.append(shares_to_trade)
                                 
                                 VPN_ot.append(iVPN[i])
-                                
+
                                 # Here all y variables are set to 0, 
                                 # in order to differentiate the signal operation in the trdes df.
                                 entry_dates.append(df.index[i])
@@ -365,7 +366,7 @@ def main() :
                                     if new_df.high[j] > max_income :
                                         max_income = new_df.high[j]
 
-                                    if BTC.close[i + j] > iBTC_SMA['SMA'].values[i] :
+                                    if BTC.close[i + j + 1] > iBTC_SMA['SMA'].values[i + j + 1] :
                                         trailling_stop = max_income * TS_proportion_SPY_above_200
                                     else :
                                         trailling_stop = max_income * TS_proportion_SPY_below_200
