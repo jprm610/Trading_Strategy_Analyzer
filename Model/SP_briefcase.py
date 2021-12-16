@@ -92,7 +92,7 @@ def main() :
     asset_count = 1
     # For every ticker in the tickers_directory :
     for ticker in cryptos :
-   
+
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
         print('------------------------------------------------------------')
@@ -100,7 +100,7 @@ def main() :
         print(ticker)
         asset_count += 1
 
-        if ticker != 'LUNA' : continue
+        if ticker in ['EUR', 'AUD'] : continue
 
         # region GET DATA
 
