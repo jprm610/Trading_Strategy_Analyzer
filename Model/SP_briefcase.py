@@ -194,9 +194,13 @@ def main() :
 
         df.columns = ['open', 'high', 'low', 'close', 'volume']
 
+        # Fill the missing dates if needed, in order to avoid
+        # holes in the data.
         missing = pd.date_range(start=df.index[0], end=df.index[len(df) - 1]).difference(df.index)
 
         for day in missing :
+            # The holes are filled with the same values
+            # of the previous date.
             new_open = df['open'].loc[day - datetime.timedelta(days=1)]
             new_high = df['high'].loc[day - datetime.timedelta(days=1)]
             new_low = df['low'].loc[day - datetime.timedelta(days=1)]
@@ -545,14 +549,28 @@ def BTC_regime() :
     
     # Here the BTC data is downloaded 
     print('BTC')
-    BTC_global = yf.download('BTC-USD')
-    BTC_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
-    BTC_global.index.names = ['date']
-    del BTC_global['adj close']
 
+    # Then download the information from Binance 
+    # and reformat it to our standard df format. 
+    first_date = client._get_earliest_valid_timestamp(f"BTCUSDT", '1d')
+    historical = client.get_historical_klines(f"BTCUSDT", '1d', first_date)
+    for line in historical :
+        del line[6:]
+    BTC_global = pd.DataFrame(historical, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
+    BTC_global.set_index('date', inplace=True)
+    BTC_global.index = pd.to_datetime(BTC_global.index, unit='ms')
+
+    cols = ['open', 'high', 'low', 'close', 'volume']
+    for col in cols :
+        BTC_global[col] = [float(i) for i in BTC_global[col]]
+
+    # Fill the missing dates if needed, in order to avoid
+    # holes in the data.
     missing = pd.date_range(start=BTC_global.index[0], end=BTC_global.index[len(BTC_global) - 1]).difference(BTC_global.index)
 
     for day in missing :
+        # The holes are filled with the same values
+        # of the previous date.
         new_open = BTC_global['open'].loc[day - datetime.timedelta(days=1)]
         new_high = BTC_global['high'].loc[day - datetime.timedelta(days=1)]
         new_low = BTC_global['low'].loc[day - datetime.timedelta(days=1)]
@@ -561,8 +579,7 @@ def BTC_regime() :
         BTC_global.loc[day] = [new_open, new_high, new_low, new_close, new_volume]
         BTC_global = BTC_global.sort_index()
 
-    # Here the BTC SMA is calculated for the Regime filter process,
-    # establishing -1 as a value when the SMA is not calculated completely.
+    # Here the BTC SMA is calculated for the Regime filter process.
     BTC_SMA = TA.SMA(BTC_global, BTC_SMA_Period)
 
     # The BTC SMA is then saved into a dataframe with it's date, 
