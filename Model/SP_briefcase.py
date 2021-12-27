@@ -4,6 +4,7 @@
 # all data for analysis and strategies development.
 import pandas as pd
 import numpy as np
+import math
 
 # Thanks to Yahoo Finance library we can get historical data
 # for all tickers without any cost.
@@ -69,6 +70,8 @@ Account_Size = 10000
 
 # endregion
 
+max_period_indicator = max(SMA1_Period, SMA2_Period, MSD_Period, ATR_Period, SPY_SMA_Period)
+
 print(f"The current working directory is {os.getcwd()}")
 
 # region SPY df
@@ -88,7 +91,6 @@ SPY_global = SPY_global.drop_duplicates(keep=False)
 # Here the SPY SMA is calculated for the Regime filter process,
 # establishing -1 as a value when the SMA is not calculated completely.
 SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
-SPY_SMA[0 : SPY_SMA_Period] = -1
 
 # The SPY SMA is then saved into a dataframe with it's date, 
 # this in order to "cut" the SMA data needed for a ticker in the backtesting process.
@@ -280,108 +282,89 @@ for ticker in tickers_directory.keys() :
         # reversing the previous operation.
         current_start_date = a * 2
 
-        if tickers_directory[ticker][current_start_date + 1] != cleaned_tickers['end_date'].values[-1] :
-            ticker_hash = f"{ticker}{str(tickers_directory[ticker][current_start_date + 1])[:10]}"
-
-            if f"{ticker_hash}.csv" not in os.listdir("Model/SP_data") :
-                unavailable_tickers.append(ticker_hash)
-                print(f"ERROR: Not available data for {ticker_hash}.")
+        if (tickers_directory[ticker][current_start_date + 1] != cleaned_tickers['end_date'].values[-1] or
+            Use_Pre_Charged_Data) :
+            
+            if f"{ticker}.csv" not in os.listdir("Model/SP_data") :
+                print(f"ERROR: Not available data for {ticker}.")
                 continue
             
             # Then try to get the .csv file of the ticker.
             try :
-                df = pd.read_csv(f"Model/SP_data/{ticker_hash}.csv", sep=';')
+                df = pd.read_csv(f"Model/SP_data/{ticker}.csv", sep=';')
             # If that's not possible, raise an error, 
             # save that ticker in unavailable tickers list 
             # and skip this ticker calculation.
             except :
-                print(f"ERROR: Not available data for {ticker_hash}.")
+                print(f"ERROR: Not available data for {ticker}.")
                 unavailable_tickers.append(ticker)
                 continue
 
             # Reformat the df, standarizing dates and index.
             df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+
+            start_date = max(tickers_directory[ticker][current_start_date], Start_Date)
+            start_index = df.index[df['date'] == start_date].to_list()[0] - max_period_indicator
+            start_date = df['date'].values[start_index]
+
             df.set_index(df['date'], inplace=True)
             del df['date']
 
-            df = df.loc[df.index >= Start_Date]
+            df = df.loc[df.index >= start_date]
+            df = df.loc[df.index <= tickers_directory[ticker][current_start_date + 1]]
 
             # If the ticker df doesn't have any information skip it.
             if df.empty : 
-                print(f"ERROR: Not available data for {ticker_hash}.")
+                print(f"ERROR: Not available data for {ticker}.")
                 continue
 
             print('Charged!')
         else :
-            # If we want to use already downloaded data :
-            if Use_Pre_Charged_Data :
-
-                # Then try to get the .csv file of the ticker.
-                try :
-                    df = pd.read_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
+            # If we want to downloaded new data :
+            try :
+                # Then download the information from Yahoo Finance 
+                # and rename the columns for standarizing data.
+                df = yf.download(ticker)
+                df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+                df.index.names = ['date']
+            # If that's not possible :
+            except :
                 # If that's not possible, raise an error, 
                 # save that ticker in unavailable tickers list 
                 # and skip this ticker calculation.
-                except :
-                    print(f"ERROR: Not available data for {ticker}.")
-                    unavailable_tickers.append(ticker)
-                    continue
-                
-                # Reformat the df, standarizing dates and index.
-                df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-                df.set_index(df['date'], inplace=True)
-                del df['date']
+                print(f"ERROR: Not available data for {ticker} in YF.")
+                unavailable_tickers.append(ticker)
+                continue
+            
+            df.reset_index(inplace=True)
+            start_date = max(tickers_directory[ticker][current_start_date], Start_Date)
+            start_index = df.index[df['date'] == start_date].to_list()[0] - max_period_indicator
+            start_date = df['date'].values[start_index]
 
-                # If the ticker df doesn't have any information skip it.
-                if df.empty : continue
+            df.set_index(df['date'], inplace=True)
+            del df['date']
 
-                print('Charged!')
-            # If we want to downloaded new data :
-            else :
-                try :
-                    # start_date and end_date is a timestamp and causes problems 
-                    # when an object of this type is given as an argument to the yf.download(), 
-                    # that's why we have to cast that value as a string and 
-                    # then get the first 10 characters that are the date itself.
-                    start = str(tickers_directory[ticker][current_start_date])[:10]
+            df = df.loc[df.index >= start_date]
+            df = df.loc[df.index <= tickers_directory[ticker][current_start_date + 1]]
 
-                    end_a = tickers_directory[ticker][current_start_date + 1] + np.timedelta64(1,'D')
-                    end = str(end_a)[:10]
+            if df.empty :
+                # Raise an error, 
+                # save that ticker in unavailable tickers list 
+                # and skip this ticker calculation.
+                print(f"ERROR: Not available data for {ticker} in YF.")
+                unavailable_tickers.append(ticker)
+                continue
+            
+            print('Downloaded!')
 
-                    # Then download the information from Yahoo Finance 
-                    # and rename the columns for standarizing data.
-                    df = yf.download(str(ticker), start=start, end=end)
-                    df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
-                    df.index.names = ['date']
-                # If that's not possible :
-                except :
-                    # If that's not possible, raise an error, 
-                    # save that ticker in unavailable tickers list 
-                    # and skip this ticker calculation.
-                    count += 1
-                    print(f"ERROR: Not available data for {ticker} in YF.")
-                    unavailable_tickers.append(ticker)
-                    continue
-
-                if df.empty :
-                    # Raise an error, 
-                    # save that ticker in unavailable tickers list 
-                    # and skip this ticker calculation.
-                    count += 1
-                    print(f"ERROR: Not available data for {ticker} in YF.")
-                    unavailable_tickers.append(ticker)
-                    continue
-
-                print('Downloaded!')
-
-                # Try to create a folder to save all the data, 
-                # if there isn't one available yet.
-                try :
-                    # Create dir.
-                    os.mkdir('Model/SP_data')
-                except :
-                    # Save the data.
-                    df.to_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
+            # Try to create a folder to save all the data, 
+            # if there isn't one available yet.
+            try :
+                # Create dir.
+                os.mkdir('Model/SP_data')
+            except :
+                # Save the data.
+                df.to_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
 
         # Here both SPY_SMA and SPY information is cut,
         # in order that the data coincides with the current df period.
@@ -403,12 +386,6 @@ for ticker in tickers_directory.keys() :
         iSMA2 = TA.SMA(df, SMA2_Period)
         iMSD = TA.MSD(df, MSD_Period)
         iATR = TA.ATR(df, ATR_Period)
-
-        # Clean indicators data
-        iSMA1[0 : SMA1_Period] = -1
-        iSMA2[0 : SMA2_Period] = -1
-        iMSD[0 : MSD_Period] = -1
-        iATR[0 : ATR_Period] = -1
 
         # endregion
 
@@ -451,7 +428,11 @@ for ticker in tickers_directory.keys() :
             # Here we make sure that we have enough info to work with.
             if i == 0 : continue
 
-            if iSMA1[i] == -1 or iSMA2[i] == -1 or iMSD[i] == -1 or iATR[i] == -1 or iSPY_SMA['SMA'].values[i] == -1 : continue
+            if math.isnan(iSPY_SMA['SMA'].values[i]) : continue
+
+            if (math.isnan(iSMA1[i]) or math.isnan(iSMA2[i]) or math.isnan(iMSD[i]) or 
+                math.isnan(iATR[i])) : 
+                continue
 
             # endregion
             
