@@ -48,7 +48,7 @@ unavailable_tickers = []
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 # Indicators
 SMA1_Period = 100
 SMA2_Period = 5
@@ -78,7 +78,7 @@ print(f"The current working directory is {os.getcwd()}")
 
 # Here the SPY data is downloaded 
 print('SPY')
-SPY_global = yf.download('SPY', start=Start_Date)
+SPY_global = yf.download('SPY')
 
 # Rename df columns for cleaning porpuses 
 # and applying recommended.
@@ -303,8 +303,15 @@ for ticker in tickers_directory.keys() :
             # Reformat the df, standarizing dates and index.
             df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
 
-            start_date = max(tickers_directory[ticker][current_start_date], Start_Date)
-            start_index = df.index[df['date'] == start_date].to_list()[0] - max_period_indicator
+            start_date = max(df.date[0], tickers_directory[ticker][current_start_date], Start_Date)
+
+            start_index = df.index[df['date'] == start_date].to_list()[0]
+            if start_index - max_period_indicator < 0 :
+                start_index = 0
+            else :
+                start_index -= max_period_indicator
+
+
             start_date = df['date'].values[start_index]
 
             df.set_index(df['date'], inplace=True)
@@ -337,8 +344,14 @@ for ticker in tickers_directory.keys() :
                 continue
             
             df.reset_index(inplace=True)
-            start_date = max(tickers_directory[ticker][current_start_date], Start_Date)
-            start_index = df.index[df['date'] == start_date].to_list()[0] - max_period_indicator
+            start_date = max(df.date[0], tickers_directory[ticker][current_start_date], Start_Date)
+
+            start_index = df.index[df['date'] == start_date].to_list()[0]
+            if start_index - max_period_indicator < 0 :
+                start_index = 0
+            else :
+                start_index -= max_period_indicator
+
             start_date = df['date'].values[start_index]
 
             df.set_index(df['date'], inplace=True)
