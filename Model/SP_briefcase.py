@@ -299,11 +299,15 @@ for ticker in tickers_directory.keys() :
                 print(f"ERROR: Not available data for {ticker}.")
                 unavailable_tickers.append(ticker)
                 continue
+            
+            if df.empty :
+                print(f"ERROR: Not available data for {ticker}.")
+                continue
 
             # Reformat the df, standarizing dates and index.
             df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
 
-            start_date = max(df.date[0], tickers_directory[ticker][current_start_date], Start_Date)
+            start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
 
             start_index = df.index[df['date'] == start_date].to_list()[0]
             if start_index - max_period_indicator < 0 :
@@ -311,8 +315,13 @@ for ticker in tickers_directory.keys() :
             else :
                 start_index -= max_period_indicator
 
-
             start_date = df['date'].values[start_index]
+
+            while True :
+                if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
+                start_date = start_date + datetime.timedelta(days=1)
+
+            if start_date > pd.to_datetime('today').normalize() : continue
 
             df.set_index(df['date'], inplace=True)
             del df['date']
@@ -343,8 +352,19 @@ for ticker in tickers_directory.keys() :
                 unavailable_tickers.append(ticker)
                 continue
             
+            # If the ticker df doesn't have any information skip it.
+            if df.empty : 
+                print(f"ERROR: Not available data for {ticker}.")
+                continue
+
             df.reset_index(inplace=True)
-            start_date = max(df.date[0], tickers_directory[ticker][current_start_date], Start_Date)
+            start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
+
+            while True :
+                if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
+                start_date = start_date + datetime.timedelta(days=1)
+
+            if start_date > pd.to_datetime('today').normalize() : continue
 
             start_index = df.index[df['date'] == start_date].to_list()[0]
             if start_index - max_period_indicator < 0 :
