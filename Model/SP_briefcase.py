@@ -70,7 +70,10 @@ Account_Size = 10000
 
 # endregion
 
-max_period_indicator = max(SMA1_Period, SMA2_Period, MSD_Period, ATR_Period, SPY_SMA_Period)
+max_period_indicator = max(SMA1_Period, SMA2_Period, MSD_Period, ATR_Period)
+
+# First the Start_Date parameter is formatted and standarized.
+Start_Date = pd.to_datetime(Start_Date)
 
 print(f"The current working directory is {os.getcwd()}")
 
@@ -83,10 +86,41 @@ SPY_global = yf.download('SPY')
 # Rename df columns for cleaning porpuses 
 # and applying recommended.
 SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+SPY_global.index.names = ['date']
 
 # Drop duplicates leaving only the first value,
 # this due to the resting entry_dates in which the market is not moving.
 SPY_global = SPY_global.drop_duplicates(keep=False)
+
+SPY_global.reset_index(inplace=True)
+
+start_date = max(SPY_global.date[0], Start_Date)
+
+while True :
+    if start_date in SPY_global['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
+    start_date = start_date + datetime.timedelta(days=1)
+
+if start_date > pd.to_datetime('today').normalize() :
+    print(f"ERROR: Not available data for SPY in YF.")
+
+start_index = SPY_global.index[SPY_global['date'] == start_date].to_list()[0]
+if start_index - SPY_SMA_Period < 0 :
+    start_index = 0
+else :
+    start_index -= SPY_SMA_Period
+
+start_date = SPY_global['date'].values[start_index]
+
+SPY_global.set_index(SPY_global['date'], inplace=True)
+del SPY_global['date']
+
+SPY_global = SPY_global.loc[SPY_global.index >= start_date]
+
+if SPY_global.empty :
+    # Raise an error, 
+    # save that ticker in unavailable tickers list 
+    # and skip this ticker calculation.
+    print(f"ERROR: Not available data for SPY in YF.")
 
 # Here the SPY SMA is calculated for the Regime filter process,
 # establishing -1 as a value when the SMA is not calculated completely.
@@ -97,6 +131,9 @@ SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
 iSPY_SMA_global = pd.DataFrame({'date' : SPY_global.index, 'SMA' : SPY_SMA})
 iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
 
+SPY_global.to_csv('SPY.csv')
+iSPY_SMA_global.to_csv('SPY_SMA.csv')
+
 # endregion
 
 # region SURVIVORSHIP BIAS
@@ -104,9 +141,6 @@ iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
 # region Tickers_df
 # In this region, the SP500 historical constitutents file is cleaned, 
 # this in order to avoid the survivorship bias problem.
-
-# First the Start_Date parameter is formatted and standarized.
-Start_Date = pd.to_datetime(Start_Date)
 
 # Here the SP500 historical constitutents file is read, 
 # then the dates are standarized to avoid dates missinterpretation.
@@ -276,11 +310,16 @@ for ticker in tickers_directory.keys() :
     # it gives us the number of periods of that ticker.
     its = int(len(tickers_directory[ticker]) / 2)
     for a in range(its) :
+
         # region GET DATA
         
         # Determine the current start date, 
         # reversing the previous operation.
         current_start_date = a * 2
+        
+        a = str(tickers_directory[ticker][current_start_date])[:10]
+        b = str(tickers_directory[ticker][current_start_date + 1])[:10] 
+        print(f"({a}) ({b})")
 
         if (tickers_directory[ticker][current_start_date + 1] != cleaned_tickers['end_date'].values[-1] or
             Use_Pre_Charged_Data) :
@@ -673,7 +712,12 @@ for ticker in tickers_directory.keys() :
         trades['y3'] = np.array(y3)
         trades['y2_raw'] = np.array(y2_raw)
         trades['y3_raw'] = np.array(y3_raw)
+        
+        a = str(tickers_directory[ticker][current_start_date])[:10]
+        b = str(tickers_directory[ticker][current_start_date + 1])[:10]
 
+        trades.to_csv(f'trades_{ticker}{a}{b}.csv')
+        df.to_csv(f'{ticker}{a}{b}.csv')
         # endregion
 
         # Here the current trades df is added to 
