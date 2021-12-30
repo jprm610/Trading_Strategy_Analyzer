@@ -37,6 +37,8 @@ import datetime
 import quandl
 quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
 
+import time 
+
 # endregion
 
 # Here we create a df in which all trades are going to be saved.
@@ -130,9 +132,6 @@ SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
 # this in order to "cut" the SMA data needed for a ticker in the backtesting process.
 iSPY_SMA_global = pd.DataFrame({'date' : SPY_global.index, 'SMA' : SPY_SMA})
 iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
-
-SPY_global.to_csv('SPY.csv')
-iSPY_SMA_global.to_csv('SPY_SMA.csv')
 
 # endregion
 
@@ -304,6 +303,8 @@ for ticker in tickers_directory.keys() :
     print(ticker)
     asset_count += 1
 
+    if asset_count % 10 == 0 : time.sleep(2)
+
     # For every ticker period.
     # NOTE: As the tickers come with pairs of start and end dates, 
     # then when the quiantity of elements is divided by 2, 
@@ -316,10 +317,8 @@ for ticker in tickers_directory.keys() :
         # Determine the current start date, 
         # reversing the previous operation.
         current_start_date = a * 2
-        
-        a = str(tickers_directory[ticker][current_start_date])[:10]
-        b = str(tickers_directory[ticker][current_start_date + 1])[:10] 
-        print(f"({a}) ({b})")
+    
+        print(f"({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
 
         if (tickers_directory[ticker][current_start_date + 1] != cleaned_tickers['end_date'].values[-1] or
             Use_Pre_Charged_Data) :
@@ -712,12 +711,6 @@ for ticker in tickers_directory.keys() :
         trades['y3'] = np.array(y3)
         trades['y2_raw'] = np.array(y2_raw)
         trades['y3_raw'] = np.array(y3_raw)
-        
-        a = str(tickers_directory[ticker][current_start_date])[:10]
-        b = str(tickers_directory[ticker][current_start_date + 1])[:10]
-
-        trades.to_csv(f'trades_{ticker}{a}{b}.csv')
-        df.to_csv(f'{ticker}{a}{b}.csv')
         # endregion
 
         # Here the current trades df is added to 
