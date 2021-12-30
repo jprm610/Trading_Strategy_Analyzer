@@ -292,6 +292,7 @@ for ticker in tickers_directory.keys() :
             # Then try to get the .csv file of the ticker.
             try :
                 df = pd.read_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+                is_downloaded = False
             # If that's not possible, raise an error, 
             # save that ticker in unavailable tickers list 
             # and skip this ticker calculation.
@@ -306,35 +307,6 @@ for ticker in tickers_directory.keys() :
 
             # Reformat the df, standarizing dates and index.
             df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-
-            start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
-
-            start_index = df.index[df['date'] == start_date].to_list()[0]
-            if start_index - max_period_indicator < 0 :
-                start_index = 0
-            else :
-                start_index -= max_period_indicator
-
-            start_date = df['date'].values[start_index]
-
-            while True :
-                if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
-                start_date = start_date + datetime.timedelta(days=1)
-
-            if start_date > pd.to_datetime('today').normalize() : continue
-
-            df.set_index(df['date'], inplace=True)
-            del df['date']
-
-            df = df.loc[df.index >= start_date]
-            df = df.loc[df.index <= tickers_directory[ticker][current_start_date + 1]]
-
-            # If the ticker df doesn't have any information skip it.
-            if df.empty : 
-                print(f"ERROR: Not available data for {ticker}.")
-                continue
-
-            print('Charged!')
         else :
             # If we want to downloaded new data :
             try :
@@ -343,6 +315,7 @@ for ticker in tickers_directory.keys() :
                 df = yf.download(ticker)
                 df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
                 df.index.names = ['date']
+                is_downloaded = True
             # If that's not possible :
             except :
                 # If that's not possible, raise an error, 
@@ -358,46 +331,53 @@ for ticker in tickers_directory.keys() :
                 continue
 
             df.reset_index(inplace=True)
-            start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
 
-            while True :
-                if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
-                start_date = start_date + datetime.timedelta(days=1)
+        start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
 
-            if start_date > pd.to_datetime('today').normalize() : continue
+        while True :
+            if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
+            start_date = start_date + datetime.timedelta(days=1)
 
-            start_index = df.index[df['date'] == start_date].to_list()[0]
-            if start_index - max_period_indicator < 0 :
-                start_index = 0
-            else :
-                start_index -= max_period_indicator
+        if start_date > pd.to_datetime('today').normalize() :
+            print(f"ERROR: Not available data for {ticker} in YF.")
+            unavailable_tickers.append(ticker)
+            continue
 
-            start_date = df['date'].values[start_index]
+        start_index = df.index[df['date'] == start_date].to_list()[0]
+        if start_index - max_period_indicator < 0 :
+            start_index = 0
+        else :
+            start_index -= max_period_indicator
 
-            df.set_index(df['date'], inplace=True)
-            del df['date']
+        start_date = df['date'].values[start_index]
 
-            df = df.loc[df.index >= start_date]
-            df = df.loc[df.index <= tickers_directory[ticker][current_start_date + 1]]
+        df.set_index(df['date'], inplace=True)
+        del df['date']
 
-            if df.empty :
-                # Raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                print(f"ERROR: Not available data for {ticker} in YF.")
-                unavailable_tickers.append(ticker)
-                continue
-            
+        df = df.loc[df.index >= start_date]
+        df = df.loc[df.index <= tickers_directory[ticker][current_start_date + 1]]
+
+        if df.empty :
+            # Raise an error, 
+            # save that ticker in unavailable tickers list 
+            # and skip this ticker calculation.
+            print(f"ERROR: Not available data for {ticker} in YF.")
+            unavailable_tickers.append(ticker)
+            continue
+
+        if Use_Pre_Charged_Data :
+            print('Charged!')
+        else :
+            if is_downloaded :
+                # Try to create a folder to save all the data, 
+                # if there isn't one available yet.
+                try :
+                    # Create dir.
+                    os.mkdir('Model/SP_data')
+                except :
+                    # Save the data.
+                    df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
             print('Downloaded!')
-
-            # Try to create a folder to save all the data, 
-            # if there isn't one available yet.
-            try :
-                # Create dir.
-                os.mkdir('Model/SP_data')
-            except :
-                # Save the data.
-                df.to_csv(f"Model/SP_data/{ticker}{a}.csv", sep=';')
 
         # Here both SPY_SMA and SPY information is cut,
         # in order that the data coincides with the current df period.
