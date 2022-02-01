@@ -59,8 +59,8 @@ SPY_SMA_Period = 200
 Consecutive_Lower_Lows = 2
 
 # Overall backtesting parameters
-Start_Date = '2011-01-01'
-Risk_Unit = 100
+Start_Date = '2021-01-01'
+Risk_Unit = 10
 Perc_In_Risk = 2.3
 Trade_Slots = 10
 Commission_Perc = 0.1
@@ -225,6 +225,13 @@ def main() :
 
             SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
             SPY = SPYa.loc[SPYa.index <= df.index[-1]]
+
+            if len(df) != len(SPY) :
+                drops = []
+                for i in range(len(df)) :
+                    if df.index[i].weekday() in [5,6] :
+                        drops.append(df.index[i])
+                df.drop(drops, inplace=True)
 
             # endregion
 
@@ -526,12 +533,13 @@ def main() :
     # Here the trades_global df is edited 
     # in order to set the entry_date characteristic as the index.
     trades_global.drop_duplicates(keep='first', inplace=True)
-    trades_global = trades_global.sort_values(by=['exit_date'], ignore_index=True)
+    trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
     trades_global.to_csv('Model/Files/SP_trades_raw.csv')
 
     trades_global = Portfolio(trades_global)
 
     return_table = Return_Table(trades_global)
+    #return_table = pd.DataFrame()
 
     trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
     trades_global.set_index(trades_global['entry_date'], inplace=True)
@@ -773,6 +781,8 @@ def Survivorship_Bias() :
     return tickers_directory, cleaned_tickers
 
 def Portfolio(trades_global) :
+
+    print('Defining Portfolio!')
     
     # region Number of Trades DF
 
@@ -783,7 +793,16 @@ def Portfolio(trades_global) :
     Number_Closed_Trades_per_Date = []
     Trades_per_date = 0
     last_date = trades_global['entry_date'].values[0]
+    perc_to_print = 0
     for i in range(len(trades_global)) :
+        """perc = i/len(trades_global)*100
+        if perc >= perc_to_print :
+            if perc == 100 :
+                print('*')
+            else :
+                print('*', end='')
+            perc_to_print += 10"""
+            
         if trades_global['entry_date'].values[i] == last_date :
             Trades_per_date += 1
         else : 
@@ -800,6 +819,8 @@ def Portfolio(trades_global) :
     Number_of_trades['# of closed trades'] = np.array(Number_Closed_Trades_per_Date)
     Number_of_trades.set_index(Number_of_trades['date'], drop=True, inplace=True)
     del Number_of_trades['date']
+
+    Number_of_trades.to_csv('#trades.csv')
 
     # endregion
 
@@ -832,6 +853,8 @@ def Portfolio(trades_global) :
 
 def Return_Table(trades_global) :
 
+    print('Constructing Return Table!')
+
     # Here the trades_global df is edited 
     # in order to sart the df by exit_date.
     trades_global_rt = trades_global.copy()
@@ -858,6 +881,8 @@ def Return_Table(trades_global) :
 
 def Stats(trades_global) :
     
+    print('Calculating general stats!')
+
     # region General_Stats
 
     # Here a the stats df is created, 
@@ -996,8 +1021,10 @@ def Stats(trades_global) :
 
 def Files_Return(trades_global, return_table, stats, unavailable_tickers) :
 
+    print('Returning Files!')
+
     trades_global.to_csv('Model/Files/SP_trades.csv')
-    return_table.to_csv('Model/Files/SP_Return_Table.csv')
+    #return_table.to_csv('Model/Files/SP_Return_Table.csv')
     stats.to_csv('Model/Files/SP_stats.csv')
 
     unavailable_tickers_df = pd.DataFrame()
