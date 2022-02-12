@@ -39,28 +39,29 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 # Indicators
 
-BTC_SMA_Period = 200
+BTC_SMA_Period = 50
+BTC_Stop_SMA_Period = 100
 
 VPN_period = 10
-DO_period = 130
+DO_period = 50
 
 VPN_to_trade = -101
-Flat_iDO = 15
+Flat_iDO = 30
 
-TS_proportion_SPY_above_200 = 0.7
+TS_proportion_SPY_above_200 = 0.65
 TS_proportion_SPY_below_200 = 0.85
 Stop_Lock = 0.5
 
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
-Risk_Unit = 100
-Perc_In_Risk = 16
-Trade_Slots = 10
+Risk_Unit = 20
+Perc_In_Risk = 20
+Trade_Slots = 50
 Commission_Perc = 0.1
-Account_Size = 10000
+Account_Size = 5000
 
 # endregion
 
@@ -71,7 +72,7 @@ def main() :
 
     print("The current working directory is " + os.getcwd())
 
-    BTC_global, iBTC_SMA_global = BTC_regime()
+    BTC_global, iBTC_SMA_global, iBTC_Stop_SMA_global = BTC_regime()
 
     exchange_info = client.get_exchange_info()
     bnb_cryptos = [i['symbol'] for i in exchange_info['symbols']]
@@ -100,7 +101,11 @@ def main() :
         print(ticker)
         asset_count += 1
 
-        if ticker in ['EUR', 'AUD'] : continue
+        if ticker in ['EUR', 'AUD', 'TUSD', 'USDC', 'BUSD', 'PAX', 'PAXG', 'SUSD', 'USDS', 'COCOS', 'DREP'] : continue
+        if ticker[-4:] == 'DOWN' : continue
+        if ticker[-2:] == 'UP' : continue
+        if ticker[-4:] == 'BEAR' : continue
+        if ticker[-3:] == 'BULL' : continue
 
         # region GET DATA
 
@@ -216,6 +221,9 @@ def main() :
         iBTC_SMAa = iBTC_SMA_global.loc[iBTC_SMA_global.index >= df.index[0]]
         iBTC_SMA = iBTC_SMAa.loc[iBTC_SMAa.index <= df.index[-1]]
 
+        iBTC_Stop_SMAa = iBTC_Stop_SMA_global.loc[iBTC_Stop_SMA_global.index >= df.index[0]]
+        iBTC_Stop_SMA = iBTC_Stop_SMAa.loc[iBTC_Stop_SMAa.index <= df.index[-1]]
+
         BTCa = BTC_global.loc[BTC_global.index >= df.index[0]]
         BTC = BTCa.loc[BTCa.index <= df.index[-1]]
 
@@ -224,7 +232,9 @@ def main() :
         # region INDICATOR CALCULATIONS
 
         iVPN = VPN(df, VPN_period)
-        iSMA = TA.SMA(df, 100)
+        Stop_EMA = TA.EMA(df, 50)
+        Trend_EMA = TA.EMA(df, 50)
+        Limit_EMA = TA.EMA(df, 50)
 
         # Flip high and close columns to calculate
         # Donchian Channels. 
@@ -251,14 +261,22 @@ def main() :
 
         y_raw = []
         y_perc = []
+        y_ru = []
         y2_raw = []
         y3_raw = []
         y = []
         y2 = []
+        y2_perc = []
+        y2_ru = []
+        ru_left =[]
         y3 = []
+        y3_perc =[]
+        y3_ru = []
         max_price = []
         min_price = []
         y_index = []
+        duration_days = []
+        #duration_months = []
 
         is_signal = []
         close_tomorrow = []
@@ -272,8 +290,8 @@ def main() :
             # Here we make sure that we have enough info to work with.
             if i == 0 : continue
 
-            if (math.isnan(iBTC_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or 
-                math.isnan(iSMA[i]) or math.isnan(iDO.UPPER[i])) : continue
+            if (math.isnan(iBTC_SMA['SMA'].values[i]) or math.isnan(iBTC_Stop_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or math.isnan(Stop_EMA[i]) or
+                math.isnan(Trend_EMA[i]) or math.isnan(Limit_EMA[i]) or math.isnan(iDO.UPPER[i])) : continue
             # endregion
 
             # region TRADE CALCULATION
@@ -282,205 +300,305 @@ def main() :
             if df.close[i] > iDO.UPPER[i - 1] :
                 if BTC.close[i] > iBTC_SMA['SMA'].values[i] : 
                     if i - last_iDO_breakout > Flat_iDO and last_iDO_breakout != 0 :
-                        if i == len(df) - 1 :
-                            # region Signals
-                            if iVPN[i] > VPN_to_trade :
+                    #if i - last_iDO_breakout > Flat_iDO :
+                        
+                        #Condition to prevent extended trades
+                        #if df.close[i] < Limit_EMA[i] * 2 :
 
-                                # Before entering the trade,
-                                # calculate the shares_to_trade,
-                                # in order to risk the Perc_In_Risk of the crypto,
-                                # finally make sure that we can afford those shares to trade.
-                                current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
+                        #Condition to trade in favor of the current trend of the ticker
+                        #if df.close[i] > Trend_EMA[i] :
+                            if i == len(df) - 1 :
+                                # region Signals
+                                if iVPN[i] > VPN_to_trade :
 
-                                shares_to_trade = abs(Risk_Unit / current_avg_lose)
+                                    # Before entering the trade,
+                                    # calculate the shares_to_trade,
+                                    # in order to risk the Perc_In_Risk of the crypto,
+                                    # finally make sure that we can afford those shares to trade.
+                                    current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
 
-                                # Here the order is set, saving all variables 
-                                # that characterizes the operation.
-                                # The on_trade flag is updated 
-                                # in order to avoid more than one operation calculation in later candles, 
-                                # until the operation is exited.
-                                is_signal.append(True)
-                                trade_type.append("Long")
-                                crypto.append(ticker)
-                                shares_to_trade_list.append(shares_to_trade)
-                                
-                                VPN_ot.append(iVPN[i])
+                                    shares_to_trade = abs(Risk_Unit / current_avg_lose)
 
-                                # Here all y variables are set to 0, 
-                                # in order to differentiate the signal operation in the trdes df.
-                                entry_dates.append(df.index[i])
-                                y_index.append(df.index[i])
-                                entry_price.append(df.close[i])
-                                exit_price.append(df.close[i])
-                                stop_price.append(df.close[i] * Stop_Lock)
-                                y.append(0)
-                                y2.append(0)
-                                y3.append(0)
-                                y_raw.append(0)
-                                y_perc.append(0)
-                                y2_raw.append(0)
-                                y3_raw.append(0)
-                                max_price.append(entry_price)
-                                min_price.append(entry_price)
-                                close_tomorrow.append(False)
-
-                            # endregion
-                        else :
-                            # region Backtesting
-                            if iVPN[i] > VPN_to_trade :
-
-                                # Before entering the trade,
-                                # calculate the shares_to_trade,
-                                # in order to risk the Perc_In_Risk of the crypto,
-                                # finally make sure that we can afford those shares to trade.
-                                current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
-
-                                shares_to_trade = abs(Risk_Unit / current_avg_lose)
-
-                                # Here the order is set, saving all variables 
-                                # that characterizes the operation.
-                                # The on_trade flag is updated 
-                                # in order to avoid more than one operation calculation in later candles, 
-                                # until the operation is exited.
-                                is_signal.append(False)
-                                trade_type.append("Long")
-                                crypto.append(ticker)
-                                shares_to_trade_list.append(shares_to_trade)
-                                
-                                VPN_ot.append(iVPN[i])
-                                
-                                # To simulate that the order is executed in the next day, 
-                                # the entry price is taken in the next candle open. 
-                                # Nevertheless, when we are in the last candle that can't be done, 
-                                # that's why the current close is saved in that case.
-                                entry_dates.append(df.index[i + 1])
-                                entry_price.append(df.open[i + 1])
-                                max_income = df.high[i + 1]
-                                min_income = df.low[i + 1]
-
-                                new_df = df.loc[df.index >= df.index[i + 1]]
-                                for j in range(len(new_df)) :
-
-                                    # Ordinary check to avoid errors.
-                                    if len(trade_type) == 0 : 
-                                        last_iDO_breakout = i
-                                        continue
+                                    # Here the order is set, saving all variables 
+                                    # that characterizes the operation.
+                                    # The on_trade flag is updated 
+                                    # in order to avoid more than one operation calculation in later candles, 
+                                    # until the operation is exited.
+                                    is_signal.append(True)
+                                    trade_type.append("Long")
+                                    crypto.append(ticker)
+                                    shares_to_trade_list.append(shares_to_trade)
                                     
-                                    # Here the max_income variable is updated.
-                                    if new_df.high[j] > max_income :
-                                        max_income = new_df.high[j]
+                                    VPN_ot.append(iVPN[i])
 
-                                    if BTC.close[i + j + 1] > iBTC_SMA['SMA'].values[i + j + 1] :
-                                        trailling_stop = max_income * TS_proportion_SPY_above_200
-                                    else :
-                                        trailling_stop = max_income * TS_proportion_SPY_below_200
+                                    # Here all y variables are set to 0, 
+                                    # in order to differentiate the signal operation in the trdes df.
+                                    entry_dates.append(df.index[i])
+                                    y_index.append(df.index[i])
+                                    entry_price.append(df.close[i])
+                                    exit_price.append(df.close[i])
+                                    stop_price.append(df.close[i] * Stop_Lock)
 
-                                    stop_lock = max_income * Stop_Lock
+                                    duration_days.append(0)
+                                    #duration_months.append(0)
+                                    y.append(0)
+                                    y2.append(0)
+                                    y2_perc.append(0)
+                                    y2_ru.append(0)
+                                    ru_left.append(0)
+                                    y3.append(0)
+                                    y3_perc.append(0)
+                                    y3_ru.append(0)
+                                    y_raw.append(0)
+                                    y_perc.append(0)
+                                    y_ru.append(0)
+                                    y2_raw.append(0)
+                                    y3_raw.append(0)
+                                    max_price.append(entry_price)
+                                    min_price.append(entry_price)
+                                    close_tomorrow.append(False)
 
-                                    # Here the min_income variable is updated.
-                                    if new_df.low[j] < min_income :
-                                        min_income = new_df.low[j]
+                                # endregion
+                            else :
+                                # region Backtesting
+                                if iVPN[i] > VPN_to_trade :
 
-                                    if new_df.low[j] <= stop_lock :
+                                    # Before entering the trade,
+                                    # calculate the shares_to_trade,
+                                    # in order to risk the Perc_In_Risk of the crypto,
+                                    # finally make sure that we can afford those shares to trade.
+                                    current_avg_lose = df.close[i] * (Perc_In_Risk / 100)
 
-                                        # To simulate that the order is executed in the next day, 
-                                        # the entry price is taken in the next candle open. 
-                                        # Nevertheless, when we are in the last candle that can't be done, 
-                                        # that's why the current close is saved in that case.
-                                        if j == len(new_df) - 1 :
-                                            outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                    shares_to_trade = abs(Risk_Unit / current_avg_lose)
 
-                                            y_index.append(new_df.index[j])
-                                            exit_price.append(stop_lock)
+                                    # Here the order is set, saving all variables 
+                                    # that characterizes the operation.
+                                    # The on_trade flag is updated 
+                                    # in order to avoid more than one operation calculation in later candles, 
+                                    # until the operation is exited.
+                                    is_signal.append(False)
+                                    trade_type.append("Long")
+                                    crypto.append(ticker)
+                                    shares_to_trade_list.append(shares_to_trade)
+                                    
+                                    VPN_ot.append(iVPN[i])
+                                    
+                                    # To simulate that the order is executed in the next day, 
+                                    # the entry price is taken in the next candle open. 
+                                    # Nevertheless, when we are in the last candle that can't be done, 
+                                    # that's why the current close is saved in that case.
+                                    entry_dates.append(df.index[i + 1])
+                                    entry_price.append(df.open[i + 1])
+                                    max_income = df.high[i + 1]
+                                    min_income = df.low[i + 1]
 
-                                            close_tomorrow.append(True)
+                                    # region Trade Management
+                                    new_df = df.loc[df.index >= df.index[i + 1]]
+                                    for j in range(len(new_df)) :
+
+                                        # Ordinary check to avoid errors.
+                                        if len(trade_type) == 0 : 
+                                            last_iDO_breakout = i
+                                            continue
+                                        
+                                        # Here the max_income variable is updated.
+                                        if new_df.high[j] > max_income :
+                                            max_income = new_df.high[j]
+
+                                        if BTC.close[i + j + 1] > iBTC_Stop_SMA['SMA'].values[i + j + 1] :
+                                            trailling_stop = max_income * TS_proportion_SPY_above_200
                                         else :
-                                            outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                            trailling_stop = max_income * TS_proportion_SPY_below_200
 
-                                            y_index.append(new_df.index[j + 1])
-                                            exit_price.append(stop_lock)
+                                        if j == 0 :
+                                            stop_lock = new_df.open[j] * Stop_Lock
 
-                                            close_tomorrow.append(False)
+                                        # Here the min_income variable is updated.
+                                        if new_df.low[j] < min_income :
+                                            min_income = new_df.low[j]
 
-                                        if exit_price[-1] > max_income : max_income = exit_price[-1]
+                                        # region Stop Loss
+                                        if new_df.low[j] <= stop_lock :
 
-                                        if exit_price[-1] < min_income : min_income = exit_price[-1]
+                                            # To simulate that the order is executed in the next day, 
+                                            # the entry price is taken in the next candle open. 
+                                            # Nevertheless, when we are in the last candle that can't be done, 
+                                            # that's why the current close is saved in that case.
+                                            if j == len(new_df) - 1 :
+                                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                                        # Saving all missing trade characteristics.
-                                        y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(y_raw[-1] / entry_price[-1] * 100)
-                                        y2_raw.append(max_income - entry_price[-1])
-                                        y3_raw.append(min_income - entry_price[-1])
-                                        y.append(outcome)
-                                        y2.append(y2_raw[-1] * shares_to_trade)
-                                        y3.append(y3_raw[-1] * shares_to_trade)
-                                        max_price.append(max_income)
-                                        min_price.append(min_income)
-                                        stop_price.append(stop_lock)
-                                        break
-                                    # If the current close is below SMA :
-                                    elif new_df.close[j] < trailling_stop :
+                                                y_index.append(new_df.index[j])
+                                                exit_price.append(stop_lock)
 
-                                        # To simulate that the order is executed in the next day, 
-                                        # the entry price is taken in the next candle open. 
-                                        # Nevertheless, when we are in the last candle that can't be done, 
-                                        # that's why the current close is saved in that case.
+                                                close_tomorrow.append(True)
+                                            else :
+                                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j + 1])
+                                                exit_price.append(stop_lock)
+
+                                                close_tomorrow.append(False)
+
+                                            if exit_price[-1] > max_income : max_income = exit_price[-1]
+
+                                            if exit_price[-1] < min_income : min_income = exit_price[-1]
+
+                                            # Saving all missing trade characteristics.
+                                            duration_days.append(y_index[-1] - entry_dates[-1])
+                                            #duration_months.append(duration_days[-1] / 30)
+                                            y_raw.append(exit_price[-1] - entry_price[-1])
+                                            y_perc.append(y_raw[-1] / entry_price[-1] * 100)
+                                            y_ru.append(y_perc[-1] / Perc_In_Risk)
+                                            y2_raw.append(max_income - entry_price[-1])
+                                            y3_raw.append(min_income - entry_price[-1])
+                                            y.append(outcome)
+                                            y2.append(y2_raw[-1] * shares_to_trade)
+                                            y2_perc.append(y2_raw[-1]  / entry_price[-1] * 100)
+                                            y2_ru.append(y2_perc[-1] / Perc_In_Risk)
+                                            ru_left.append(y2_ru[-1] - y_ru[-1])
+                                            y3.append(y3_raw[-1] * shares_to_trade)
+                                            y3_perc.append(y3_raw[-1]  / entry_price[-1] * 100)
+                                            y3_ru.append(y3_perc[-1] / Perc_In_Risk)
+                                            max_price.append(max_income)
+                                            min_price.append(min_income)
+                                            stop_price.append(stop_lock)
+                                            break
+                                        # endregion
+
+                                        # region Trailing Stop
+                                        # If the current close is below SMA (Stop_EMA[i + j + 1] or trailling_stop) :
+                                        elif new_df.close[j] < trailling_stop :
+
+                                            # To simulate that the order is executed in the next day, 
+                                            # the entry price is taken in the next candle open. 
+                                            # Nevertheless, when we are in the last candle that can't be done, 
+                                            # that's why the current close is saved in that case.
+                                            if j == len(new_df) - 1 :
+                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j])
+                                                exit_price.append(new_df.close[j])
+
+                                                close_tomorrow.append(True)
+                                            else :
+                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j + 1])
+                                                exit_price.append(new_df.open[j + 1])
+
+                                                close_tomorrow.append(False)
+
+                                            if exit_price[-1] > max_income : max_income = exit_price[-1]
+
+                                            if exit_price[-1] < min_income : min_income = exit_price[-1]
+
+                                            # Saving all missing trade characteristics.
+                                            duration_days.append(y_index[-1] - entry_dates[-1])
+                                            #duration_months.append(duration_days[-1] / 30)
+                                            y_raw.append(exit_price[-1] - entry_price[-1])
+                                            y_perc.append(y_raw[-1] / entry_price[-1] * 100)
+                                            y_ru.append(y_perc[-1] / Perc_In_Risk)
+                                            y2_raw.append(max_income - entry_price[-1])
+                                            y3_raw.append(min_income - entry_price[-1])
+                                            y.append(outcome)
+                                            y2.append(y2_raw[-1] * shares_to_trade)
+                                            y2_perc.append(y2_raw[-1]  / entry_price[-1] * 100)
+                                            y2_ru.append(y2_perc[-1] / Perc_In_Risk)
+                                            ru_left.append(y2_ru[-1] - y_ru[-1])
+                                            y3.append(y3_raw[-1] * shares_to_trade)
+                                            y3_perc.append(y3_raw[-1]  / entry_price[-1] * 100)
+                                            y3_ru.append(y3_perc[-1] / Perc_In_Risk)
+                                            max_price.append(max_income)
+                                            min_price.append(min_income)
+                                            stop_price.append(stop_lock)
+                                            break
+                                        # endregion
+                                        """"
+                                        # region Taking Profits (Limit Price)
+                                        elif new_df.close[j] > Limit_EMA[i + j + 1] * 7 :
+
+                                            # To simulate that the order is executed in the next day, 
+                                            # the entry price is taken in the next candle open. 
+                                            # Nevertheless, when we are in the last candle that can't be done, 
+                                            # that's why the current close is saved in that case.
+                                            if j == len(new_df) - 1 :
+                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j])
+                                                exit_price.append(new_df.close[j])
+
+                                                close_tomorrow.append(True)
+                                            else :
+                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                                y_index.append(new_df.index[j + 1])
+                                                exit_price.append(new_df.open[j + 1])
+
+                                                close_tomorrow.append(False)
+
+                                            if exit_price[-1] > max_income : max_income = exit_price[-1]
+
+                                            if exit_price[-1] < min_income : min_income = exit_price[-1]
+
+                                            # Saving all missing trade characteristics.
+                                            duration_days.append(y_index[-1] - entry_dates[-1])
+                                            #duration_months.append(duration_days[-1] / 30)
+                                            y_raw.append(exit_price[-1] - entry_price[-1])
+                                            y_perc.append(y_raw[-1] / entry_price[-1] * 100)
+                                            y_ru.append(y_perc[-1] / Perc_In_Risk)
+                                            y2_raw.append(max_income - entry_price[-1])
+                                            y3_raw.append(min_income - entry_price[-1])
+                                            y.append(outcome)
+                                            y2.append(y2_raw[-1] * shares_to_trade)
+                                            y2_perc.append(y2_raw[-1]  / entry_price[-1] * 100)
+                                            y2_ru.append(y2_perc[-1] / Perc_In_Risk)
+                                            ru_left.append(y2_ru[-1] - y_ru[-1])
+                                            y3.append(y3_raw[-1] * shares_to_trade)
+                                            y3_perc.append(y3_raw[-1]  / entry_price[-1] * 100)
+                                            y3_ru.append(y3_perc[-1] / Perc_In_Risk)
+                                            max_price.append(max_income)
+                                            min_price.append(min_income)
+                                            stop_price.append(stop_lock)
+                                            break
+                                        """
+                                        # endregion
+                                        
+                                        # if the trade is still open at the last candle then append the values regarding the last close
                                         if j == len(new_df) - 1 :
+                                            # All characteristics are saved 
+                                            # as if the trade was exited in this moment.
                                             outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                                            y_index.append(new_df.index[j])
                                             exit_price.append(new_df.close[j])
 
-                                            close_tomorrow.append(True)
-                                        else :
-                                            outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                            y_index.append(new_df.index[j + 1])
-                                            exit_price.append(new_df.open[j + 1])
-
+                                            y_index.append(new_df.index[j])
                                             close_tomorrow.append(False)
 
-                                        if exit_price[-1] > max_income : max_income = exit_price[-1]
+                                            duration_days.append(y_index[-1] - entry_dates[-1])
+                                            #duration_months.append(duration_days[-1] / 30)
+                                            y_raw.append(exit_price[-1] - entry_price[-1])
+                                            y_perc.append(y_raw[-1] / entry_price[-1] * 100)
+                                            y_ru.append(y_perc[-1] / Perc_In_Risk)
+                                            y2_raw.append(max_income - entry_price[-1])
+                                            y3_raw.append(min_income - entry_price[-1])
+                                            y.append(outcome)
+                                            y2.append(y2_raw[-1] * shares_to_trade)
+                                            y2_perc.append(y2_raw[-1]  / entry_price[-1] * 100)
+                                            y2_ru.append(y2_perc[-1] / Perc_In_Risk)
+                                            ru_left.append(y2_ru[-1] - y_ru[-1])
+                                            y3.append(y3_raw[-1] * shares_to_trade)
+                                            y3_perc.append(y3_raw[-1]  / entry_price[-1] * 100)
+                                            y3_ru.append(y3_perc[-1] / Perc_In_Risk)
+                                            max_price.append(max_income)
+                                            min_price.append(min_income)
+                                            stop_price.append(stop_lock)
+                                            break
 
-                                        if exit_price[-1] < min_income : min_income = exit_price[-1]
-
-                                        # Saving all missing trade characteristics.
-                                        y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(y_raw[-1] / entry_price[-1] * 100)
-                                        y2_raw.append(max_income - entry_price[-1])
-                                        y3_raw.append(min_income - entry_price[-1])
-                                        y.append(outcome)
-                                        y2.append(y2_raw[-1] * shares_to_trade)
-                                        y3.append(y3_raw[-1] * shares_to_trade)
-                                        max_price.append(max_income)
-                                        min_price.append(min_income)
-                                        stop_price.append(stop_lock)
-                                        break
-                                    
-                                    if j == len(new_df) - 1 :
-                                        # All characteristics are saved 
-                                        # as if the trade was exited in this moment.
-                                        outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                        exit_price.append(new_df.close[j])
-
-                                        y_index.append(new_df.index[j])
-                                        close_tomorrow.append(False)
-
-                                        y_raw.append(exit_price[-1] - entry_price[-1])
-                                        y_perc.append(y_raw[-1] / entry_price[-1] * 100)
-                                        y2_raw.append(max_income - entry_price[-1])
-                                        y3_raw.append(min_income - entry_price[-1])
-                                        y.append(outcome)
-                                        y2.append(y2_raw[-1] * shares_to_trade)
-                                        y3.append(y3_raw[-1] * shares_to_trade)
-                                        max_price.append(max_income)
-                                        min_price.append(min_income)
-                                        stop_price.append(stop_lock)
-                                        break
-                            
-                            # endregion
-                last_iDO_breakout = i
+                                        if j != 0 :
+                                            stop_lock = max_income * Stop_Lock   
+                                    # endregion
+                                # endregion
+                    last_iDO_breakout = i
             # endregion
         # endregion
 
@@ -492,6 +610,8 @@ def main() :
         # Here all trades including their characteristics are saved in a df.
         trades['entry_date'] = np.array(entry_dates)
         trades['exit_date'] = np.array(y_index)
+        trades['days'] = np.array(duration_days)
+        #trades['months'] = np.array(duration_months)        
         trades['trade_type']  = np.array(trade_type)
         trades['crypto'] = np.array(crypto)
         trades['is_signal'] = np.array(is_signal)
@@ -501,6 +621,7 @@ def main() :
         trades['y']  = np.array(y)
         trades['y_raw'] = np.array(y_raw)
         trades['y%'] = np.array(y_perc)
+        trades['y_ru'] = np.array(y_ru)
         trades['shares_to_trade'] = np.array(shares_to_trade_list)
         trades['close_tomorrow'] = np.array(close_tomorrow)
 
@@ -508,8 +629,13 @@ def main() :
         
         trades['max'] = np.array(max_price)
         trades['min'] = np.array(min_price)
-        trades['y2'] = np.array(y2)
-        trades['y3'] = np.array(y3)
+        trades['MFE'] = np.array(y2)
+        trades['MFE_%'] = np.array(y2_perc)
+        trades['MFE_ru'] = np.array(y2_ru)
+        trades['RU_left'] = np.array(ru_left)
+        trades['MAE'] = np.array(y3)
+        trades['MAE_%'] = np.array(y3_perc)
+        trades['MAE_ru'] = np.array(y3_ru)
         trades['y2_raw'] = np.array(y2_raw)
         trades['y3_raw'] = np.array(y3_raw)
 
@@ -580,14 +706,19 @@ def BTC_regime() :
         BTC_global = BTC_global.sort_index()
 
     # Here the BTC SMA is calculated for the Regime filter process.
-    BTC_SMA = TA.SMA(BTC_global, BTC_SMA_Period)
+    BTC_SMA = TA.EMA(BTC_global, BTC_SMA_Period)
+    BTC_Stop_SMA = TA.EMA(BTC_global, BTC_Stop_SMA_Period)
 
     # The BTC SMA is then saved into a dataframe with it's date, 
     # this in order to "cut" the SMA data needed for a ticker in the backtesting process.
     iBTC_SMA_global = pd.DataFrame({'date' : BTC_global.index, 'SMA' : BTC_SMA})
     iBTC_SMA_global.set_index(iBTC_SMA_global['date'], inplace=True)
 
-    return BTC_global, iBTC_SMA_global
+    #this BTC DF is for trailing stop purposes instead of RF purposes
+    iBTC_Stop_SMA_global = pd.DataFrame({'date' : BTC_global.index, 'SMA' : BTC_Stop_SMA})
+    iBTC_Stop_SMA_global.set_index(iBTC_Stop_SMA_global['date'], inplace=True)
+
+    return BTC_global, iBTC_SMA_global, iBTC_Stop_SMA_global
 
 def Portfolio(trades_global) :
     
@@ -687,39 +818,43 @@ def Stats(trades_global) :
     # Then the time period is written.
     stats.loc[len(stats)] = ['Start date', trades_global.index.values[0]]
     stats.loc[len(stats)] = ['End date', trades_global['exit_date'].values[-1]]
+    #stats.loc[len(stats)] = ['Av. duration (days)', statistics.mean(trades_global['days'])]
+
 
     # Then the overall profit is calculated, and the amount of trades is saved.
-    stats.loc[len(stats)] = ['Net profit', trades_global['y'].sum()]
+    stats.loc[len(stats)] = ['Net profit', round(trades_global['y'].sum(), 1)]
+    stats.loc[len(stats)] = ['RU left', round(trades_global['RU_left'].sum(), 1)]
+    stats.loc[len(stats)] = ['Av. RU left', round(trades_global['RU_left'].mean(), 1)]
     stats.loc[len(stats)] = ['Total # of trades', len(trades_global)]
     stats.loc[len(stats)] = ['# of winning trades', len(global_wins)]
     stats.loc[len(stats)] = ['# of losing trades', len(global_loses)]
 
     # Here the winning weight is calculated, also known as % profitable.
     profitable = len(global_wins) / len(trades_global)
-    stats.loc[len(stats)] = ['Winning Weight', profitable * 100]
+    stats.loc[len(stats)] = ['Winning Weight', round(profitable * 100, 1)]
 
     # The total win and lose is saved.
     total_win = sum(global_wins)
     total_lose = sum(global_loses)
-    stats.loc[len(stats)] = ['Total win', total_win]
-    stats.loc[len(stats)] = ['Total lose', total_lose]
+    stats.loc[len(stats)] = ['Total win', round(total_win, 1)]
+    stats.loc[len(stats)] = ['Total lose', round(total_lose, 1)]
 
     # Here the profit factor is calculated.
-    stats.loc[len(stats)] = ['Profit factor', total_win / abs(total_lose)]
+    stats.loc[len(stats)] = ['Profit factor', round(total_win / abs(total_lose), 1)]
 
     # The avg win and lose is calculated.
     avg_win = statistics.mean(global_wins)
     avg_lose = statistics.mean(global_loses)
-    stats.loc[len(stats)] = ['Avg win', avg_win]
-    stats.loc[len(stats)] = ['Avg lose', avg_lose]
-    stats.loc[len(stats)] = ['Reward to risk ratio', avg_win / abs(avg_lose)]
-    stats.loc[len(stats)] = ['Avg max win', statistics.mean(trades_global['y2'])]
-    stats.loc[len(stats)] = ['Avg max lose', statistics.mean(trades_global['y3'])]
+    stats.loc[len(stats)] = ['Avg win', round(avg_win, 1)]
+    stats.loc[len(stats)] = ['Avg lose', round(avg_lose, 1)]
+    stats.loc[len(stats)] = ['Reward to risk ratio', round(avg_win / abs(avg_lose), 1)]
+    stats.loc[len(stats)] = ['Avg max win', round(statistics.mean(trades_global['MFE']), 1)]
+    stats.loc[len(stats)] = ['Avg max lose', round(statistics.mean(trades_global['MAE']), 1)]
 
     # Best and worst trades, includin the expectancy are saved.
-    stats.loc[len(stats)] = ['Best trade', max(global_wins)]
-    stats.loc[len(stats)] = ['Worst trade', min(global_loses)]
-    stats.loc[len(stats)] = ['Expectancy', (profitable * avg_win) - ((1 - profitable) * -avg_lose)]
+    stats.loc[len(stats)] = ['Best trade', round(max(global_wins), 1)]
+    stats.loc[len(stats)] = ['Worst trade', round(min(global_loses), 1)]
+    stats.loc[len(stats)] = ['Expectancy', round((profitable * avg_win) - ((1 - profitable) * -avg_lose), 1)]
     # endregion
 
     # region Streaks
@@ -798,10 +933,10 @@ def Stats(trades_global) :
         for i in range(len(drawdowns)) :
             if drawdowns[i] > max_dd :
                 max_dd = drawdowns[i]
-                perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
+                #perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
 
-        stats.loc[len(stats)] = ['Max drawdown', max_dd]
-        stats.loc[len(stats)] = ['Max drawdown %', perc_max_dd]
+        stats.loc[len(stats)] = ['Max drawdown', round(max_dd, 1)]
+        stats.loc[len(stats)] = ['Max drawdown %', round(perc_max_dd, 1)]
     except :
         stats.loc[len(stats)] = ['Max drawdown', 'unknown']
         stats.loc[len(stats)] = ['Max drawdown %', 'unknown']
