@@ -49,10 +49,10 @@ VPN_period = 10
 DO_period = 50
 
 VPN_to_trade = -101
-Flat_iDO = 30
+Flat_iDO = 15   
 
-TS_proportion_SPY_above_200 = 0.65
-TS_proportion_SPY_below_200 = 0.85
+TS_proportion_BTC_above_200 = 0.65
+TS_proportion_BTC_below_200 = 0.85
 Stop_Lock = 0.5
 
 # Overall backtesting parameters
@@ -101,7 +101,7 @@ def main() :
         print(ticker)
         asset_count += 1
 
-        if ticker in ['EUR', 'AUD', 'TUSD', 'USDC', 'BUSD', 'PAX', 'PAXG', 'SUSD', 'USDS', 'COCOS', 'DREP'] : continue
+        if ticker in ['EUR', 'AUD', 'GBP', 'TUSD', 'USDC', 'BUSD', 'PAX', 'PAXG', 'SUSD', 'USDS', 'COCOS', 'DREP'] : continue
         if ticker[-4:] == 'DOWN' : continue
         if ticker[-2:] == 'UP' : continue
         if ticker[-4:] == 'BEAR' : continue
@@ -232,7 +232,7 @@ def main() :
         # region INDICATOR CALCULATIONS
 
         iVPN = VPN(df, VPN_period)
-        Stop_EMA = TA.EMA(df, 50)
+        Stop_EMA = TA.EMA(df, 100)
         Trend_EMA = TA.EMA(df, 50)
         Limit_EMA = TA.EMA(df, 50)
 
@@ -298,15 +298,19 @@ def main() :
             # Here the Regime Filter is done,
             # checking that the current BTC close is above the BTC's SMA.
             if df.close[i] > iDO.UPPER[i - 1] :
-                if BTC.close[i] > iBTC_SMA['SMA'].values[i] : 
+
+                #Condition to trade in favor of the current trend of the ticker, the BTC or both
+                if BTC.close[i] > iBTC_SMA['SMA'].values[i] and df.close[i] > Trend_EMA[i] :
+                #if BTC.close[i] > iBTC_SMA['SMA'].values[i] :
+                #if df.close[i] > Trend_EMA[i] :
+
+                    # added the option here to test with or without the first BO
                     if i - last_iDO_breakout > Flat_iDO and last_iDO_breakout != 0 :
                     #if i - last_iDO_breakout > Flat_iDO :
                         
                         #Condition to prevent extended trades
                         #if df.close[i] < Limit_EMA[i] * 2 :
 
-                        #Condition to trade in favor of the current trend of the ticker
-                        #if df.close[i] > Trend_EMA[i] :
                             if i == len(df) - 1 :
                                 # region Signals
                                 if iVPN[i] > VPN_to_trade :
@@ -405,10 +409,13 @@ def main() :
                                         if new_df.high[j] > max_income :
                                             max_income = new_df.high[j]
 
-                                        if BTC.close[i + j + 1] > iBTC_Stop_SMA['SMA'].values[i + j + 1] :
-                                            trailling_stop = max_income * TS_proportion_SPY_above_200
+                                        # We have all the option to perform the trailing stop (with respect to the ticker EMA or regarding BTC EMA or both)
+                                        if BTC.close[i + j + 1] > iBTC_Stop_SMA['SMA'].values[i + j + 1] and new_df.close[j] > Stop_EMA[i + j + 1] :
+                                        #if new_df.close[j] > Stop_EMA[i + j + 1] :
+                                        #if BTC.close[i + j + 1] > iBTC_Stop_SMA['SMA'].values[i + j + 1] :
+                                            trailling_stop = max_income * TS_proportion_BTC_above_200
                                         else :
-                                            trailling_stop = max_income * TS_proportion_SPY_below_200
+                                            trailling_stop = max_income * TS_proportion_BTC_below_200
 
                                         if j == 0 :
                                             stop_lock = new_df.open[j] * Stop_Lock
@@ -598,7 +605,7 @@ def main() :
                                             stop_lock = max_income * Stop_Lock   
                                     # endregion
                                 # endregion
-                    last_iDO_breakout = i
+                last_iDO_breakout = i
             # endregion
         # endregion
 
