@@ -53,15 +53,16 @@ Flat_iDO = 15
 
 TS_proportion_BTC_above_200 = 0.65
 TS_proportion_BTC_below_200 = 0.85
-Stop_Lock = 0.5
+Stop_Lock = 0.66
+Stop_Lock_Trail = 0.5
 
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
-Risk_Unit = 20
-Perc_In_Risk = 20
+Risk_Unit = 24
+Perc_In_Risk = 16
 Trade_Slots = 50
 Commission_Perc = 0.1
-Account_Size = 5000
+Account_Size = 7500
 
 # endregion
 
@@ -601,8 +602,8 @@ def main() :
                                             stop_price.append(stop_lock)
                                             break
 
-                                        if j != 0 :
-                                            stop_lock = max_income * Stop_Lock   
+                                        if j != 0 and (max_income * Stop_Lock_Trail) > stop_lock :
+                                            stop_lock = max_income * Stop_Lock_Trail   
                                     # endregion
                                 # endregion
                 last_iDO_breakout = i
@@ -748,6 +749,11 @@ def Portfolio(trades_global) :
             Number_Closed_Trades_per_Date.append(Closed_Trades_per_Date)
             last_date = trades_global['entry_date'].values[i]
             Trades_per_date = 1
+        if i == len(trades_global) - 1 :
+            Closed_Trades_per_Date = sum(1 for x in trades_global['exit_date'][0:i] if x <= trades_global['entry_date'].values[i]) - sum(Number_Closed_Trades_per_Date)
+            Trading_dates.append(trades_global['entry_date'].values[i])
+            Number_Trades_per_Date.append(Trades_per_date)
+            Number_Closed_Trades_per_Date.append(Closed_Trades_per_Date)
 
     Number_of_trades = pd.DataFrame()
     Number_of_trades['date'] = np.array(Trading_dates)
@@ -940,7 +946,7 @@ def Stats(trades_global) :
         for i in range(len(drawdowns)) :
             if drawdowns[i] > max_dd :
                 max_dd = drawdowns[i]
-                #perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
+                perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
 
         stats.loc[len(stats)] = ['Max drawdown', round(max_dd, 1)]
         stats.loc[len(stats)] = ['Max drawdown %', round(perc_max_dd, 1)]
