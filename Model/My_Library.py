@@ -57,32 +57,6 @@ def SPY_df(Start_Date, SPY_SMA_Period) :
 
     SPY_global.reset_index(inplace=True)
 
-    start_date = max(SPY_global.date[0], Start_Date)
-
-    # Make sure that the first date exists in the df.
-    while True :
-        if start_date in SPY_global['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
-        start_date = start_date + datetime.timedelta(days=1)
-
-    # If don't stop the program.
-    if start_date > pd.to_datetime('today').normalize() :
-        print(f"ERROR: Not available data for SPY in YF.")
-        return -1
-
-    # Cut the df taking into account the SMA calculation.
-    start_index = SPY_global.index[SPY_global['date'] == start_date].to_list()[0]
-    if start_index - SPY_SMA_Period < 0 :
-        start_index = 0
-    else :
-        start_index -= SPY_SMA_Period
-
-    start_date = SPY_global['date'].values[start_index]
-
-    SPY_global.set_index(SPY_global['date'], inplace=True)
-    del SPY_global['date']
-
-    SPY_global = SPY_global.loc[SPY_global.index >= start_date]
-
     if SPY_global.empty :
         # Raise an error, 
         # save that ticker in unavailable tickers list 
@@ -90,6 +64,9 @@ def SPY_df(Start_Date, SPY_SMA_Period) :
         print(f"ERROR: Not available data for SPY in YF.")
         return -1
     # endregion
+    
+    SPY_global.set_index(SPY_global['date'], inplace=True)
+    del SPY_global['date']
 
     # Here the SPY SMA is calculated for the Regime filter process.
     SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
