@@ -23,13 +23,16 @@ import datetime
 import quandl
 quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
 
+import warnings
+warnings.filterwarnings('ignore')
+
 # endregion
 
 # Here we create a list in which are going to be saved 
 # those tickers from which we couldn't get historical data.
 unavailable_tickers = []
 
-Start_Date = '1996-01-02'
+Start_Date = '1950-01-01'
 
 # endregion
 
@@ -197,6 +200,11 @@ print("Survivorship Bias done!")
 
 # endregion
 
+tickers_dict = pd.DataFrame()
+tickers_dict['tickers'] = list(tickers_directory.keys())
+tickers_dict['periods'] = list(tickers_directory.values())
+tickers_dict.to_csv("Model/tickers_periods.csv")
+
 asset_count = 1
 # For every ticker in the tickers_directory :
 for ticker in tickers_directory.keys() :
@@ -211,105 +219,67 @@ for ticker in tickers_directory.keys() :
     # We create a loop in which all 3 data providers are going to be evaluated 
     # in order to get the data, strating with YF, then SHARADAR and finally WIKI.
     
+    if tickers_directory[ticker][-1] == cleaned_tickers['end_date'].values[-1] :
+        print('Listed!')
+        continue
+
     count = 0
     is_downloaded = False
-    while count < 3 :
-        # region SHARADAR
-        if count == 0 :
-            # Try to get the data from SHARADAR data provider.
-            try :
-                # Get the df and standarize the data.
-                df = quandl.get_table('SHARADAR/SEP', ticker='AAPL')
-                df.drop(['closeunadj', 'lastupdated', 'ticker'], axis=1, inplace=True)
-                df.sort_values(by=['date'], ignore_index=True, inplace=True)
-                df.set_index(df['date'], inplace=True)
-                df.drop(['date'], axis=1, inplace=True)
-            # If that's not possible :
-            except :
-                # If that's not possible, raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                count += 1
-                print(f"ERROR: Not available data for {ticker} in SHARADAR.")
-                continue
-
-            if df.empty :
-                # Raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                count += 1
-                print(f"ERROR: Not available data for {ticker} in SHARADAR.")
-                continue
-            else :
-                is_downloaded = True 
-                break
-        # endregion
-
+    while count < 2 :
         # region YF
-        elif count == 1 :
+        if count == 0 :
             try :
+                print('YF')
                 # Then download the information from Yahoo Finance 
                 # and rename the columns for standarizing data.
-                df = yf.download(str(ticker))
-                df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
-                df.index.names = ['date']
+                yf_df = yf.download(str(ticker))
+                yf_df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+                yf_df.index.names = ['date']
             # If that's not possible :
             except :
-                # If that's not possible, raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                count += 1
+                yf_df = pd.DataFrame()
                 print(f"ERROR: Not available data for {ticker} in YF.")
-                continue
-
-            if df.empty :
-                # Raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                count += 1
-                print(f"ERROR: Not available data for {ticker} in YF.")
-                continue
-            else : 
-                is_downloaded = True
-                break
         # endregion
         
         # region WIKI
-        elif count == 2 :
+        elif count == 1 :
             # Try to get the data from WIKI data provider.
             try :
+                print('WIKI')
                 # Get the df and standarize the data.
-                df = quandl.get(f'WIKI/{ticker}')
-                df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
-                df.columns = ['open', 'high', 'low', 'close', 'volume']
-                df.index.names = ['date']
+                wiki_df = quandl.get(f'WIKI/{ticker}')
+                wiki_df.drop(['Ex-Dividend', 'Split Ratio', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume'], axis=1, inplace=True)
+                wiki_df.columns = ['open', 'high', 'low', 'close', 'volume']
+                wiki_df.index.names = ['date']
             # If none of the above were possible :
             except :
-                # If that's not possible, raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                count += 1
+                wiki_df = pd.DataFrame()
                 print(f"ERROR: Not available data for {ticker} in WIKI.")
-                continue
 
-            if df.empty :
-                # Raise an error, 
-                # save that ticker in unavailable tickers list 
-                # and skip this ticker calculation.
-                count += 1
-                print(f"ERROR: Not available data for {ticker} in WIKI.")
-                continue
-            else :
-                is_downloaded = True 
-                break
+        count += 1
         # endregion
-    
-    if not is_downloaded : 
+
+    if yf_df.empty and wiki_df.empty : 
         unavailable_tickers.append(f"{ticker}")
-        print('Failed!')
+        print('No data!')
         continue
 
-    print('Downloaded!')
+    if not yf_df.empty and yf_df.index[0] > tickers_directory[ticker][-1] :
+        yf_df = pd.DataFrame()
+    
+    if not yf_df.empty :
+        data_from = 'YF'
+        df = yf_df
+    else :
+        data_from = 'WIKI'
+        df = wiki_df
+
+    if df.empty :
+        unavailable_tickers.append(f"{ticker}")
+        print('No data!')
+        continue
+
+    print(f'Downloaded from {data_from}!')
 
     # Try to create a folder to save all the data, 
     # if there isn't one available yet.
@@ -320,16 +290,6 @@ for ticker in tickers_directory.keys() :
         # Save the data.
         df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
 
-tickers_dict = pd.DataFrame()
-tickers_dict['tickers'] = np.array(tickers_directory.keys())
-tickers_dict['periods'] = np.array(tickers_directory.values())
-tickers_dict.to_csv("tickers_periods.csv", sep=';')
-
-for file in os.listdir('Model/SP_data2') :
-    ticker = file.replace('.csv', '')
-    if ticker in tickers_df1['symbols'].values[-1] :
-        os.remove(f"Model/SP_data/{ticker}.csv")
- 
 unavailable_df = pd.DataFrame()
 unavailable_df['ticker'] = np.array(unavailable_tickers)
-unavailable_df.to_csv("Model/unavailable_tickers.csv", sep=';')
+unavailable_df.to_csv("Model/unavailable_tickers.csv")
