@@ -35,7 +35,9 @@ quandl.ApiConfig.api_key = "RA5Lq7EJx_4NPg64UULv"
 import warnings
 warnings.filterwarnings('ignore')
 
-def SPY_df(Start_Date, SPY_SMA_Period) :
+# endregion
+
+def SPY_df(SPY_SMA_Period) :
 
     # Here the SPY data is downloaded from Yahoo Finance
     print('SPY_Download')
@@ -82,7 +84,7 @@ def Survivorship_Bias(Start_Date) :
 
     print('Survivorship Bias Process!')
 
-    # region Tickers_df
+    # region SP500_historical
     # In this region, the SP500 historical constitutents file is cleaned, 
     # this in order to avoid the survivorship bias problem.
 
@@ -91,9 +93,8 @@ def Survivorship_Bias(Start_Date) :
 
     # Here the SP500 historical constitutents file is read, 
     # then the dates are standarized to avoid dates missinterpretation.
-    tickers_df = pd.read_csv("Model/SP500_historical.csv", sep=';')
-    tickers_df['date'] = [i.replace('/','-') for i in tickers_df['date']]
-    tickers_df['date'] = pd.to_datetime(tickers_df['date'], format='%d-%m-%Y')
+    SP500_historical = pd.read_csv("Model/SP500_historical.csv")
+    SP500_historical['DATE'] = pd.to_datetime(SP500_historical['DATE'], format='%m/%d/%Y')
 
     # region FIRST CLEANING
     # A first cleaning process is done, creating a new df with every list of tickers and its changes.
@@ -103,41 +104,32 @@ def Survivorship_Bias(Start_Date) :
 
     # Every row means that that list didn't change through that period.
     tickers_df1 = pd.DataFrame(columns=['start_date', 'end_date', 'symbols'])
-    for i in range(len(tickers_df)) :
+    for i in range(len(SP500_historical)) :
 
         # For every row, a tickers directory is crated, in order to save start_date, 
         # end date and the list of symbols for that time period.
         tickers = {}
 
-        # Also a symbols list is created in order to save all symbols columns 
-        # as a simplified list.
-        symbols = []
-
         # The start_date is defined simply as the row date.
-        tickers['start_date'] = tickers_df.date[i]
+        tickers['start_date'] = SP500_historical['DATE'].values[i]
 
         # The end_date is defined here.
         # If the last row is being evaluated,
         # then the end_date is going to be today date.
-        if i == len(tickers_df) - 1 :
+        if i == len(SP500_historical) - 1 :
             tickers['end_date'] = datetime.datetime.today().strftime('%Y-%m-%d')
         # If not, is defined as the next row date.
         else :
-            tickers['end_date'] = tickers_df.date[i]
+            tickers['end_date'] = SP500_historical['DATE'].values[i]
 
         # Then all symbols that are presented in the current row as separated columns, 
         # are saved into a simplified list.
-        for j in tickers_df.columns[1:] :
-            symbols.append(tickers_df[j].values[i])
-
-        # Here the symbols are filtered, filtering "None" values, 
-        # recalling that "None" != "None".
-        # Then "." are replaced by "_" correcting the symbol writing.
-        # Finally they're sorted and saved in the dictionary.
-        symbols = [x for x in symbols if x == x]
-        symbols = [x.replace('.','-') for x in symbols]
-        symbols.sort()
-        tickers['symbols'] = symbols
+        constitutents = SP500_historical['CONSTITUTENTS'].values[i]
+        constitutents = constitutents.replace('[',"")
+        constitutents = constitutents.replace(']',"")
+        constitutents = constitutents.replace("'","")
+        constitutents = constitutents.split(', ')
+        tickers['symbols'] = constitutents
 
         # Lastly, a new row is appended with all 3 different column values.
         tickers_df1.loc[len(tickers_df1)] = [tickers['start_date'], tickers['end_date'], tickers['symbols']]
