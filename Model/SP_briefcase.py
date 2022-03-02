@@ -48,7 +48,7 @@ warnings.filterwarnings('ignore')
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 # Indicators
 SMA1_Period = 100
 SMA2_Period = 5
@@ -85,7 +85,7 @@ def main() :
 
     print(f"The current working directory is {os.getcwd()}")
 
-    SPY_global, iSPY_SMA_global = SPY_df(Start_Date, SPY_SMA_Period)
+    SPY_global, iSPY_SMA_global = SPY_df(SPY_SMA_Period)
 
     tickers_directory, cleaned_tickers = Survivorship_Bias(Start_Date)
     
