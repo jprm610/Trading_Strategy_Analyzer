@@ -39,7 +39,7 @@ client = bnb.Client('yp4IdJHY5YdmWMM3KF6fmW8wynwqet3t8PGP4pxkXKJrmomL2Odxo3EUbmL
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 # Indicators
 
 BTC_SMA_Period = 50
@@ -75,11 +75,16 @@ def main() :
 
     BTC_global, iBTC_SMA_global, iBTC_Stop_SMA_global = BTC_regime()
 
+    """
     exchange_info = client.get_exchange_info()
     bnb_cryptos = [i['symbol'] for i in exchange_info['symbols']]
     bnb_cryptos = [i for i in bnb_cryptos if i[-4:] == 'USDT']
     bnb_cryptos = set([i[:-4] for i in bnb_cryptos])
     cryptos = bnb_cryptos
+    """
+
+    cryptos = pd.read_csv('Model\crypto_tickers_list_18022022.csv')
+
     """
     yf_cryptos = pd.read_csv('Model\cryptos_tickers_YF.csv')
     yf_cryptos = [i for i in yf_cryptos['tickers']]
@@ -93,7 +98,10 @@ def main() :
     print("Trade Calculation!")
     asset_count = 1
     # For every ticker in the tickers_directory :
-    for ticker in cryptos :
+    #for ticker in cryptos
+    for ticker in cryptos['symbol'] :
+
+        #if ticker in ['PAXG', 'COCOS', 'DREP'] : continue
 
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
@@ -102,11 +110,13 @@ def main() :
         print(ticker)
         asset_count += 1
 
+        """
         if ticker in ['EUR', 'AUD', 'GBP', 'TUSD', 'USDC', 'BUSD', 'PAX', 'PAXG', 'SUSD', 'USDS', 'COCOS', 'DREP'] : continue
         if ticker[-4:] == 'DOWN' : continue
         if ticker[-2:] == 'UP' : continue
         if ticker[-4:] == 'BEAR' : continue
         if ticker[-3:] == 'BULL' : continue
+        """
 
         # region GET DATA
 
@@ -433,14 +443,14 @@ def main() :
                                             # Nevertheless, when we are in the last candle that can't be done, 
                                             # that's why the current close is saved in that case.
                                             if j == len(new_df) - 1 :
-                                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                                 y_index.append(new_df.index[j])
                                                 exit_price.append(stop_lock)
 
                                                 close_tomorrow.append(True)
                                             else :
-                                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                                 y_index.append(new_df.index[j + 1])
                                                 exit_price.append(stop_lock)
@@ -482,14 +492,14 @@ def main() :
                                             # Nevertheless, when we are in the last candle that can't be done, 
                                             # that's why the current close is saved in that case.
                                             if j == len(new_df) - 1 :
-                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                                 y_index.append(new_df.index[j])
                                                 exit_price.append(new_df.close[j])
 
                                                 close_tomorrow.append(True)
                                             else :
-                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                                 y_index.append(new_df.index[j + 1])
                                                 exit_price.append(new_df.open[j + 1])
@@ -530,14 +540,14 @@ def main() :
                                             # Nevertheless, when we are in the last candle that can't be done, 
                                             # that's why the current close is saved in that case.
                                             if j == len(new_df) - 1 :
-                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                                 y_index.append(new_df.index[j])
                                                 exit_price.append(new_df.close[j])
 
                                                 close_tomorrow.append(True)
                                             else :
-                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                                 y_index.append(new_df.index[j + 1])
                                                 exit_price.append(new_df.open[j + 1])
@@ -575,7 +585,7 @@ def main() :
                                         if j == len(new_df) - 1 :
                                             # All characteristics are saved 
                                             # as if the trade was exited in this moment.
-                                            outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                            outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - (entry_price[-1] * (1 + (Commission_Perc / 100)))) * shares_to_trade
 
                                             exit_price.append(new_df.close[j])
 
@@ -946,7 +956,7 @@ def Stats(trades_global) :
         for i in range(len(drawdowns)) :
             if drawdowns[i] > max_dd :
                 max_dd = drawdowns[i]
-                perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
+                #perc_max_dd = drawdowns[i] / dd_piecks[i] * 100
 
         stats.loc[len(stats)] = ['Max drawdown', round(max_dd, 1)]
         stats.loc[len(stats)] = ['Max drawdown %', round(perc_max_dd, 1)]
