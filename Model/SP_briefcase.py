@@ -43,13 +43,12 @@ warnings.filterwarnings('ignore')
 # region PARAMETERS
 
 Use_Pre_Charged_Data = True
-
 # Indicators
 
 SPY_SMA_Period = 200
 
 VPN_period = 10
-DO_period = 400
+DO_period = 250
 
 VPN_to_trade = 40
 
@@ -59,7 +58,7 @@ TS_proportion_SPY_below_200 = 0.9
 # Overall backtesting parameters
 Start_Date = '2010-01-01'
 Risk_Unit = 100
-Perc_In_Risk = 3.2
+Perc_In_Risk = 10
 Trade_Slots = 10
 Commission_Perc = 0.1
 Account_Size = 10000
@@ -257,7 +256,7 @@ def main() :
                                         if new_df.high[j] > max_income :
                                             max_income = new_df.high[j]
 
-                                        if SPY.close[i + j] > iSPY_SMA['SMA'].values[i] :
+                                        if SPY.close[i + j] > iSPY_SMA['SMA'].values[i + j] :
                                             trailling_stop = max_income * TS_proportion_SPY_above_200
                                         else :
                                             trailling_stop = max_income * TS_proportion_SPY_below_200
