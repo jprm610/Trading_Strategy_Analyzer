@@ -83,7 +83,7 @@ def main() :
     cryptos = bnb_cryptos
     """
 
-    cryptos = pd.read_csv('Model\crypto_tickers_list_18022022.csv')
+    cryptos = pd.read_csv('Model\crypto_tickers_list_15032022.csv')
 
     """
     yf_cryptos = pd.read_csv('Model\cryptos_tickers_YF.csv')
@@ -125,7 +125,7 @@ def main() :
 
             # Then try to get the .csv file of the ticker.
             try :
-                df = pd.read_csv(f"Model/Crypto_data/{ticker}USD.csv", sep=';')
+                df = pd.read_csv(f"Model/Crypto_data/{ticker}USD.csv")
             # If that's not possible, raise an error, 
             # save that ticker in unavailable tickers list 
             # and skip this ticker calculation.
@@ -145,8 +145,8 @@ def main() :
             print('Charged!')
         # If we want to downloaded new data :
         else :
-            """
-            try :
+            
+            """try :
                 # Then download the information from Yahoo Finance 
                 # and rename the columns for standarizing data.
                 yf_df = yf.download(f"{ticker}-USD")
@@ -159,8 +159,10 @@ def main() :
                 # save that ticker in unavailable tickers list 
                 # and skip this ticker calculation.
                 print(f"ERROR: Not available data for {ticker}USD in YF.")
-                yf_df = pd.DataFrame()
-                """
+                yf_df = pd.DataFrame()"""
+
+            """df = yf_df.copy()
+            df = df[:-1]"""
 
             try :
                 # Then download the information from Yahoo Finance 
@@ -190,7 +192,8 @@ def main() :
             """if len(bnb_df) >= len(yf_df) :
                 df = bnb_df.copy()
             else :
-                df = yf_df.copy()"""
+                df = yf_df.copy()
+            #df = df[:-1]"""
 
             if df.empty :
                 print('Failed!')
@@ -203,10 +206,10 @@ def main() :
             try :
                 # Create dir.
                 os.mkdir('Model/Crypto_data')
-                df.to_csv(f"Model/Crypto_data/{ticker}USD.csv", sep=';')
+                df.to_csv(f"Model/Crypto_data/{ticker}USD.csv")
             except :
                 # Save the data.
-                df.to_csv(f"Model/Crypto_data/{ticker}USD.csv", sep=';')
+                df.to_csv(f"Model/Crypto_data/{ticker}USD.csv")
 
         df.columns = ['open', 'high', 'low', 'close', 'volume']
 
@@ -693,6 +696,12 @@ def BTC_regime() :
     
     # Here the BTC data is downloaded 
     print('BTC')
+
+    """# BTC from yahoo
+    BTC_global = yf.download(f"BTC-USD")
+    BTC_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+    BTC_global.index.names = ['date']
+    del BTC_global['adj close']"""
 
     # Then download the information from Binance 
     # and reformat it to our standard df format. 
