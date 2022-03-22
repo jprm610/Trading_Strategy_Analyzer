@@ -57,8 +57,8 @@ TS_proportion_SPY_below_200 = 0.9
 
 # Overall backtesting parameters
 Start_Date = '2010-01-01'
-Risk_Unit = 100
-Perc_In_Risk = 10
+Risk_Unit = 60
+Perc_In_Risk = 6
 Trade_Slots = 10
 Commission_Perc = 0.1
 Account_Size = 10000
