@@ -311,7 +311,7 @@ def main() :
             # region TRADE CALCULATION
             # Here the Regime Filter is done,
             # checking that the current BTC close is above the BTC's SMA.
-            if df.close[i] > iDO.UPPER[i - 1] :
+            if df.close[i] > ((iDO.UPPER[i - 1])) :
 
                 #Condition to trade in favor of the current trend of the ticker, the BTC or both
                 if BTC.close[i] > iBTC_SMA['SMA'].values[i] and df.close[i] > Trend_EMA[i] :
@@ -594,6 +594,10 @@ def main() :
 
                                             y_index.append(new_df.index[j])
                                             close_tomorrow.append(False)
+
+                                            #snipet to show the real stop at the current candle when the trade is still opened
+                                            if (max_income * Stop_Lock_Trail) > stop_lock :
+                                                stop_lock = max_income * Stop_Lock_Trail
 
                                             duration_days.append(y_index[-1] - entry_dates[-1])
                                             #duration_months.append(duration_days[-1] / 30)
