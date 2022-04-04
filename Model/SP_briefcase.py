@@ -294,6 +294,7 @@ def main() :
 
         is_signal = []
         close_tomorrow = []
+        stop_change = []
 
         last_iDO_breakout = 0
         # Here occurs the OnBarUpdate() in which all strategie calculations happen.
@@ -375,6 +376,7 @@ def main() :
                                     max_price.append(entry_price)
                                     min_price.append(entry_price)
                                     close_tomorrow.append(False)
+                                    stop_change.append(False)
 
                                 # endregion
                             else :
@@ -483,6 +485,7 @@ def main() :
                                             max_price.append(max_income)
                                             min_price.append(min_income)
                                             stop_price.append(stop_lock)
+                                            stop_change.append(False)
                                             break
                                         # endregion
 
@@ -532,6 +535,7 @@ def main() :
                                             max_price.append(max_income)
                                             min_price.append(min_income)
                                             stop_price.append(stop_lock)
+                                            stop_change.append(False)
                                             break
                                         # endregion
                                         """"
@@ -580,6 +584,7 @@ def main() :
                                             max_price.append(max_income)
                                             min_price.append(min_income)
                                             stop_price.append(stop_lock)
+                                            stop_change.append(False)
                                             break
                                         """
                                         # endregion
@@ -593,11 +598,7 @@ def main() :
                                             exit_price.append(new_df.close[j])
 
                                             y_index.append(new_df.index[j])
-                                            close_tomorrow.append(False)
-
-                                            #snipet to show the real stop at the current candle when the trade is still opened
-                                            if (max_income * Stop_Lock_Trail) > stop_lock :
-                                                stop_lock = max_income * Stop_Lock_Trail
+                                            close_tomorrow.append(False)                                           
 
                                             duration_days.append(y_index[-1] - entry_dates[-1])
                                             #duration_months.append(duration_days[-1] / 30)
@@ -616,7 +617,15 @@ def main() :
                                             y3_ru.append(y3_perc[-1] / Perc_In_Risk)
                                             max_price.append(max_income)
                                             min_price.append(min_income)
-                                            stop_price.append(stop_lock)
+                                            stop_price.append(stop_lock)                                            
+
+                                            #snipet to show the real stop at the current candle when the trade is still opened
+                                            if (max_income * Stop_Lock_Trail) > stop_lock :
+                                                stop_lock = max_income * Stop_Lock_Trail
+                                                stop_change.append(True)
+                                            else :
+                                                stop_change.append(False)
+
                                             break
 
                                         if j != 0 and (max_income * Stop_Lock_Trail) > stop_lock :
@@ -648,6 +657,7 @@ def main() :
         trades['y%'] = np.array(y_perc)
         trades['y_ru'] = np.array(y_ru)
         trades['shares_to_trade'] = np.array(shares_to_trade_list)
+        trades['stop_change'] = np.array(stop_change)
         trades['close_tomorrow'] = np.array(close_tomorrow)
 
         trades['iVPN' + str(VPN_period)] = np.array(VPN_ot)
