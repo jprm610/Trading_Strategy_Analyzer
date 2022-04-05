@@ -55,6 +55,7 @@ TS_proportion_BTC_above_200 = 0.65
 TS_proportion_BTC_below_200 = 0.85
 Stop_Lock = 0.66
 Stop_Lock_Trail = 0.5
+Stop_Limit_Distance = 0.98
 
 # Overall backtesting parameters
 Start_Date = '2011-01-01'
@@ -269,6 +270,7 @@ def main() :
         entry_price = []
         exit_price = []
         stop_price = []
+        stop_limit = []
         shares_to_trade_list = []
 
         VPN_ot = []
@@ -357,6 +359,7 @@ def main() :
                                     entry_price.append(df.close[i])
                                     exit_price.append(df.close[i])
                                     stop_price.append(df.close[i] * Stop_Lock)
+                                    stop_limit.append(df.close[i] * (Stop_Lock * Stop_Limit_Distance))
 
                                     duration_days.append(0)
                                     #duration_months.append(0)
@@ -485,6 +488,7 @@ def main() :
                                             max_price.append(max_income)
                                             min_price.append(min_income)
                                             stop_price.append(stop_lock)
+                                            stop_limit.append(stop_lock * Stop_Limit_Distance)
                                             stop_change.append(False)
                                             break
                                         # endregion
@@ -535,6 +539,7 @@ def main() :
                                             max_price.append(max_income)
                                             min_price.append(min_income)
                                             stop_price.append(stop_lock)
+                                            stop_limit.append(stop_lock * Stop_Limit_Distance)
                                             stop_change.append(False)
                                             break
                                         # endregion
@@ -584,6 +589,7 @@ def main() :
                                             max_price.append(max_income)
                                             min_price.append(min_income)
                                             stop_price.append(stop_lock)
+                                            stop_limit.append(stop_lock * Stop_Limit_Distance)
                                             stop_change.append(False)
                                             break
                                         """
@@ -616,8 +622,7 @@ def main() :
                                             y3_perc.append(y3_raw[-1]  / entry_price[-1] * 100)
                                             y3_ru.append(y3_perc[-1] / Perc_In_Risk)
                                             max_price.append(max_income)
-                                            min_price.append(min_income)
-                                            stop_price.append(stop_lock)                                            
+                                            min_price.append(min_income)                                                                                
 
                                             #snipet to show the real stop at the current candle when the trade is still opened
                                             if (max_income * Stop_Lock_Trail) > stop_lock :
@@ -625,6 +630,9 @@ def main() :
                                                 stop_change.append(True)
                                             else :
                                                 stop_change.append(False)
+
+                                            stop_price.append(stop_lock)
+                                            stop_limit.append(stop_lock * Stop_Limit_Distance)   
 
                                             break
 
@@ -652,6 +660,7 @@ def main() :
         trades['entry_price'] = np.array(entry_price)
         trades['exit_price'] = np.array(exit_price)
         trades['stop_price'] = np.array(stop_price)
+        trades['stop_limit'] = np.array(stop_limit)
         trades['y']  = np.array(y)
         trades['y_raw'] = np.array(y_raw)
         trades['y%'] = np.array(y_perc)
