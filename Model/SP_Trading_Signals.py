@@ -1,7 +1,5 @@
 # region LIBRARIES
 
-from My_Library import *
-
 # Pandas and numpy are the base libraries in order to manipulate
 # all data for analysis and strategies development.
 import pandas as pd
@@ -393,7 +391,7 @@ def main() :
 
     try :
         # Create dir.
-        os.mkdir('Model/Files')
+        os.mkdir('Files')
         print('Created!')
     except :
         print('Created!')
@@ -402,14 +400,57 @@ def main() :
     # in order to set the entry_date characteristic as the index.
     trades_global.drop_duplicates(keep='first', inplace=True)
     trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
-    trades_global.to_csv(f'Model/Files/SP_trades_raw{str(datetime.date.today())}.csv')
+    trades_global.to_csv(f'Files/SP_trades_raw{str(datetime.date.today())}.csv')
 
     unavailable_tickers_df = pd.DataFrame()
     unavailable_tickers_df['ticks'] = np.array(unavailable_tickers)
-    unavailable_tickers_df.to_csv('Model/Files/SP_unavailable_tickers.csv')
+    unavailable_tickers_df.to_csv('Files/SP_unavailable_tickers.csv')
 
     notification = win10toast.ToastNotifier()
     notification.show_toast('Alert!', 'Backtesting finished.')
+
+def SPY_df(SPY_SMA_Period) :
+
+    # Here the SPY data is downloaded from Yahoo Finance
+    print('SPY_Download')
+    SPY_global = yf.download('SPY')
+
+    # Rename df columns for cleaning porpuses 
+    # and applying recommended.
+    SPY_global.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
+    SPY_global.index.names = ['date']
+
+    # Drop duplicates leaving only the first value,
+    # this due to the resting entry_dates in which the market is not moving.
+    SPY_global = SPY_global.drop_duplicates(keep=False)
+
+    # region Date_Range
+
+    # In this region, the SPY df is cut in order to get only the necessary
+    # data for the backtesting.
+
+    SPY_global.reset_index(inplace=True)
+
+    if SPY_global.empty :
+        # Raise an error, 
+        # save that ticker in unavailable tickers list 
+        # and skip this ticker calculation.
+        print(f"ERROR: Not available data for SPY in YF.")
+        return -1
+    # endregion
+    
+    SPY_global.set_index(SPY_global['date'], inplace=True)
+    del SPY_global['date']
+
+    # Here the SPY SMA is calculated for the Regime filter process.
+    SPY_SMA = TA.SMA(SPY_global, SPY_SMA_Period)
+
+    # The SPY SMA is then saved into a dataframe with it's date, 
+    # this in order to "cut" the SMA data needed for a ticker in the backtesting process.
+    iSPY_SMA_global = pd.DataFrame({'date' : SPY_global.index, 'SMA' : SPY_SMA})
+    iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
+
+    return SPY_global, iSPY_SMA_global
 
 def Survivorship() :
     
@@ -424,7 +465,7 @@ def Survivorship() :
 
     # Here the SP500 historical constitutents file is read, 
     # then the dates are standarized to avoid dates missinterpretation.
-    SP500_historical = pd.read_csv("Model/SP500_historical.csv")
+    SP500_historical = pd.read_csv("SP500_historical.csv")
     SP500_historical['DATE'] = pd.to_datetime(SP500_historical['DATE'], format='%m/%d/%Y')
     SP500_historical = SP500_historical[-2:]
 
@@ -578,14 +619,14 @@ def Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, S
     if (tickers_directory[ticker][current_start_date + 1] != cleaned_tickers['end_date'].values[-1] or
         Use_Pre_Charged_Data) :
         
-        if f"{ticker}.csv" not in os.listdir("Model/SP_data") :
+        if f"{ticker}.csv" not in os.listdir("SP_data") :
             print(f"ERROR: Not available data for {ticker}.")
             unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
             return -1
         
         # Then try to get the .csv file of the ticker.
         try :
-            df = pd.read_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+            df = pd.read_csv(f"SP_data/{ticker}.csv", sep=';')
             is_downloaded = False
         # If that's not possible, raise an error, 
         # save that ticker in unavailable tickers list 
@@ -668,11 +709,11 @@ def Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, S
             # if there isn't one available yet.
             try :
                 # Create dir.
-                os.mkdir('Model/SP_data')
-                df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+                os.mkdir('SP_data')
+                df.to_csv(f"SP_data/{ticker}.csv", sep=';')
             except :
                 # Save the data.
-                df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+                df.to_csv(f"SP_data/{ticker}.csv", sep=';')
         print('Downloaded!')
 
     # Here both SPY_SMA and SPY information is cut,
