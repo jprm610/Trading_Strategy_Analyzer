@@ -12,15 +12,6 @@ import math
 # for all tickers without any cost.
 import yfinance as yf
 
-# Statistics library allows us to use some needed operations for analysis.
-import statistics
-
-# Plotly allows us to create graphs needed to do analysis.
-import plotly as py
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-from plotly.graph_objs import *
-
 # TA libraty from finta allows us to use their indicator 
 # functions that have proved to be correct.
 from finta import TA
@@ -48,7 +39,7 @@ warnings.filterwarnings('ignore')
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 # Indicators
 SMA1_Period = 100
 SMA2_Period = 5
@@ -61,7 +52,7 @@ SPY_SMA_Period = 200
 Consecutive_Lower_Lows = 2
 
 # Overall backtesting parameters
-Start_Date = '2010-01-01'
+Start_Date = '2021-01-01'
 Risk_Unit = 100
 Perc_In_Risk = 2.3
 Trade_Slots = 10
@@ -78,6 +69,7 @@ def main() :
 
     # Here we create a df in which all trades are going to be saved.
     trades_global = pd.DataFrame()
+    unavailable_tickers = []
 
     print(f"The current working directory is {os.getcwd()}")
 
@@ -107,7 +99,7 @@ def main() :
         its = int(len(tickers_directory[ticker]) / 2)
         for a in range(its) :
 
-            returned_tuple = Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, max_period_indicator, Start_Date, Use_Pre_Charged_Data)
+            returned_tuple = Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, unavailable_tickers, max_period_indicator, Start_Date, Use_Pre_Charged_Data)
             if not isinstance(returned_tuple, tuple) :
                 continue
             
@@ -374,23 +366,21 @@ def main() :
             # Here all trades including their characteristics are saved in a df.
             trades['entry_date'] = np.array(entry_dates)
             trades['exit_date'] = np.array(y_index)
-            trades['trade_type']  = np.array(trade_type)
             trades['stock'] = np.array(stock)
-            trades['is_signal'] = np.array(is_signal)
+            trades['shares_to_trade'] = np.array(shares_to_trade_list)
             trades['entry_price'] = np.array(entry_price)
+            trades['volatility'] = np.array(volatity_ot)
+            trades['is_signal'] = np.array(is_signal)
+            trades['close_tomorrow'] = np.array(close_tomorrow)
+            trades['trade_type']  = np.array(trade_type)
             trades['exit_price'] = np.array(exit_price)
             trades['y']  = np.array(y)
             trades['y_raw'] = np.array(y_raw)
             trades['y%'] = np.array(y_perc)
-            trades['shares_to_trade'] = np.array(shares_to_trade_list)
-            trades['close_tomorrow'] = np.array(close_tomorrow)
-
             trades[f"iSMA{SMA1_Period}"] = np.array(iSMA1_ot)
             trades[f"iSMA{SMA2_Period}"] = np.array(iSMA2_ot)
             trades[f"iMSD{MSD_Period}"] = np.array(iMSD_ot)
             trades[f"iATR{ATR_Period}"] = np.array(iATR_ot)
-            trades['volatility'] = np.array(volatity_ot)
-
             trades['y2'] = np.array(y2)
             trades['y3'] = np.array(y3)
             trades['y2_raw'] = np.array(y2_raw)
@@ -413,6 +403,10 @@ def main() :
     trades_global.drop_duplicates(keep='first', inplace=True)
     trades_global = trades_global.sort_values(by=['entry_date'], ignore_index=True)
     trades_global.to_csv(f'Model/Files/SP_trades_raw{str(datetime.date.today())}.csv')
+
+    unavailable_tickers_df = pd.DataFrame()
+    unavailable_tickers_df['ticks'] = np.array(unavailable_tickers)
+    unavailable_tickers_df.to_csv('Model/Files/SP_unavailable_tickers.csv')
 
     notification = win10toast.ToastNotifier()
     notification.show_toast('Alert!', 'Backtesting finished.')
@@ -467,6 +461,7 @@ def Survivorship() :
         constitutents = constitutents.replace(']',"")
         constitutents = constitutents.replace("'","")
         constitutents = constitutents.split(', ')
+        constitutents = [i.replace('.','-') for i in constitutents]
         tickers['symbols'] = constitutents
 
         # Lastly, a new row is appended with all 3 different column values.
@@ -572,9 +567,9 @@ def Survivorship() :
 
     return tickers_directory, cleaned_tickers
 
-def Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, max_period_indicator, Start_Date, Use_Pre_Charged_Data) :
-    
-    unavailable_tickers = []
+def Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, unavailable_tickers, max_period_indicator, Start_Date, Use_Pre_Charged_Data) :
+
+    ticker = ticker.replace('.','-')
     
     # Determine the current start date, 
     # reversing the previous operation.
@@ -674,6 +669,7 @@ def Get_Data_A(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, S
             try :
                 # Create dir.
                 os.mkdir('Model/SP_data')
+                df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
             except :
                 # Save the data.
                 df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
