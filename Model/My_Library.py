@@ -131,6 +131,7 @@ def Survivorship_Bias(Start_Date) :
         constitutents = constitutents.replace(']',"")
         constitutents = constitutents.replace("'","")
         constitutents = constitutents.split(', ')
+        constitutents = [i.replace('.','-') for i in constitutents]
         tickers['symbols'] = constitutents
 
         # Lastly, a new row is appended with all 3 different column values.
@@ -236,9 +237,7 @@ def Survivorship_Bias(Start_Date) :
 
     return tickers_directory, cleaned_tickers
 
-def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, max_period_indicator, Start_Date, Use_Pre_Charged_Data) :
-    
-    unavailable_tickers = []
+def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, unavailable_tickers, max_period_indicator, Start_Date, Use_Pre_Charged_Data) :
     
     # Determine the current start date, 
     # reversing the previous operation.
@@ -340,6 +339,7 @@ def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY
             # if there isn't one available yet.
             try :
                 # Create dir.
+                df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
                 os.mkdir('Model/SP_data')
             except :
                 # Save the data.
