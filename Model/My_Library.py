@@ -87,13 +87,13 @@ def Survivorship_Bias(Start_Date) :
     print('Survivorship Bias Process!')
 
     # region SP500_historical
-    # In this region, the SP500 historical constitutents file is cleaned, 
+    # In this region, the SP500 historical constituents file is cleaned, 
     # this in order to avoid the survivorship bias problem.
 
     # First the Start_Date parameter is formatted and standarized.
     start_date = pd.to_datetime(Start_Date)
 
-    # Here the SP500 historical constitutents file is read, 
+    # Here the SP500 historical constituents file is read, 
     # then the dates are standarized to avoid dates missinterpretation.
     SP500_historical = pd.read_csv("Model/SP500_historical.csv")
     SP500_historical['DATE'] = pd.to_datetime(SP500_historical['DATE'], format='%m/%d/%Y')
@@ -126,13 +126,13 @@ def Survivorship_Bias(Start_Date) :
 
         # Then all symbols that are presented in the current row as separated columns, 
         # are saved into a simplified list.
-        constitutents = SP500_historical['CONSTITUTENTS'].values[i]
-        constitutents = constitutents.replace('[',"")
-        constitutents = constitutents.replace(']',"")
-        constitutents = constitutents.replace("'","")
-        constitutents = constitutents.split(', ')
-        constitutents = [i.replace('.','-') for i in constitutents]
-        tickers['symbols'] = constitutents
+        constituents = SP500_historical['CONSTITUENTS'].values[i]
+        constituents = constituents.replace('[',"")
+        constituents = constituents.replace(']',"")
+        constituents = constituents.replace("'","")
+        constituents = constituents.split(',')
+        constituents = [i.replace('.','-') for i in constituents]
+        tickers['symbols'] = constituents
 
         # Lastly, a new row is appended with all 3 different column values.
         tickers_df1.loc[len(tickers_df1)] = [tickers['start_date'], tickers['end_date'], tickers['symbols']]
