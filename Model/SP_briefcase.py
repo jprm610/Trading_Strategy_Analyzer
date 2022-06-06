@@ -66,12 +66,12 @@ Filter_Mode = f'iVPN{VPN_period}'
 
 # endregion
 
-unavailable_tickers = []
-
 # First the Start_Date parameter is formatted and standarized.
 Start_Date = pd.to_datetime(Start_Date)
 
 def main() :
+
+    unavailable_tickers = []
 
     # Here we create a df in which all trades are going to be saved.
     trades_global = pd.DataFrame()
@@ -104,7 +104,7 @@ def main() :
         its = int(len(tickers_directory[ticker]) / 2)
         for a in range(its) :
             
-            returned_tuple = Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, max_period_indicator, Start_Date, Use_Pre_Charged_Data)
+            returned_tuple = Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, unavailable_tickers, max_period_indicator, Start_Date, Use_Pre_Charged_Data)
             if not isinstance(returned_tuple, tuple) :
                 continue
             
