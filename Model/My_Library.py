@@ -170,7 +170,23 @@ def Survivorship_Bias(Start_Date) :
 
     # Only the tickers in the selected period 
     # are saved in the cleaned_tickers df.
-    cleaned_tickers = tickers_df2.loc[tickers_df2['start_date'] >= start_date]
+    #cleaned_tickers = tickers_df2.loc[tickers_df2['start_date'] >= start_date] (last code)
+
+    # The period should begin in the date of the Start_Date parameter as opposed to the first date 
+    # greater than that date in existance within the created dataframe
+
+    # For that pourpose it is calculated the index of the most recent change, in case the Start_Date
+    # is earlier than Start_Date the index to reference is the first one (0)
+    try:
+        start_index = tickers_df2.index[tickers_df2['start_date'] <= start_date].to_list()[-1]
+    except:
+        start_index = 0
+
+    # The original dataframe is then cut from that index included onwards
+    cleaned_tickers = tickers_df2.loc[tickers_df2.index >= start_index]
+
+    # The first start date is replaced by the Start_Date, from where the data is taken
+    cleaned_tickers['start_date'].values[0] = start_date
 
     # endregion
 
@@ -256,7 +272,6 @@ def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY
         # Then try to get the .csv file of the ticker.
         try :
             df = pd.read_csv(f"Model/SP_data/{ticker}.csv", sep=';')
-            is_downloaded = False
         # If that's not possible, raise an error, 
         # save that ticker in unavailable tickers list 
         # and skip this ticker calculation.
@@ -280,13 +295,12 @@ def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY
             df = yf.download(ticker)
             df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
             df.index.names = ['date']
-            is_downloaded = True
         # If that's not possible :
         except :
             # If that's not possible, raise an error, 
             # save that ticker in unavailable tickers list 
             # and skip this ticker calculation.
-            print(f"ERROR: Not available data for {ticker} in YF.")
+            print(f"ERROR: Not available data for {ticker} in YF download.")
             unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
             return -1
         
@@ -298,6 +312,16 @@ def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY
 
         df.reset_index(inplace=True)
 
+        # Try to create a folder to save all the data, 
+        # if there isn't one available yet.
+        try :
+            # Create dir.
+            df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+            os.mkdir('Model/SP_data')
+        except :
+            # Save the data.
+            df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+
     start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
 
     while True :
@@ -305,7 +329,7 @@ def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY
         start_date = start_date + datetime.timedelta(days=1)
 
     if start_date > pd.to_datetime('today').normalize() :
-        print(f"ERROR: Not available data for {ticker} in YF.")
+        print(f"ERROR: Not available data for {ticker} in YF start_date.")
         unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
         return -1
 
@@ -327,23 +351,13 @@ def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY
         # Raise an error, 
         # save that ticker in unavailable tickers list 
         # and skip this ticker calculation.
-        print(f"ERROR: Not available data for {ticker} in YF.")
+        print(f"ERROR: Not available data for {ticker} in YF empty.")
         unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
         return -1
 
     if Use_Pre_Charged_Data :
         print('Charged!')
     else :
-        if is_downloaded :
-            # Try to create a folder to save all the data, 
-            # if there isn't one available yet.
-            try :
-                # Create dir.
-                df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
-                os.mkdir('Model/SP_data')
-            except :
-                # Save the data.
-                df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
         print('Downloaded!')
 
     # Here both SPY_SMA and SPY information is cut,
