@@ -322,7 +322,7 @@ def main() :
                 #if df.close[i] > Trend_EMA[i] :
 
                     # added the option here to test with or without the first BO
-                    if i - last_iDO_breakout > Flat_iDO and last_iDO_breakout != 0 :
+                    if i - last_iDO_breakout >= Flat_iDO and last_iDO_breakout != 0 :
                     #if i - last_iDO_breakout > Flat_iDO :
                         
                         #Condition to prevent extended trades
