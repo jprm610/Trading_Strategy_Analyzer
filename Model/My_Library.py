@@ -119,7 +119,7 @@ def Survivorship_Bias(Start_Date) :
         # If the last row is being evaluated,
         # then the end_date is going to be today date.
         if i == len(SP500_historical) - 1 :
-            tickers['end_date'] = datetime.datetime.today().strftime('%Y-%m-%d')
+            tickers['end_date'] = pd.to_datetime('today').normalize()
         # If not, is defined as the next row date.
         else :
             tickers['end_date'] = SP500_historical['DATE'].values[i]
@@ -156,14 +156,14 @@ def Survivorship_Bias(Start_Date) :
         if i == 0 : tickers_df2.loc[len(tickers_df2)] = tickers_df1.iloc[i]
         # For the last row, today date is appended as end date.
         elif i == len(tickers_df1) - 1 :
-            end_dates.append(datetime.datetime.today().strftime('%Y-%m-%d'))
+            end_dates.append(pd.to_datetime('today').normalize())
         # For the rest:
         else :
             # If to continous list of tickers are different, 
             # add a new row and append the current end_date.
             if tickers_df2['symbols'].values[-1] != tickers_df1['symbols'].values[i] :
                 tickers_df2.loc[len(tickers_df2)] = tickers_df1.iloc[i]
-                end_dates.append(tickers_df1['end_date'].values[i] - datetime.timedelta(days=1))
+                end_dates.append(tickers_df1['end_date'].values[i] - pd.Timedelta(1, unit='D'))
 
     # Append the new end_date list in the df.
     tickers_df2['end_date'] = np.array(end_dates)
@@ -236,7 +236,7 @@ def Survivorship_Bias(Start_Date) :
             else :
                 # Check wheter the previous tuple end_date 
                 # is not contiguous to the current tuple start_date.
-                if tickers_directory[e][i - 1][1] != tickers_directory[e][i][0] - np.timedelta64(1,'D') :
+                if tickers_directory[e][i - 1][1] != tickers_directory[e][i][0] - pd.Timedelta(1, unit='D') :
                     # If so, close the previous period and open a new one.
                     # NOTE: This process is very similar 
                     # to the tickers_df2 cleaning process.
