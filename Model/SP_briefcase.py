@@ -42,7 +42,7 @@ warnings.filterwarnings('ignore')
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 # Indicators
 
 SPY_SMA_Period = 200
@@ -89,11 +89,10 @@ def main() :
     asset_count = 1
     # For every ticker in the tickers_directory :
     for ticker in tickers_directory.keys() :
-
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
         print('------------------------------------------------------------')
-        print(str(asset_count) + '/' + str(len(tickers_directory.keys())))
+        print(f"{asset_count}/{len(tickers_directory.keys())}")
         print(ticker)
         asset_count += 1
 
@@ -520,10 +519,10 @@ def Get_Data1(Ticker, Start, End, Pre_Start_Period, Unavailable_Tickers, Load_Da
         df.reset_index(inplace=True)
 
     start_date = max(df.date[0], Start)
-
+    
     while True :
         if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
-        start_date = start_date + datetime.timedelta(days=1)
+        start_date = start_date + pd.Timedelta(1, unit='D')
 
     if start_date > pd.to_datetime('today').normalize() :
         print(error_string)
@@ -540,6 +539,8 @@ def Get_Data1(Ticker, Start, End, Pre_Start_Period, Unavailable_Tickers, Load_Da
 
     df.set_index(df['date'], inplace=True)
     del df['date']
+
+    download_df = df.copy()
 
     df = df.loc[df.index >= start_date]
     df = df.loc[df.index <= End]
@@ -559,11 +560,11 @@ def Get_Data1(Ticker, Start, End, Pre_Start_Period, Unavailable_Tickers, Load_Da
         # if there isn't one available yet.
         try :
             # Create dir.
-            df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
+            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
             os.mkdir('Model/SP_data')
         except :
             # Save the data.
-            df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
+            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
         print('Downloaded!')
 
     return df, Unavailable_Tickers
