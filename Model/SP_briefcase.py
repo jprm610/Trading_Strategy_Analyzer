@@ -29,10 +29,6 @@ from finta import TA
 # will be useful in the Get Data region.
 import os
 
-# datetime library allows us to standarize dates format 
-# for comparisons between them while calculating trades.
-import datetime
-
 import win10toast
 
 import warnings
@@ -110,9 +106,9 @@ def main() :
 
             if (end != cleaned_tickers['end_date'].values[-1] or
                 Use_Pre_Charged_Data) :
-                returned_tuple = Get_Data1(ticker, start, end, max_period_indicator, unavailable_tickers, True)
+                returned_tuple = Get_Data(ticker, start, end, unavailable_tickers, True, max_period_indicator)
             else :
-                returned_tuple = Get_Data1(ticker, start, end, max_period_indicator, unavailable_tickers, False)
+                returned_tuple = Get_Data(ticker, start, end, unavailable_tickers, False, max_period_indicator)
 
             if not isinstance(returned_tuple, tuple) :
                 continue
@@ -463,110 +459,5 @@ def VPN(df, period, EMA_period=3) :
     VPNs = TA.EMA(df2, EMA_period)
     
     return VPNs
-
-def Get_Data1(Ticker, Start, End, Pre_Start_Period, Unavailable_Tickers, Load_Data) :
-
-    print(f"({str(Start)[:10]}) ({str(End)[:10]})")
-    error_string = f"ERROR: Not available data for {Ticker}."
-    no_data_string = f"{Ticker}_({str(Start)[:10]}) ({str(End)[:10]})"
-    if Load_Data :
-        if f"{Ticker}.csv" not in os.listdir("Model/SP_data") :
-            print(error_string)
-            Unavailable_Tickers.append(no_data_string)
-            return -1
-        
-        # Then try to get the .csv file of the Ticker.
-        try :
-            df = pd.read_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
-        # If that's not possible, raise an error, 
-        # save that Ticker in unavailable tickers list 
-        # and skip this Ticker calculation.
-        except :
-            print(error_string)
-            Unavailable_Tickers.append(no_data_string)
-            return -1
-        
-        if df.empty :
-            print(error_string)
-            Unavailable_Tickers.append(no_data_string)
-            return -1
-
-        # Reformat the df, standarizing dates and index.
-        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-    else :
-        # If we want to downloaded new data :
-        try :
-            # Then download the information from Yahoo Finance 
-            # and rename the columns for standarizing data.
-            df = yf.download(Ticker)
-            df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
-            df.index.names = ['date']
-        # If that's not possible :
-        except :
-            # If that's not possible, raise an error, 
-            # save that Ticker in unavailable tickers list 
-            # and skip this Ticker calculation.
-            print(error_string)
-            Unavailable_Tickers.append(no_data_string)
-            return -1
-        
-        # If the Ticker df doesn't have any information skip it.
-        if df.empty : 
-            print(error_string)
-            Unavailable_Tickers.append(no_data_string)
-            return -1
-
-        df.reset_index(inplace=True)
-
-    start_date = max(df.date[0], Start)
-    
-    while True :
-        if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
-        start_date = start_date + pd.Timedelta(1, unit='D')
-
-    if start_date > pd.to_datetime('today').normalize() :
-        print(error_string)
-        Unavailable_Tickers.append(no_data_string)
-        return -1
-
-    start_index = df.index[df['date'] == start_date].to_list()[0]
-    if start_index - Pre_Start_Period < 0 :
-        start_index = 0
-    else :
-        start_index -= Pre_Start_Period
-
-    start_date = df['date'].values[start_index]
-
-    df.set_index(df['date'], inplace=True)
-    del df['date']
-
-    download_df = df.copy()
-
-    df = df.loc[df.index >= start_date]
-    df = df.loc[df.index <= End]
-
-    if df.empty :
-        # Raise an error, 
-        # save that Ticker in unavailable tickers list 
-        # and skip this Ticker calculation.
-        print(error_string)
-        Unavailable_Tickers.append(no_data_string)
-        return -1
-
-    if Load_Data :
-        print('Charged!')
-    else :
-        # Try to create a folder to save all the data, 
-        # if there isn't one available yet.
-        try :
-            # Create dir.
-            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
-            os.mkdir('Model/SP_data')
-        except :
-            # Save the data.
-            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
-        print('Downloaded!')
-
-    return df, Unavailable_Tickers
 
 main()
