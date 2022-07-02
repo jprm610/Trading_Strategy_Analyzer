@@ -24,10 +24,6 @@ from plotly.graph_objs import *
 # functions that have proved to be correct.
 from finta import TA
 
-# datetime library allows us to standarize dates format 
-# for comparisons between them while calculating trades.
-import datetime
-
 # qunadl library allows us to access the api 
 # from where the tickers data is extracted, 
 # either from SHARADAR or WIKI.
@@ -253,135 +249,142 @@ def Survivorship_Bias(Start_Date) :
 
     return tickers_directory, cleaned_tickers
 
-def Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, unavailable_tickers, max_period_indicator, Start_Date, Use_Pre_Charged_Data) :
-    
-    # Determine the current start date, 
-    # reversing the previous operation.
-    current_start_date = a * 2
+def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Period=0) :
+    """
+    Retrieves ticker data from Yahoo Finance in dataframe format.
+    If the information was downloades (new information), saves into
+    SP_data directory so the data repository is updated.
 
-    print(f"({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
+    Parameters:
+    1) Ticker (str): Ticker for which the data is going to be extracted.
+    2) Start (Timestamp): Start date for data extraction.
+    3) End (Timestamp): End date for data extraction.
+    4) Unavailable_Tickers (list): The list that is going to be updated in case the ticker information couldn't be retrieved.
+    5) Load_Data (bool): False => Download data from Yahoo Finace. True => Charge data from local folder.
+    6) Pre_Start_Period (0) (int): The additional days needed previous the Start, so the indicators can be well calculated.
 
-    if (tickers_directory[ticker][current_start_date + 1] != cleaned_tickers['end_date'].values[-1] or
-        Use_Pre_Charged_Data) :
-        
-        if f"{ticker}.csv" not in os.listdir("Model/SP_data") :
-            print(f"ERROR: Not available data for {ticker}.")
-            unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
+    Returns:
+    -1 (int): If the data couldn't be retrieved or there wasn't available information.
+    df, Unavailable_Tickers (tuple).
+        df (dataframe): pandas dataframe with the ticker data. (Columns: date (as index), open, high, low, close, adj close, volume))
+        Unavailable_Tickers (list): The list either updated or not.
+    """
+
+    # For backend purposes.
+    print(f"({str(Start)[:10]}) ({str(End)[:10]})")
+    error_string = f"ERROR: Not available data for {Ticker}."
+    no_data_string = f"{Ticker}_({str(Start)[:10]}) ({str(End)[:10]})"
+
+    # DATA EXTRACTION
+    # Retrieve data from local dicrectory:
+    if Load_Data :
+        # Check if the ticker data exists in the directory.
+        if f"{Ticker}.csv" not in os.listdir("Model/SP_data") :
+            print(error_string)
+            Unavailable_Tickers.append(no_data_string)
             return -1
         
-        # Then try to get the .csv file of the ticker.
+        # Then try to get the .csv file of the Ticker.
         try :
-            df = pd.read_csv(f"Model/SP_data/{ticker}.csv", sep=';')
-        # If that's not possible, raise an error, 
-        # save that ticker in unavailable tickers list 
-        # and skip this ticker calculation.
+            df = pd.read_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
         except :
-            print(f"ERROR: Not available data for {ticker}.")
-            unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
+            print(error_string)
+            Unavailable_Tickers.append(no_data_string)
             return -1
         
+        # If empty, skip the ticker.
         if df.empty :
-            print(f"ERROR: Not available data for {ticker}.")
-            unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
+            print(error_string)
+            Unavailable_Tickers.append(no_data_string)
             return -1
 
         # Reformat the df, standarizing dates and index.
         df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+    # Retrieve data from Yahoo Finance:
     else :
-        # If we want to downloaded new data :
         try :
-            # Then download the information from Yahoo Finance 
-            # and rename the columns for standarizing data.
-            df = yf.download(ticker)
+            # Download the information from Yahoo Finance 
+            # and rename the columns for standarizing data, setting the dates as index
+            df = yf.download(Ticker)
             df.columns = ['open', 'high', 'low', 'close', 'adj close', 'volume']
             df.index.names = ['date']
         # If that's not possible :
         except :
-            # If that's not possible, raise an error, 
-            # save that ticker in unavailable tickers list 
-            # and skip this ticker calculation.
-            print(f"ERROR: Not available data for {ticker} in YF download.")
-            unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
+            print(error_string)
+            Unavailable_Tickers.append(no_data_string)
             return -1
         
-        # If the ticker df doesn't have any information skip it.
+        # If empty, skip the ticker.
         if df.empty : 
-            print(f"ERROR: Not available data for {ticker}.")
-            unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
+            print(error_string)
+            Unavailable_Tickers.append(no_data_string)
             return -1
 
+        # Reset index for next process.
         df.reset_index(inplace=True)
 
+    # ADDITIONAL TIME RANGE
+    # Define the start date for the current ticker.
+    start_date = max(df.date[0], Start)
+    
+    # Find the real start date in the df, this by adding one day at a time,
+    # until it is found or it's 'tomorrow' date.
+    while True :
+        if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
+        start_date = start_date + pd.Timedelta(1, unit='D')
+    # If it's tomorrow date, means the start date didn't exist in the df,
+    # so the ticker is skiped.
+    if start_date > pd.to_datetime('today').normalize() :
+        print(error_string)
+        Unavailable_Tickers.append(no_data_string)
+        return -1
+
+    # Find the start_date index,
+    start_index = df.index[df['date'] == start_date].to_list()[0]
+    # and redefine the start index according to the Pre_Start_Period parameter.
+    if start_index - Pre_Start_Period < 0 :
+        start_index = 0
+    else :
+        start_index -= Pre_Start_Period
+
+    # Get the real start date
+    start_date = df['date'].values[start_index]
+
+    # Set date column as index.
+    df.set_index(df['date'], inplace=True)
+    del df['date']
+
+    # The df is going to be cutted for the backtesting,
+    # so a copy of the full df is saved.
+    download_df = df.copy()
+
+    # Cut the df.
+    df = df.loc[df.index >= start_date]
+    df = df.loc[df.index <= End]
+
+    # If after the cut there's no data, skip it,
+    # meaning that there wasn't data for the time range requested.
+    if df.empty :
+        print(error_string)
+        Unavailable_Tickers.append(no_data_string)
+        return -1
+
+    if Load_Data :
+        print('Charged!')
+    # If the data was downloaded from Yahoo Finance:
+    else :
         # Try to create a folder to save all the data, 
         # if there isn't one available yet.
         try :
             # Create dir.
-            df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
+            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
             os.mkdir('Model/SP_data')
         except :
             # Save the data.
-            df.to_csv(f"Model/SP_data/{ticker}.csv", sep=';')
-
-    start_date = max(df.date[0], pd.to_datetime(tickers_directory[ticker][current_start_date]), Start_Date)
-
-    while True :
-        if start_date in df['date'].tolist() or start_date > pd.to_datetime('today').normalize() : break
-        start_date = start_date + datetime.timedelta(days=1)
-
-    if start_date > pd.to_datetime('today').normalize() :
-        print(f"ERROR: Not available data for {ticker} in YF start_date.")
-        unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
-        return -1
-
-    start_index = df.index[df['date'] == start_date].to_list()[0]
-    if start_index - max_period_indicator < 0 :
-        start_index = 0
-    else :
-        start_index -= max_period_indicator
-
-    start_date = df['date'].values[start_index]
-
-    df.set_index(df['date'], inplace=True)
-    del df['date']
-
-    df = df.loc[df.index >= start_date]
-    df = df.loc[df.index <= tickers_directory[ticker][current_start_date + 1]]
-
-    if df.empty :
-        # Raise an error, 
-        # save that ticker in unavailable tickers list 
-        # and skip this ticker calculation.
-        print(f"ERROR: Not available data for {ticker} in YF empty.")
-        unavailable_tickers.append(f"{ticker}_({str(tickers_directory[ticker][current_start_date])[:10]}) ({str(tickers_directory[ticker][current_start_date + 1])[:10]})")
-        return -1
-
-    if Use_Pre_Charged_Data :
-        print('Charged!')
-    else :
+            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
         print('Downloaded!')
 
-    # Here both SPY_SMA and SPY information is cut,
-    # in order that the data coincides with the current df period.
-    # This check is done in order that the SPY 
-    # information coincides with the current ticker info.
-    iSPY_SMAa = iSPY_SMA_global.loc[iSPY_SMA_global.index >= df.index[0]]
-    iSPY_SMA = iSPY_SMAa.loc[iSPY_SMAa.index <= df.index[-1]]
-
-    SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
-    SPY = SPYa.loc[SPYa.index <= df.index[-1]]
-
-    if len(df) != len(SPY) :
-        drops = []
-        for i in range(len(df)) :
-            if df.index[i].weekday() in [5,6] :
-                drops.append(df.index[i])
-            elif math.isnan(df.close[i]) :
-                drops.append(df.index[i])
-        df.drop(drops, inplace=True)
-
-    # endregion
-
-    return df, SPY, iSPY_SMA, unavailable_tickers
+    return df, Unavailable_Tickers
 
 def Portfolio(trades_global, Trade_Slots, filter_mode, is_asc=False) :
 
