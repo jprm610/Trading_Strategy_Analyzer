@@ -104,11 +104,41 @@ def main() :
         its = int(len(tickers_directory[ticker]) / 2)
         for a in range(its) :
             
-            returned_tuple = Get_Data(tickers_directory, cleaned_tickers, ticker, a, iSPY_SMA_global, SPY_global, unavailable_tickers, max_period_indicator, Start_Date, Use_Pre_Charged_Data)
+            # region Get_Data
+            current_start_date = a * 2
+            start = tickers_directory[ticker][current_start_date]
+            end = tickers_directory[ticker][current_start_date + 1]
+
+            if (end != cleaned_tickers['end_date'].values[-1] or
+                Use_Pre_Charged_Data) :
+                returned_tuple = Get_Data(ticker, start, end, unavailable_tickers, True, max_period_indicator)
+            else :
+                returned_tuple = Get_Data(ticker, start, end, unavailable_tickers, False, max_period_indicator)
+
             if not isinstance(returned_tuple, tuple) :
                 continue
             
-            df, SPY, iSPY_SMA, unavailable_tickers = returned_tuple
+            df, unavailable_tickers = returned_tuple
+
+            # Here both SPY_SMA and SPY information is cut,
+            # in order that the data coincides with the current df period.
+            # This check is done in order that the SPY 
+            # information coincides with the current ticker info.
+            iSPY_SMAa = iSPY_SMA_global.loc[iSPY_SMA_global.index >= df.index[0]]
+            iSPY_SMA = iSPY_SMAa.loc[iSPY_SMAa.index <= df.index[-1]]
+
+            SPYa = SPY_global.loc[SPY_global.index >= df.index[0]]
+            SPY = SPYa.loc[SPYa.index <= df.index[-1]]
+
+            if len(df) != len(SPY) :
+                drops = []
+                for i in range(len(df)) :
+                    if df.index[i].weekday() in [5,6] :
+                        drops.append(df.index[i])
+                    elif math.isnan(df.close[i]) :
+                        drops.append(df.index[i])
+                df.drop(drops, inplace=True)
+            # endregion
 
             # region INDICATOR CALCULATIONS
 
