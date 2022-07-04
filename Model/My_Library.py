@@ -249,7 +249,48 @@ def Survivorship_Bias(Start_Date) :
 
     return tickers_directory, cleaned_tickers
 
-def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Period=0) :
+def Relative_Strength(tickers_list:list, Look_Back_Period, Start_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data") :
+    
+    unavailable_tickers = []
+    tickers_performance = {}
+
+    print('Downloading tickers')
+    asset_count = 1
+    for ticker in tickers_list :
+        print('------------------------------------------------------------')
+        print(f"{asset_count}/{len(tickers_list)}")
+        print(ticker)
+        asset_count += 1
+
+        # region Get_Data
+        end = pd.to_datetime("today").normalize()
+
+        returned_tuple = Get_Data(ticker, Start_Date, end, unavailable_tickers, Use_Pre_Charged_Data, Look_Back_Period, Directory_Path)
+
+        if not isinstance(returned_tuple, tuple) :
+            continue
+        
+        df, unavailable_tickers = returned_tuple
+
+        # endregion
+
+        for i in range(len(df)) :
+            if i - Look_Back_Period < 0 : continue
+
+            c0, d0 = df.close[i], df.index[i]
+            c1, d1 = df.close[i-Look_Back_Period], df.index[i-Look_Back_Period]
+            change = round(((df.close[i] - df.close[i-Look_Back_Period])/df.close[i])*100, 3)
+
+            if df.index[i] not in tickers_performance :
+                tickers_performance[df.index[i]] = {
+                    ticker : None
+                }
+
+            tickers_performance[df.index[i]][ticker] = change
+
+    return tickers_performance
+
+def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Period=0, Directory_Path="Model/SP_data") :
     """
     Retrieves ticker data from Yahoo Finance in dataframe format.
     If the information was downloades (new information), saves into
@@ -262,6 +303,7 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
     4) Unavailable_Tickers (list): The list that is going to be updated in case the ticker information couldn't be retrieved.
     5) Load_Data (bool): False => Download data from Yahoo Finace. True => Charge data from local folder.
     6) Pre_Start_Period (0) (int): The additional days needed previous the Start, so the indicators can be well calculated.
+    7) Directory_Path ("Model/SP_data") (str): Directory to download and charge data.
 
     Returns:
     -1 (int): If the data couldn't be retrieved or there wasn't available information.
@@ -279,14 +321,14 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
     # Retrieve data from local dicrectory:
     if Load_Data :
         # Check if the ticker data exists in the directory.
-        if f"{Ticker}.csv" not in os.listdir("Model/SP_data") :
+        if f"{Ticker}.csv" not in os.listdir(Directory_Path) :
             print(error_string)
             Unavailable_Tickers.append(no_data_string)
             return -1
         
         # Then try to get the .csv file of the Ticker.
         try :
-            df = pd.read_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
+            df = pd.read_csv(f"{Directory_Path}/{Ticker}.csv", sep=';')
         except :
             print(error_string)
             Unavailable_Tickers.append(no_data_string)
@@ -377,11 +419,11 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
         # if there isn't one available yet.
         try :
             # Create dir.
-            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
-            os.mkdir('Model/SP_data')
+            os.mkdir(f"{Directory_Path}")
+            download_df.to_csv(f"{Directory_Path}/{Ticker}.csv", sep=';')
         except :
             # Save the data.
-            download_df.to_csv(f"Model/SP_data/{Ticker}.csv", sep=';')
+            download_df.to_csv(f"{Directory_Path}/{Ticker}.csv", sep=';')
         print('Downloaded!')
 
     return df, Unavailable_Tickers
