@@ -42,7 +42,7 @@ warnings.filterwarnings('ignore')
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = True
+Use_Pre_Charged_Data = False
 # Indicators
 
 SPY_SMA_Period = 200
@@ -111,14 +111,15 @@ def main() :
 
             if (end != cleaned_tickers['end_date'].values[-1] or
                 Use_Pre_Charged_Data) :
-                returned_tuple = Get_Data(ticker, start, end, unavailable_tickers, True, max_period_indicator)
+                returned = Get_Data(ticker, start, end, True, max_period_indicator)
             else :
-                returned_tuple = Get_Data(ticker, start, end, unavailable_tickers, False, max_period_indicator)
+                returned = Get_Data(ticker, start, end, False, max_period_indicator)
 
-            if not isinstance(returned_tuple, tuple) :
+            if isinstance(returned, int) :
+                unavailable_tickers.append(f"{ticker}_({str(start)[:10]}) ({str(end)[:10]}))")
                 continue
             
-            df, unavailable_tickers = returned_tuple
+            df = returned
 
             # Here both SPY_SMA and SPY information is cut,
             # in order that the data coincides with the current df period.
