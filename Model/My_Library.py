@@ -290,40 +290,35 @@ def Relative_Strength(tickers_list:list, Look_Back_Period, Start_Date, Use_Pre_C
 
     return tickers_performance
 
-def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Period=0, Directory_Path="Model/SP_data") :
+def Get_Data(Ticker, Start, End, Load_Data, Pre_Start_Period=0, Directory_Path="Model/SP_data") :
     """
     Retrieves ticker data from Yahoo Finance in dataframe format.
-    If the information was downloades (new information), saves into
-    SP_data directory so the data repository is updated.
+    If the information was downloaded (new information), saves it into
+    the selected directory so the data repository is updated.
 
     Parameters:
     1) Ticker (str): Ticker for which the data is going to be extracted.
     2) Start (Timestamp): Start date for data extraction.
     3) End (Timestamp): End date for data extraction.
-    4) Unavailable_Tickers (list): The list that is going to be updated in case the ticker information couldn't be retrieved.
-    5) Load_Data (bool): False => Download data from Yahoo Finace. True => Charge data from local folder.
-    6) Pre_Start_Period (0) (int): The additional days needed previous the Start, so the indicators can be well calculated.
-    7) Directory_Path ("Model/SP_data") (str): Directory to download and charge data.
+    4) Load_Data (bool): False => Download data from Yahoo Finace. True => Charge data from local directory.
+    5) Pre_Start_Period (0) (int): The additional days needed previous the Start, so the indicators can be well calculated.
+    6) Directory_Path ("Model/SP_data") (str): Directory to download and charge data.
 
     Returns:
     -1 (int): If the data couldn't be retrieved or there wasn't available information.
-    df, Unavailable_Tickers (tuple).
-        df (dataframe): pandas dataframe with the ticker data. (Columns: date (as index), open, high, low, close, adj close, volume))
-        Unavailable_Tickers (list): The list either updated or not.
+    df (dataframe): pandas dataframe with the ticker data. (Columns: date (as index), open, high, low, close, adj close, volume))
     """
 
-    # For backend purposes.
+    # For front-end purposes.
     print(f"({str(Start)[:10]}) ({str(End)[:10]})")
     error_string = f"ERROR: Not available data for {Ticker}."
-    no_data_string = f"{Ticker}_({str(Start)[:10]}) ({str(End)[:10]})"
 
     # DATA EXTRACTION
-    # Retrieve data from local dicrectory:
+    # Retrieve data from local directory:
     if Load_Data :
         # Check if the ticker data exists in the directory.
         if f"{Ticker}.csv" not in os.listdir(Directory_Path) :
             print(error_string)
-            Unavailable_Tickers.append(no_data_string)
             return -1
         
         # Then try to get the .csv file of the Ticker.
@@ -331,13 +326,11 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
             df = pd.read_csv(f"{Directory_Path}/{Ticker}.csv", sep=';')
         except :
             print(error_string)
-            Unavailable_Tickers.append(no_data_string)
             return -1
         
         # If empty, skip the ticker.
         if df.empty :
             print(error_string)
-            Unavailable_Tickers.append(no_data_string)
             return -1
 
         # Reformat the df, standarizing dates and index.
@@ -353,13 +346,11 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
         # If that's not possible :
         except :
             print(error_string)
-            Unavailable_Tickers.append(no_data_string)
             return -1
         
         # If empty, skip the ticker.
         if df.empty : 
             print(error_string)
-            Unavailable_Tickers.append(no_data_string)
             return -1
 
         # Reset index for next process.
@@ -378,7 +369,6 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
     # so the ticker is skiped.
     if start_date > pd.to_datetime('today').normalize() :
         print(error_string)
-        Unavailable_Tickers.append(no_data_string)
         return -1
 
     # Find the start_date index,
@@ -408,7 +398,6 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
     # meaning that there wasn't data for the time range requested.
     if df.empty :
         print(error_string)
-        Unavailable_Tickers.append(no_data_string)
         return -1
 
     if Load_Data :
@@ -426,7 +415,7 @@ def Get_Data(Ticker, Start, End, Unavailable_Tickers, Load_Data, Pre_Start_Perio
             download_df.to_csv(f"{Directory_Path}/{Ticker}.csv", sep=';')
         print('Downloaded!')
 
-    return df, Unavailable_Tickers
+    return df
 
 def Portfolio(trades_global, Trade_Slots, filter_mode, is_asc=False) :
 
