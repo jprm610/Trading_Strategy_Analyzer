@@ -249,45 +249,105 @@ def Survivorship_Bias(Start_Date) :
 
     return tickers_directory, cleaned_tickers
 
-def Relative_Strength(tickers_list:list, Look_Back_Period, Start_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data") :
-    
-    unavailable_tickers = []
-    tickers_performance = {}
+def Relative_Strength(Tickers_List:list, Look_Back_Period, Start_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data", Minimum_Volume=100000, Minimum_Price=10, VSMA_period=50) :
+    """
+    Calculates the relative strength for every ticker in Tickers_List,
+    according to the Look_Back_Period provided.
 
-    print('Downloading tickers')
+    Parameters:
+    1) Tickers_List (list): A list of the tickers that are going to be evaluated.
+    2) Look_Back_Period (int): The period of time (days) for which the RS is going to be calculated.
+    3) Start_Date (Timestamp): Date from which the Relative Strength is going to be calculated.
+    4) Use_Pre_Charged_Data (bool): False => Download data from Yahoo Finace. True => Charge data from local directory.
+    6) Directory_Path ("Model/SP_data") (str): Directory to download and charge data.
+    7) Minimum_Volume (100000) (float): Minimum volume that a ticker has to have to be taken into account.
+    8) Minimum_Price (10) (float): Minimum price that a ticker has to have to be taken into account.
+    9) VSMA_period (50) (int): Period for the VSMA_period indicator.
+
+    Returns:
+    tickers_performance (dict): Dictionary with date as key and a dataframe as a value.
+        For every day has a dataframe with the RS ranking of the tickers evaluated.
+    """
+
+    # tickers_performance is a dictionary with
+    # dates as keys and dataframe as values.
+    tickers_performance = {}
+    
+    print('Loading tickers')
     asset_count = 1
-    for ticker in tickers_list :
+    for ticker in Tickers_List :
+
+        # region Get_Data
+
         print('------------------------------------------------------------')
-        print(f"{asset_count}/{len(tickers_list)}")
+        print(f"{asset_count}/{len(Tickers_List)}")
         print(ticker)
         asset_count += 1
 
-        # region Get_Data
         end = pd.to_datetime("today").normalize()
 
-        returned_tuple = Get_Data(ticker, Start_Date, end, unavailable_tickers, Use_Pre_Charged_Data, Look_Back_Period, Directory_Path)
+        # Make sure the df has enough data for the Look Back Period and
+        # the Volume SMA indicator.
+        Look_Back_Period = max(Look_Back_Period, VSMA_period)
+        returned = Get_Data(ticker, Start_Date, end, Use_Pre_Charged_Data, Look_Back_Period, Directory_Path)
 
-        if not isinstance(returned_tuple, tuple) :
+        if isinstance(returned, int) :
             continue
         
-        df, unavailable_tickers = returned_tuple
+        df = returned
 
         # endregion
 
+        # Calculate Volume SMA indicator.
+        df_v = df.copy()
+        df_v.rename(columns={'volume':'close', 'close':'volume'}, inplace=True)
+        iVSMA = TA.SMA(df_v, VSMA_period)
+
+        # After getting the ticker data,
+        # calculate the RS for every day.
         for i in range(len(df)) :
+
             if i - Look_Back_Period < 0 : continue
 
-            c0, d0 = df.close[i], df.index[i]
-            c1, d1 = df.close[i-Look_Back_Period], df.index[i-Look_Back_Period]
-            change = round(((df.close[i] - df.close[i-Look_Back_Period])/df.close[i])*100, 3)
+            # If the ticker doesn't have enough volume or the price is too low, skip it.
+            if iVSMA[i] < Minimum_Volume or df.close[i] < Minimum_Price : continue
 
+            # We are using the IBD Style RS.
+
+            # First the quarters look back periods are calculated.
+            lbp_1_4 = int(Look_Back_Period*(1/4))
+            lbp_2_4 = int(Look_Back_Period*(1/2))
+            lbp_3_4 = int(Look_Back_Period*(3/4))
+
+            # Then the ROC is calculated for every quarter.
+            roc_1_4 = round((df.close[i] - df.close[i-lbp_1_4])/df.close[i-lbp_1_4], 3)
+            roc_2_4 = round((df.close[i] - df.close[i-lbp_2_4])/df.close[i-lbp_2_4], 3)
+            roc_3_4 = round((df.close[i] - df.close[i-lbp_3_4])/df.close[i-lbp_3_4], 3)
+            roc_4_4 = round((df.close[i] - df.close[i-Look_Back_Period])/df.close[i-Look_Back_Period], 3)
+            
+            # Finally the RS is calculated giving more weight to the last quarter (40%).
+            rs = ((roc_1_4 * .4) + (roc_2_4 * .2) + (roc_3_4 * .2) + (roc_4_4 * .2)) * 100
+
+            # Then the RS is saved into the tickers performance directory,
+            # as a dataframe (columns: ticker, rs).
             if df.index[i] not in tickers_performance :
-                tickers_performance[df.index[i]] = {
-                    ticker : None
-                }
+                tickers_performance[df.index[i]] = pd.DataFrame(columns=['ticker','rs'])
+            tickers_performance[df.index[i]].loc[len(tickers_performance[df.index[i]])] = [ticker, rs]
 
-            tickers_performance[df.index[i]][ticker] = change
+    # For every dataframe:
+    for date in tickers_performance.keys() :
+        # Rank all the relatives strengths and apply percentiles interpretation,
+        # so that they can be selected by decile or quartile, etc.
+        df = tickers_performance[date]
+        df = df.sort_values(by=['rs'], ignore_index=True, ascending=False)
+        df['rank'] = df['rs'].rank(pct=True)
+        df['rank'] = df['rank'].apply(lambda x : round(x * 100,3))
+        df.set_index(df['ticker'], inplace=True)
+        del df['ticker']
+        tickers_performance[date] = df
 
+    # Then the tickers performance dictionary is returned with dates as key,
+    # and dataframes as values (columns: ticker, rs, rank)
     return tickers_performance
 
 def Get_Data(Ticker, Start, End, Load_Data, Pre_Start_Period=0, Directory_Path="Model/SP_data") :
