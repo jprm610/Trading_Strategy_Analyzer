@@ -249,7 +249,7 @@ def Survivorship_Bias(Start_Date) :
 
     return tickers_directory, cleaned_tickers
 
-def Relative_Strength(Tickers_List:list, Look_Back_Period, Start_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data", Minimum_Volume=100000, Minimum_Price=10, VSMA_period=50) :
+def Relative_Strength(Tickers:list, Look_Back_Period, Start_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data", Minimum_Volume=100000, Minimum_Price=10, VSMA_period=50) :
     """
     Calculates the relative strength for every ticker in Tickers_List,
     according to the Look_Back_Period provided.
@@ -266,21 +266,27 @@ def Relative_Strength(Tickers_List:list, Look_Back_Period, Start_Date, Use_Pre_C
 
     Returns:
     tickers_performance (dict): Dictionary with date as key and a dataframe as a value.
-        For every day has a dataframe with the RS ranking of the tickers evaluated.
+        For every day has a dataframe with the RS ranking of the tickers evaluated and its comparison with SPY RS.
     """
+
+    # So we can calculate SPY_rs for the later comparison.
+    Tickers.append('SPY')
+
+    # Make sure there are no repeated tickers.
+    Tickers = set(Tickers)
 
     # tickers_performance is a dictionary with
     # dates as keys and dataframe as values.
     tickers_performance = {}
-    
+
     print('Loading tickers')
     asset_count = 1
-    for ticker in Tickers_List :
+    for ticker in Tickers :
 
         # region Get_Data
 
         print('------------------------------------------------------------')
-        print(f"{asset_count}/{len(Tickers_List)}")
+        print(f"{asset_count}/{len(Tickers)}")
         print(ticker)
         asset_count += 1
 
@@ -310,7 +316,8 @@ def Relative_Strength(Tickers_List:list, Look_Back_Period, Start_Date, Use_Pre_C
             if i - Look_Back_Period < 0 : continue
 
             # If the ticker doesn't have enough volume or the price is too low, skip it.
-            if iVSMA[i] < Minimum_Volume or df.close[i] < Minimum_Price : continue
+            if ((iVSMA[i] < Minimum_Volume or df.close[i] < Minimum_Price)
+                and ticker != 'SPY') : continue
 
             # We are using the IBD Style RS.
 
@@ -344,10 +351,20 @@ def Relative_Strength(Tickers_List:list, Look_Back_Period, Start_Date, Use_Pre_C
         df['rank'] = df['rank'].apply(lambda x : round(x * 100,3))
         df.set_index(df['ticker'], inplace=True)
         del df['ticker']
+
+        # Calculate the rs_SPY, that is the comparison between the ticker rs
+        # and SPY rs. rs_SPY = (ticker_rs - SPY_rs)/abs(SPY_rs)
+        rs_SPYs = []
+        for ticker in df.index.to_list() :
+            rs_SPY = (df.loc[ticker, 'rs'] - df.loc['SPY', 'rs'])/abs(df.loc['SPY', 'rs'])
+            rs_SPYs.append(rs_SPY)
+        df['rs_SPY'] = np.array(rs_SPYs)
+        df['rs_SPY'] = df['rs_SPY'].apply(lambda x : round(x * 100,3))
+
         tickers_performance[date] = df
 
     # Then the tickers performance dictionary is returned with dates as key,
-    # and dataframes as values (columns: ticker, rs, rank)
+    # and dataframes as values (columns: ticker (as index), rs, rank, rs_SPY)
     return tickers_performance
 
 def Get_Data(Ticker, Start, End, Load_Data, Pre_Start_Period=0, Directory_Path="Model/SP_data") :
