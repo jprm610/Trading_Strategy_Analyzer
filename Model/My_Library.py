@@ -353,13 +353,12 @@ def Relative_Strength(Tickers:list, Look_Back_Period, Start_Date, Use_Pre_Charge
         del df['ticker']
 
         # Calculate the rs_SPY, that is the comparison between the ticker rs
-        # and SPY rs. rs_SPY = (ticker_rs - SPY_rs)/abs(SPY_rs)
+        # and SPY rs. rs_SPY = ticker_rs - SPY_rs
         rs_SPYs = []
         for ticker in df.index.to_list() :
-            rs_SPY = (df.loc[ticker, 'rs'] - df.loc['SPY', 'rs'])/abs(df.loc['SPY', 'rs'])
+            rs_SPY = df.loc[ticker, 'rs'] - df.loc['SPY', 'rs']
             rs_SPYs.append(rs_SPY)
         df['rs_SPY'] = np.array(rs_SPYs)
-        df['rs_SPY'] = df['rs_SPY'].apply(lambda x : round(x * 100,3))
 
         tickers_performance[date] = df
 
