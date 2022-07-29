@@ -249,7 +249,7 @@ def Survivorship_Bias(Start_Date) :
 
     return tickers_directory, cleaned_tickers
 
-def Relative_Strength(Tickers:list, Look_Back_Period, Start_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data", Minimum_Volume=100000, Minimum_Price=10, VSMA_period=50) :
+def Relative_Strength(Tickers:list, Look_Back_Period, Start_Date, End_Date, Use_Pre_Charged_Data, Directory_Path="Model/SP_data", Minimum_Volume=100000, Minimum_Price=10, VSMA_period=50) :
     """
     Calculates the relative strength for every ticker in Tickers_List,
     according to the Look_Back_Period provided.
@@ -274,6 +274,7 @@ def Relative_Strength(Tickers:list, Look_Back_Period, Start_Date, Use_Pre_Charge
 
     # Make sure there are no repeated tickers.
     Tickers = set(Tickers)
+    Tickers = sorted(list(Tickers))
 
     # tickers_performance is a dictionary with
     # dates as keys and dataframe as values.
@@ -290,12 +291,10 @@ def Relative_Strength(Tickers:list, Look_Back_Period, Start_Date, Use_Pre_Charge
         print(ticker)
         asset_count += 1
 
-        end = pd.to_datetime("today").normalize()
-
         # Make sure the df has enough data for the Look Back Period and
         # the Volume SMA indicator.
         Look_Back_Period = max(Look_Back_Period, VSMA_period)
-        returned = Get_Data(ticker, Start_Date, end, Use_Pre_Charged_Data, Look_Back_Period, Directory_Path)
+        returned = Get_Data(ticker, Start_Date, End_Date, Use_Pre_Charged_Data, Look_Back_Period, Directory_Path)
 
         if isinstance(returned, int) :
             continue
