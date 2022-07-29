@@ -42,15 +42,17 @@ warnings.filterwarnings('ignore')
 
 # region PARAMETERS
 
-Use_Pre_Charged_Data = False
+Use_Pre_Charged_Data = True
 # Indicators
 
 SPY_SMA_Period = 200
 
 VPN_period = 10
 DO_period = 250
+SMA_period = 100
 
-VPN_to_trade = 40
+VPN_to_trade = -101
+Flat_iDO = 15
 
 TS_proportion_SPY_above_200 = 0.8
 TS_proportion_SPY_below_200 = 0.9
@@ -89,7 +91,7 @@ def main() :
     asset_count = 1
     # For every ticker in the tickers_directory :
     for ticker in tickers_directory.keys() :
-
+        
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
         print('------------------------------------------------------------')
@@ -144,13 +146,13 @@ def main() :
             # region INDICATOR CALCULATIONS
 
             iVPN = VPN(df, VPN_period)
-            iSMA = TA.SMA(df, 100)
+            iSMA = TA.SMA(df, SMA_period)
 
             # Flip high and close columns to calculate
             # Donchian Channels. 
             DO_df = df.copy()
             DO_df.rename(columns={'high': 'close', 'close': 'high'}, inplace=True)
-            iDO = TA.DO(DO_df, DO_period)
+            iDO = TA.DO(DO_df, DO_period, DO_period)
 
             # endregion
 
@@ -200,7 +202,7 @@ def main() :
                 # checking that the current SPY close is above the SPY's SMA.
                 if df.close[i] > iDO.UPPER[i - 1] :
                     if SPY.close[i] > iSPY_SMA['SMA'].values[i] : 
-                        if i - last_iDO_breakout > 15 and last_iDO_breakout != 0 :
+                        if i - last_iDO_breakout >= Flat_iDO and last_iDO_breakout != 0 :
                             if i == len(df) - 1 :
                                 # region Signals
                                 if iVPN[i] > VPN_to_trade :
