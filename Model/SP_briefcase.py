@@ -350,33 +350,34 @@ def main() :
                         if j == 0 :
                             stop_lock = min_Low_Flat_iDO_Period * Stop_Lock_Proportion
 
-                        if SPY.close[i + j] > iSPY_SMA['SMA'].values[i + j] :
+                        """if SPY.close[i + j] > iSPY_SMA['SMA'].values[i + j] :
                             trailling_stop = max_income * TS_proportion_SPY_above_200
                         else :
-                            trailling_stop = max_income * TS_proportion_SPY_below_200
+                            trailling_stop = max_income * TS_proportion_SPY_below_200"""
 
                         # Here the min_income variable is updated.
                         if new_df.low[j] < min_income :
                             min_income = new_df.low[j]
 
-                        if new_df.low <= stop_lock :
-
+                        # trad management for GAPS  downs
+                        if new_df.open[j] <= stop_lock :
+                            
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
                             # Nevertheless, when we are in the last candle that can't be done, 
                             # that's why the current close is saved in that case.
                             if j == len(new_df) - 1 :
-                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                outcome = ((new_df.open[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                                 y_index.append(new_df.index[j])
-                                exit_price.append(round(stop_lock, 2))
+                                exit_price.append(round(new_df.open[j], 2))
 
-                                close_tomorrow.append(False)
+                                close_tomorrow.append(True)
                             else :
-                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                outcome = ((new_df.open[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                                y_index.append(new_df.index[j + 1])
-                                exit_price.append(round(new_df.open[j + 1], 2))
+                                y_index.append(new_df.index[j])
+                                exit_price.append(round(new_df.open[j], 2))
 
                                 close_tomorrow.append(False)
 
@@ -396,7 +397,44 @@ def main() :
                             min_price.append(min_income)
                             break
 
-                        elif new_df.close[j] < trailling_stop :
+                        if new_df.low[j] <= stop_lock :
+
+                            # To simulate that the order is executed in the next day, 
+                            # the entry price is taken in the next candle open. 
+                            # Nevertheless, when we are in the last candle that can't be done, 
+                            # that's why the current close is saved in that case.
+                            if j == len(new_df) - 1 :
+                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                y_index.append(new_df.index[j])
+                                exit_price.append(round(stop_lock, 2))
+
+                                close_tomorrow.append(True)
+                            else :
+                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                y_index.append(new_df.index[j + 1])
+                                exit_price.append(round(stop_lock, 2))
+
+                                close_tomorrow.append(False)
+
+                            if exit_price[-1] > max_income : max_income = exit_price[-1]
+
+                            if exit_price[-1] < min_income : min_income = exit_price[-1]
+
+                            # Saving all missing trade characteristics.
+                            y_raw.append(exit_price[-1] - entry_price[-1])
+                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                            y2_raw.append(max_income - entry_price[-1])
+                            y3_raw.append(min_income - entry_price[-1])
+                            y.append(outcome)
+                            y2.append(y2_raw[-1] * shares_to_trade)
+                            y3.append(y3_raw[-1] * shares_to_trade)
+                            max_price.append(max_income)
+                            min_price.append(min_income)
+                            break
+
+                        """ elif new_df.close[j] < trailling_stop :
 
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
@@ -431,7 +469,7 @@ def main() :
                             y3.append(y3_raw[-1] * shares_to_trade)
                             max_price.append(max_income)
                             min_price.append(min_income)
-                            break
+                            break"""
                         
                         if j == len(new_df) - 1 :
                             # All characteristics are saved 
