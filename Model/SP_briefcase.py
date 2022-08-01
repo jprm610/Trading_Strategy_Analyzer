@@ -57,12 +57,13 @@ DO_Screener_Upper_Proportion = 0.75
 SMA1_Screener_Look_Back = 21
 
 VPN_period = 10
-DO_TradePoint_Period= 20
-SMA1_period, SMA2_period, SMA3_period = 200, 150, 50
+DO_TradePoint_Period = 10
+SMA1_period, SMA2_period, SMA3_period, SMA4_period = 200, 150, 50, 20
 
-VPN_to_trade = 40
-Flat_iDO_Period = 15
+VPN_to_trade = 30
+Flat_iDO_Period = 5
 Min_Low_Proportion = 0.9
+Target_Proportion = 3
 
 Stop_Lock_Proportion = 0.995
 
@@ -81,9 +82,6 @@ Filter_Mode = f'iVPN{VPN_period}'
 
 # endregion
 
-# First the Start_Date parameter is formatted and standarized.
-Start_Date = pd.to_datetime(Start_Date)
-
 def main() :
 
     unavailable_tickers = []
@@ -97,22 +95,31 @@ def main() :
 
     #tickers_directory, cleaned_tickers = Survivorship_Bias(Start_Date)
 
-    tickers = pd.read_csv("US_stock_universe.csv")
-    tickers = tickers['symbol'].to_list()
-    RS_df = Relative_Strength(tickers, RS_Look_Back, Start_Date, End_Date, Use_Pre_Charged_Data)
+    file = pd.read_csv('Model/SP500_historical.csv')
+    tickers = file.CONSTITUENTS[232]
+    tickers = tickers.replace('[','')
+    tickers = tickers.replace(']','')
+    tickers = tickers.replace("'",'')
+    tickers = tickers.split(',')
 
-    max_period_indicator = max(VPN_period, DO_period)
+    #tickers = pd.read_csv("Model/US_stock_universe.csv")
+    #tickers = tickers['symbol'].to_list()
+    RS_df = Relative_Strength(tickers, RS_Look_Back, Start_Date, End_Date, Use_Pre_Charged_Data, "Model/US_Stocks")
+
+    max_period_indicator = max(VPN_period, DO_TradePoint_Period, SMA1_period, SMA2_period, SMA3_period)
 
     print('------------------------------------------------------------')
     print("Trade Calculation!")
     asset_count = 1
     # For every ticker in the tickers_directory :
-    for ticker in tickers_directory.keys() :
+    for ticker in tickers :
         
+        #if ticker != 'TSLA' : continue
+
         # This section is only for front-end purposes,
         # in order to show the current progress of the program when is running.
         print('------------------------------------------------------------')
-        print(str(asset_count) + '/' + str(len(tickers_directory.keys())))
+        print(str(asset_count) + '/' + str(len(tickers)))
         print(ticker)
         asset_count += 1
 
@@ -120,11 +127,12 @@ def main() :
         # NOTE: As the tickers come with pairs of start and end dates, 
         # then when the quiantity of elements is divided by 2, 
         # it gives us the number of periods of that ticker.
-        its = int(len(tickers_directory[ticker]) / 2)
+        #its = int(len(tickers_directory[ticker]) / 2)
+        its = 1
         for a in range(its) :
             
             # region Get_Data
-            current_start_date = a * 2
+            """current_start_date = a * 2
             start = tickers_directory[ticker][current_start_date]
             end = tickers_directory[ticker][current_start_date + 1]
 
@@ -132,10 +140,12 @@ def main() :
                 Use_Pre_Charged_Data) :
                 returned = Get_Data(ticker, start, end, True, max_period_indicator)
             else :
-                returned = Get_Data(ticker, start, end, False, max_period_indicator)
+                returned = Get_Data(ticker, start, end, False, max_period_indicator)"""
+
+            returned = Get_Data(ticker, Start_Date, End_Date, True, max_period_indicator, "Model/US_Stocks")
 
             if isinstance(returned, int) :
-                unavailable_tickers.append(f"{ticker}_({str(start)[:10]}) ({str(end)[:10]}))")
+                unavailable_tickers.append(f"{ticker}_({str(Start_Date)[:10]}) ({str(End_Date)[:10]})")
                 continue
             
             df = returned
@@ -163,7 +173,7 @@ def main() :
             # region INDICATOR CALCULATIONS
 
             iVPN = VPN(df, VPN_period)
-            iSMA1, iSMA2, iSMA3 = TA.SMA(df,SMA1_period), TA.SMA(df,SMA2_period), TA.SMA(df,SMA3_period)
+            iSMA1, iSMA2, iSMA3, iSMA4 = TA.SMA(df,SMA1_period), TA.SMA(df,SMA2_period), TA.SMA(df,SMA3_period), TA.SMA(df,SMA4_period)
 
             # Flip high and close columns to calculate
             # Donchian Channels. 
@@ -202,9 +212,14 @@ def main() :
             is_signal = []
             close_tomorrow = []
 
-            last_iDO_TradePoint_breakout = 0
+            iDO_breakouts_ids = []
+            iDO_breakouts = []
             # Here occurs the OnBarUpdate() in which all strategie calculations happen.
             for i in range(len(df)) :
+
+                d = df.index[i]
+                c = df.close[i]
+                a = i
 
                 # region CHART INITIALIZATION
 
@@ -213,7 +228,7 @@ def main() :
 
                 if (math.isnan(iSPY_SMA['SMA'].values[i]) or math.isnan(iVPN[i]) or 
                     math.isnan(iSMA1[i]) or math.isnan(iSMA2[i]) or math.isnan(iSMA3[i]) or 
-                    math.isnan(iDO_Screener.UPPER[i]) or iDO_Screener.LOWER[i] or
+                    math.isnan(iDO_Screener.UPPER[i]) or math.isnan(iDO_Screener.LOWER[i]) or
                     math.isnan(iDO_Trade_Point.UPPER[i])) : continue
                 # endregion
                 
@@ -221,13 +236,22 @@ def main() :
                 # Here the Regime Filter is done,
                 # checking that the current SPY close is above the SPY's SMA.
 
-                if df.close[i] > iDO_Trade_Point.UPPER[i - 1] :
-                    last_iDO_TradePoint_breakout = i
+                d = df.index[i]
+                c = df.close[i]
+                a = i
+
+                if df.high[i] > iDO_Trade_Point.UPPER[i - 1] :
+                    if len(iDO_breakouts_ids) >= 10 :
+                        iDO_breakouts_ids.pop(0)
+                    iDO_breakouts_ids.append(i)
+
+                    if len(iDO_breakouts) >= 10 :
+                        iDO_breakouts.pop(0)
+                    iDO_breakouts.append(df.high[i])
 
                 # region STAGE_2
 
-                if df.index[i] not in list(RS_df.keys()) : 
-                    continue
+                if df.index[i] not in list(RS_df.keys()) : continue
 
                 if ticker not in RS_df[df.index[i]].index.to_list() : continue
 
@@ -239,6 +263,7 @@ def main() :
 
                 if iSMA1[i-SMA1_Screener_Look_Back] > iSMA1[i] : continue
 
+                S1, S2, S3 = iSMA1[i], iSMA2[i], iSMA3[i]
                 if not (iSMA3[i] > iSMA2[i] > iSMA1[i]) : continue
 
                 if df.close[i] < iSMA3[i] : continue
@@ -252,16 +277,20 @@ def main() :
 
                 # endregion
 
-                if SPY.close[i] <= iSPY_SMA['SMA'].values[i] : continue
+                #if SPY.close[i] <= iSPY_SMA['SMA'].values[i] : continue
 
-                if df.close[i] <= iDO_Trade_Point.UPPER[i - 1] : continue
+                if df.high[i] <= iDO_Trade_Point.UPPER[i - 1] : continue
 
-                if i - last_iDO_TradePoint_breakout >= Flat_iDO_Period and last_iDO_TradePoint_breakout != 0 : continue
+                if len(iDO_breakouts) < 2 : continue
+
+                if i - iDO_breakouts_ids[-2] < Flat_iDO_Period : continue
                 
-                min_Low_Flat_iDO_Period = min(list(df.low[i-last_iDO_TradePoint_breakout:]))
-                if min_Low_Flat_iDO_Period < iDO_Trade_Point[i] * Min_Low_Proportion : continue
+                min_Low_Flat_iDO_Period = min(list(df.low[iDO_breakouts_ids[-2]:i]))
+                if min_Low_Flat_iDO_Period < iDO_breakouts[-2] * Min_Low_Proportion : continue
 
                 if iVPN[i] <= VPN_to_trade : continue
+
+                if df.close[i] <= iDO_breakouts[-2] : continue
 
                 if i == len(df) - 1 :
                     # region Signals
@@ -349,6 +378,7 @@ def main() :
 
                         if j == 0 :
                             stop_lock = min_Low_Flat_iDO_Period * Stop_Lock_Proportion
+                            stop_perc = 1 - (stop_lock/entry_price[-1])
 
                         """if SPY.close[i + j] > iSPY_SMA['SMA'].values[i + j] :
                             trailling_stop = max_income * TS_proportion_SPY_above_200
@@ -397,24 +427,24 @@ def main() :
                             min_price.append(min_income)
                             break
 
-                        if new_df.low[j] <= stop_lock :
+                        if new_df.close[j] <= stop_lock :
 
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
                             # Nevertheless, when we are in the last candle that can't be done, 
                             # that's why the current close is saved in that case.
                             if j == len(new_df) - 1 :
-                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                outcome = ((df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                                 y_index.append(new_df.index[j])
-                                exit_price.append(round(stop_lock, 2))
+                                exit_price.append(round(new_df.close[j], 2))
 
                                 close_tomorrow.append(True)
                             else :
-                                outcome = ((stop_lock * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+                                outcome = ((df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                                 y_index.append(new_df.index[j + 1])
-                                exit_price.append(round(stop_lock, 2))
+                                exit_price.append(round(new_df.open[j + 1], 2))
 
                                 close_tomorrow.append(False)
 
@@ -433,6 +463,8 @@ def main() :
                             max_price.append(max_income)
                             min_price.append(min_income)
                             break
+                            
+                        target = entry_price[-1] * (1 + (stop_perc * Target_Proportion))
 
                         """ elif new_df.close[j] < trailling_stop :
 
@@ -470,7 +502,43 @@ def main() :
                             max_price.append(max_income)
                             min_price.append(min_income)
                             break"""
-                        
+
+                        """if new_df.high[j] > target :
+                            # To simulate that the order is executed in the next day, 
+                            # the entry price is taken in the next candle open. 
+                            # Nevertheless, when we are in the last candle that can't be done, 
+                            # that's why the current close is saved in that case.
+                            #if j == len(new_df) - 1 :
+                            outcome = ((target * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                            y_index.append(new_df.index[j])
+                            exit_price.append(round(target, 2))
+
+                            close_tomorrow.append(False)
+                            else :
+                                outcome = ((target * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                                y_index.append(new_df.index[j])
+                                exit_price.append(round(target, 2))
+
+                                close_tomorrow.append(False)
+
+                            if exit_price[-1] > max_income : max_income = exit_price[-1]
+
+                            if exit_price[-1] < min_income : min_income = exit_price[-1]
+
+                            # Saving all missing trade characteristics.
+                            y_raw.append(exit_price[-1] - entry_price[-1])
+                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
+                            y2_raw.append(max_income - entry_price[-1])
+                            y3_raw.append(min_income - entry_price[-1])
+                            y.append(outcome)
+                            y2.append(y2_raw[-1] * shares_to_trade)
+                            y3.append(y3_raw[-1] * shares_to_trade)
+                            max_price.append(max_income)
+                            min_price.append(min_income)
+                            break"""
+
                         if j == len(new_df) - 1 :
                             # All characteristics are saved 
                             # as if the trade was exited in this moment.
@@ -493,7 +561,7 @@ def main() :
                             break
                         
                         if j != 0 and iSMA3[i + j] >= entry_price[-1] :
-                            stop_lock = iSMA3[i + j] * Stop_Lock_Proportion
+                            stop_lock = iSMA4[i + j] * Stop_Lock_Proportion
 
                             # endregion
                 # endregion
