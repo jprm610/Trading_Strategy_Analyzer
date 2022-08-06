@@ -44,6 +44,8 @@ warnings.filterwarnings('ignore')
 # region PARAMETERS
 
 Use_Pre_Charged_Data = True
+Data_Path = "Model/SP_data"
+
 # Indicators
 
 RS_Look_Back = 252
@@ -71,7 +73,7 @@ TS_proportion_SPY_above_200 = 0.8
 TS_proportion_SPY_below_200 = 0.9
 
 # Overall backtesting parameters
-Start_Date = pd.to_datetime('2010-01-01')
+Start_Date = pd.to_datetime('2020-01-01')
 End_Date = pd.to_datetime('today').normalize()
 Risk_Unit = 60
 Perc_In_Risk = 6
@@ -104,9 +106,9 @@ def main() :
 
     #tickers = pd.read_csv("Model/US_stock_universe.csv")
     #tickers = tickers['symbol'].to_list()
-    RS_df = Relative_Strength(tickers, RS_Look_Back, Start_Date, End_Date, Use_Pre_Charged_Data, "Model/US_Stocks")
+    #RS_df = Relative_Strength(tickers, RS_Look_Back, Start_Date, End_Date, Use_Pre_Charged_Data, Data_Path)
 
-    max_period_indicator = max(VPN_period, DO_TradePoint_Period, SMA1_period, SMA2_period, SMA3_period)
+    max_period_indicator = max(VPN_period, DO_TradePoint_Period, SMA1_period, SMA2_period, SMA3_period, SMA4_period)
 
     print('------------------------------------------------------------')
     print("Trade Calculation!")
@@ -142,7 +144,7 @@ def main() :
             else :
                 returned = Get_Data(ticker, start, end, False, max_period_indicator)"""
 
-            returned = Get_Data(ticker, Start_Date, End_Date, True, max_period_indicator, "Model/US_Stocks")
+            returned = Get_Data(ticker, Start_Date, End_Date, Use_Pre_Charged_Data, max_period_indicator, Data_Path)
 
             if isinstance(returned, int) :
                 unavailable_tickers.append(f"{ticker}_({str(Start_Date)[:10]}) ({str(End_Date)[:10]})")
@@ -186,17 +188,24 @@ def main() :
 
             # region TRADE_EMULATION
 
+            trades = pd.DataFrame(
+                    columns=['entry_date','exit_date','trade_type','stock','is_signal','entry_price','exit_price',
+                        'y','y_raw','y%','shares_to_trade','close_tomorrow','max','min','y2','y3','y2_raw','y3_raw'])
+
             # Here are declared all lists that are going to be used 
             # to save trades characteristics.
-            entry_dates = []
+            VPN_ot = []
+
+            iDO_breakouts_ids = []
+            iDO_breakouts = []
+
+            """entry_dates = []
             trade_type = []
             stock = []
 
             entry_price = []
             exit_price = []
             shares_to_trade_list = []
-
-            VPN_ot = []
 
             y_raw = []
             y_perc = []
@@ -210,10 +219,7 @@ def main() :
             y_index = []
 
             is_signal = []
-            close_tomorrow = []
-
-            iDO_breakouts_ids = []
-            iDO_breakouts = []
+            close_tomorrow = []"""
             # Here occurs the OnBarUpdate() in which all strategie calculations happen.
             for i in range(len(df)) :
 
@@ -251,11 +257,11 @@ def main() :
 
                 # region STAGE_2
 
-                if df.index[i] not in list(RS_df.keys()) : continue
+                #if df.index[i] not in list(RS_df.keys()) : continue
 
-                if ticker not in RS_df[df.index[i]].index.to_list() : continue
+                #if ticker not in RS_df[df.index[i]].index.to_list() : continue
 
-                if RS_df[df.index[i]].loc[ticker, 'rank'] < RS_Rank_Minimum : continue
+                #if RS_df[df.index[i]].loc[ticker, 'rank'] < RS_Rank_Minimum : continue
                 
                 if df.close[i] < iDO_Screener.LOWER[i] * DO_Screener_Lower_Proportion : continue
 
@@ -309,29 +315,21 @@ def main() :
                     # The on_trade flag is updated 
                     # in order to avoid more than one operation calculation in later candles, 
                     # until the operation is exited.
-                    is_signal.append(True)
-                    trade_type.append("Long")
-                    stock.append(ticker)
-                    shares_to_trade_list.append(shares_to_trade)
+                    trade_info = {
+                        'entry_price': round(df.close[i], 2),
+                        'entry_date': df.index[i],
+                        'shares_to_trade': shares_to_trade,
+                        'trade_type': "Long",
+                        'stock': ticker,
+                        'max_price': df.close[i],
+                        'min_price': df.close[i]
+                    }
                     
-                    VPN_ot.append(iVPN[i])
+                    VPN_ot.append(round(iVPN[i], 2))
                     
                     # Here all y variables are set to 0, 
                     # in order to differentiate the signal operation in the trdes df.
-                    entry_dates.append(df.index[i])
-                    y_index.append(df.index[i])
-                    entry_price.append(round(df.close[i], 2))
-                    exit_price.append(round(df.close[i], 2))
-                    y.append(0)
-                    y2.append(0)
-                    y3.append(0)
-                    y_raw.append(0)
-                    y_perc.append(0)
-                    y2_raw.append(0)
-                    y3_raw.append(0)
-                    max_price.append(entry_price)
-                    min_price.append(entry_price)
-                    close_tomorrow.append(False)
+                    trades = Close_Trade(trades, trade_info, df.close[i], df.index[i], Commission_Perc, Is_Signal=True)
 
                     # endregion
                 else :
@@ -351,122 +349,70 @@ def main() :
                     # The on_trade flag is updated 
                     # in order to avoid more than one operation calculation in later candles, 
                     # until the operation is exited.
-                    is_signal.append(False)
-                    trade_type.append("Long")
-                    stock.append(ticker)
-                    shares_to_trade_list.append(shares_to_trade)
-                    
-                    VPN_ot.append(iVPN[i])
-                    
-                    # To simulate that the order is executed in the next day, 
-                    # the entry price is taken in the next candle open. 
-                    # Nevertheless, when we are in the last candle that can't be done, 
-                    # that's why the current close is saved in that case.
-                    entry_dates.append(df.index[i + 1])
-                    entry_price.append(round(df.open[i + 1], 2))
-                    max_income = df.high[i + 1]
-                    min_income = df.low[i + 1]
+                    trade_info = {
+                        'entry_price': round(df.open[i + 1], 2),
+                        'entry_date': df.index[i + 1],
+                        'shares_to_trade': round(shares_to_trade, 1),
+                        'trade_type': "Long",
+                        'stock': ticker,
+                        'max_price': df.high[i + 1],
+                        'min_price': df.low[i + 1]
+                    }
+
+                    VPN_ot.append(round(iVPN[i], 2))
 
                     new_df = df.loc[df.index >= df.index[i]]
                     for j in range(len(new_df)) :
                         # Ordinary check to avoid errors.
-                        if len(trade_type) == 0 : continue
+                        #if len(trade_type) == 0 : continue
                         
                         # Here the max_income variable is updated.
-                        if new_df.high[j] > max_income :
-                            max_income = new_df.high[j]
+                        if new_df.high[j] > trade_info['max_price'] :
+                            trade_info['max_price'] = new_df.high[j]
+
+                        # Here the min_income variable is updated.
+                        if new_df.low[j] < trade_info['min_price'] :
+                            trade_info['min_price'] = new_df.low[j]
 
                         if j == 0 :
                             stop_lock = min_Low_Flat_iDO_Period * Stop_Lock_Proportion
-                            stop_perc = 1 - (stop_lock/entry_price[-1])
+                            stop_perc = 1 - (stop_lock/trade_info['entry_price'])
 
                         """if SPY.close[i + j] > iSPY_SMA['SMA'].values[i + j] :
                             trailling_stop = max_income * TS_proportion_SPY_above_200
                         else :
                             trailling_stop = max_income * TS_proportion_SPY_below_200"""
 
-                        # Here the min_income variable is updated.
-                        if new_df.low[j] < min_income :
-                            min_income = new_df.low[j]
-
-                        # trad management for GAPS  downs
+                        # trade management for GAPS  downs
                         if new_df.open[j] <= stop_lock :
                             
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
                             # Nevertheless, when we are in the last candle that can't be done, 
                             # that's why the current close is saved in that case.
+
                             if j == len(new_df) - 1 :
-                                outcome = ((new_df.open[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j])
-                                exit_price.append(round(new_df.open[j], 2))
-
-                                close_tomorrow.append(True)
+                                trades = Close_Trade(trades, trade_info, new_df.open[j], new_df.index[j], Commission_Perc, Close_Tomorrow=True)
                             else :
-                                outcome = ((new_df.open[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j])
-                                exit_price.append(round(new_df.open[j], 2))
-
-                                close_tomorrow.append(False)
-
-                            if exit_price[-1] > max_income : max_income = exit_price[-1]
-
-                            if exit_price[-1] < min_income : min_income = exit_price[-1]
-
-                            # Saving all missing trade characteristics.
-                            y_raw.append(exit_price[-1] - entry_price[-1])
-                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                            y2_raw.append(max_income - entry_price[-1])
-                            y3_raw.append(min_income - entry_price[-1])
-                            y.append(outcome)
-                            y2.append(y2_raw[-1] * shares_to_trade)
-                            y3.append(y3_raw[-1] * shares_to_trade)
-                            max_price.append(max_income)
-                            min_price.append(min_income)
+                                trades = Close_Trade(trades, trade_info, new_df.open[j], new_df.index[j], Commission_Perc)
                             break
 
                         if new_df.close[j] <= stop_lock :
-
+                            
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
                             # Nevertheless, when we are in the last candle that can't be done, 
                             # that's why the current close is saved in that case.
+
                             if j == len(new_df) - 1 :
-                                outcome = ((df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j])
-                                exit_price.append(round(new_df.close[j], 2))
-
-                                close_tomorrow.append(True)
+                                trades = Close_Trade(trades, trade_info, new_df.close[j], new_df.index[j], Commission_Perc, Close_Tomorrow=True)
                             else :
-                                outcome = ((df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j + 1])
-                                exit_price.append(round(new_df.open[j + 1], 2))
-
-                                close_tomorrow.append(False)
-
-                            if exit_price[-1] > max_income : max_income = exit_price[-1]
-
-                            if exit_price[-1] < min_income : min_income = exit_price[-1]
-
-                            # Saving all missing trade characteristics.
-                            y_raw.append(exit_price[-1] - entry_price[-1])
-                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                            y2_raw.append(max_income - entry_price[-1])
-                            y3_raw.append(min_income - entry_price[-1])
-                            y.append(outcome)
-                            y2.append(y2_raw[-1] * shares_to_trade)
-                            y3.append(y3_raw[-1] * shares_to_trade)
-                            max_price.append(max_income)
-                            min_price.append(min_income)
+                                trades = Close_Trade(trades, trade_info, new_df.open[j + 1], new_df.index[j + 1], Commission_Perc)
                             break
                             
-                        target = entry_price[-1] * (1 + (stop_perc * Target_Proportion))
+                        target = trade_info['entry_price'] * (1 + (stop_perc * Target_Proportion))
 
-                        """ elif new_df.close[j] < trailling_stop :
+                        """ if new_df.close[j] < trailling_stop :
 
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
@@ -542,7 +488,11 @@ def main() :
                         if j == len(new_df) - 1 :
                             # All characteristics are saved 
                             # as if the trade was exited in this moment.
-                            outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
+
+                            trades = Close_Trade(trades, trade_info, new_df.close[j], new_df.index[j], Commission_Perc)
+                            break
+
+                            """outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
                             exit_price.append(round(new_df.close[j], 2))
 
@@ -558,9 +508,9 @@ def main() :
                             y3.append(y3_raw[-1] * shares_to_trade)
                             max_price.append(max_income)
                             min_price.append(min_income)
-                            break
+                            break"""
                         
-                        if j != 0 and iSMA3[i + j] >= entry_price[-1] :
+                        if j != 0 and iSMA3[i + j] >= trade_info['entry_price'] :
                             stop_lock = iSMA4[i + j] * Stop_Lock_Proportion
 
                             # endregion
@@ -569,7 +519,14 @@ def main() :
 
             # region TRADES_DF
 
-            # A new df is created in order to save the trades done in the current ticker.
+            trades[f'iVPN{VPN_period}'] = np.array(VPN_ot)
+
+            # Here the current trades df is added to 
+            # the end of the global_trades df.
+            trades_global = pd.concat([trades_global, trades])
+            #trades_global = trades_global.append(trades, ignore_index=True)
+
+            """# A new df is created in order to save the trades done in the current ticker.
             trades = pd.DataFrame()
 
             # Here all trades including their characteristics are saved in a df.
@@ -593,13 +550,9 @@ def main() :
             trades['y2'] = np.array(y2)
             trades['y3'] = np.array(y3)
             trades['y2_raw'] = np.array(y2_raw)
-            trades['y3_raw'] = np.array(y3_raw)
+            trades['y3_raw'] = np.array(y3_raw)"""
 
             # endregion
-
-            # Here the current trades df is added to 
-            # the end of the global_trades df.
-            trades_global = trades_global.append(trades, ignore_index=True)
 
     try :
         # Create dir.
