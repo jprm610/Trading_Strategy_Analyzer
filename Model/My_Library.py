@@ -492,6 +492,79 @@ def Get_Data(Ticker, Start, End, Load_Data, Pre_Start_Period=0, Directory_Path="
 
     return df
 
+def Close_Trade(Trades: pd.DataFrame, Trade_Info:dict, Exit_Price, Exit_Date, Commission_Perc, Is_Signal=False, Close_Tomorrow=False) :
+
+    """
+    Closes the trade filling all missing trade characteristics.
+
+    Parameters:
+    1) Trades (DataFrame): Dataframe populated with all trades done in the current ticker.
+    2) Trade_Info (dict): Dictionary populated with the entry date for the trade.
+    3) Exit_Price (float): Price in which the trade exited.
+    4) Exit_Date (Timestamp): Date in which the trade exited.
+    5) Commission_Perc (float): Commission charged for the trade.
+    6) Is_Signal (False) (bool): Is the trade a signal?
+    7) Close_Tomorrow (False) (bool): Is this trade closing tomorrow?
+
+    Returns:
+    1) Trades (DataFrame): Updated Trades dataframe with the new trade added at the end with all characteristics.
+    """
+
+    # Round all inputs to 2 decimal points.
+    Exit_Price = round(Exit_Price, 2)
+    Trade_Info['min_price'], Trade_Info['max_price'] = round(Trade_Info['min_price'], 2), round(Trade_Info['max_price'], 2)
+
+    if Is_Signal :
+        # Fill the trade information with the default characteristics.
+        exit_data = {
+            'is_signal': Is_Signal,
+            'close_tomorrow': Close_Tomorrow,
+            'exit_price': Trade_Info['entry_price'],
+            'exit_date': Trade_Info['entry_date'],
+            'y_raw': 0,
+            'y_perc': 0,
+            'y2_raw': 0,
+            'y3_raw': 0,
+            'y': 0,
+            'y2': 0,
+            'y3': 0
+        }
+    else :
+        # Calculate the outcome taking into consideration the Commission Percentage charged.
+        outcome = ((Exit_Price * (1 - (Commission_Perc / 100))) - Trade_Info['entry_price']) * Trade_Info['shares_to_trade']
+
+        # Update the max and min price variables.
+        if Exit_Price > Trade_Info['max_price'] : Trade_Info['max_price'] = Exit_Price
+        if Exit_Price < Trade_Info['min_price'] : Trade_Info['min_price'] = Exit_Price
+
+        # Fill the trade information with the data given.
+        exit_data = {
+            'is_signal': Is_Signal,
+            'close_tomorrow': Close_Tomorrow,
+            'exit_price': Exit_Price,
+            'exit_date': Exit_Date,
+            'y_raw': Exit_Price - Trade_Info['entry_price'],
+            'y2_raw': Trade_Info['max_price'] - Trade_Info['entry_price'],
+            'y3_raw': Trade_Info['min_price'] - Trade_Info['entry_price'],
+            'y': round(outcome, 2)
+        }
+        exit_data['y_perc'] = round((exit_data['y_raw']/Trade_Info['entry_price']) * 100, 2)
+        exit_data['y2'] = round(exit_data['y2_raw'] * Trade_Info['shares_to_trade'], 2)
+        exit_data['y3'] = round(exit_data['y3_raw'] * Trade_Info['shares_to_trade'], 2)
+
+    # Complete the trade info (Already with the entry data) with the exit data.
+    Trade_Info.update(exit_data)
+
+    # Add the new trade at the end of the trades dataframe with all its characteristics.
+    Trades.loc[len(Trades)] = [Trade_Info['entry_date'], Trade_Info['exit_date'], Trade_Info['trade_type'], 
+                                Trade_Info['stock'], Trade_Info['is_signal'], Trade_Info['entry_price'], 
+                                Trade_Info['exit_price'], Trade_Info['y'], Trade_Info['y_raw'], Trade_Info['y_perc'], 
+                                Trade_Info['shares_to_trade'], Trade_Info['close_tomorrow'], Trade_Info['max_price'], 
+                                Trade_Info['min_price'], Trade_Info['y2'], Trade_Info['y3'], Trade_Info['y2_raw'], 
+                                Trade_Info['y3_raw']]
+    
+    return Trades
+
 def Portfolio(trades_global, Trade_Slots, filter_mode, is_asc=False) :
 
     print('Defining Portfolio!')
