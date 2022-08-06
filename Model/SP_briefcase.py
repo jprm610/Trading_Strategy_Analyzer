@@ -298,9 +298,8 @@ def main() :
 
                 if df.close[i] <= iDO_breakouts[-2] : continue
 
+                # SIGNALS
                 if i == len(df) - 1 :
-                    # region Signals
-
                     # Before entering the trade,
                     # calculate the shares_to_trade,
                     # in order to risk the Perc_In_Risk of the stock,
@@ -330,11 +329,8 @@ def main() :
                     # Here all y variables are set to 0, 
                     # in order to differentiate the signal operation in the trdes df.
                     trades = Close_Trade(trades, trade_info, df.close[i], df.index[i], Commission_Perc, Is_Signal=True)
-
-                    # endregion
+                # BACKTESTING
                 else :
-                    # region Backtesting
-
                     # Before entering the trade,
                     # calculate the shares_to_trade,
                     # in order to risk the Perc_In_Risk of the stock,
@@ -412,41 +408,16 @@ def main() :
                             
                         target = trade_info['entry_price'] * (1 + (stop_perc * Target_Proportion))
 
-                        """ if new_df.close[j] < trailling_stop :
+                        """if new_df.close[j] < trailling_stop :
 
                             # To simulate that the order is executed in the next day, 
                             # the entry price is taken in the next candle open. 
                             # Nevertheless, when we are in the last candle that can't be done, 
                             # that's why the current close is saved in that case.
                             if j == len(new_df) - 1 :
-                                outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j])
-                                exit_price.append(round(new_df.close[j], 2))
-
-                                close_tomorrow.append(True)
+                                trades = Close_Trade(trades, trade_info, new_df.close[j], new_df.index[j], Commission_Perc, Close_Tomorrow=True)
                             else :
-                                outcome = ((new_df.open[j + 1] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j + 1])
-                                exit_price.append(round(new_df.open[j + 1], 2))
-
-                                close_tomorrow.append(False)
-
-                            if exit_price[-1] > max_income : max_income = exit_price[-1]
-
-                            if exit_price[-1] < min_income : min_income = exit_price[-1]
-
-                            # Saving all missing trade characteristics.
-                            y_raw.append(exit_price[-1] - entry_price[-1])
-                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                            y2_raw.append(max_income - entry_price[-1])
-                            y3_raw.append(min_income - entry_price[-1])
-                            y.append(outcome)
-                            y2.append(y2_raw[-1] * shares_to_trade)
-                            y3.append(y3_raw[-1] * shares_to_trade)
-                            max_price.append(max_income)
-                            min_price.append(min_income)
+                                trades = Close_Trade(trades, trade_info, new_df.open[j + 1], new_df.index[j + 1], Commission_Perc)
                             break"""
 
                         """if new_df.high[j] > target :
@@ -454,35 +425,11 @@ def main() :
                             # the entry price is taken in the next candle open. 
                             # Nevertheless, when we are in the last candle that can't be done, 
                             # that's why the current close is saved in that case.
-                            #if j == len(new_df) - 1 :
-                            outcome = ((target * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
 
-                            y_index.append(new_df.index[j])
-                            exit_price.append(round(target, 2))
-
-                            close_tomorrow.append(False)
+                            if j == len(new_df) - 1 :
+                                trades = Close_Trade(trades, trade_info, target, new_df.index[j], Commission_Perc, Close_Tomorrow=True)
                             else :
-                                outcome = ((target * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                                y_index.append(new_df.index[j])
-                                exit_price.append(round(target, 2))
-
-                                close_tomorrow.append(False)
-
-                            if exit_price[-1] > max_income : max_income = exit_price[-1]
-
-                            if exit_price[-1] < min_income : min_income = exit_price[-1]
-
-                            # Saving all missing trade characteristics.
-                            y_raw.append(exit_price[-1] - entry_price[-1])
-                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                            y2_raw.append(max_income - entry_price[-1])
-                            y3_raw.append(min_income - entry_price[-1])
-                            y.append(outcome)
-                            y2.append(y2_raw[-1] * shares_to_trade)
-                            y3.append(y3_raw[-1] * shares_to_trade)
-                            max_price.append(max_income)
-                            min_price.append(min_income)
+                                trades = Close_Trade(trades, trade_info, target, new_df.index[j], Commission_Perc)
                             break"""
 
                         if j == len(new_df) - 1 :
@@ -491,32 +438,10 @@ def main() :
 
                             trades = Close_Trade(trades, trade_info, new_df.close[j], new_df.index[j], Commission_Perc)
                             break
-
-                            """outcome = ((new_df.close[j] * (1 - (Commission_Perc / 100))) - entry_price[-1]) * shares_to_trade
-
-                            exit_price.append(round(new_df.close[j], 2))
-
-                            y_index.append(new_df.index[j])
-                            close_tomorrow.append(False)
-
-                            y_raw.append(exit_price[-1] - entry_price[-1])
-                            y_perc.append(round(y_raw[-1] / entry_price[-1] * 100, 2))
-                            y2_raw.append(max_income - entry_price[-1])
-                            y3_raw.append(min_income - entry_price[-1])
-                            y.append(outcome)
-                            y2.append(y2_raw[-1] * shares_to_trade)
-                            y3.append(y3_raw[-1] * shares_to_trade)
-                            max_price.append(max_income)
-                            min_price.append(min_income)
-                            break"""
                         
                         if j != 0 and iSMA3[i + j] >= trade_info['entry_price'] :
                             stop_lock = iSMA4[i + j] * Stop_Lock_Proportion
-
-                            # endregion
                 # endregion
-            # endregion
-
             # region TRADES_DF
 
             trades[f'iVPN{VPN_period}'] = np.array(VPN_ot)
@@ -524,33 +449,6 @@ def main() :
             # Here the current trades df is added to 
             # the end of the global_trades df.
             trades_global = pd.concat([trades_global, trades])
-            #trades_global = trades_global.append(trades, ignore_index=True)
-
-            """# A new df is created in order to save the trades done in the current ticker.
-            trades = pd.DataFrame()
-
-            # Here all trades including their characteristics are saved in a df.
-            trades['entry_date'] = np.array(entry_dates)
-            trades['exit_date'] = np.array(y_index)
-            trades['trade_type']  = np.array(trade_type)
-            trades['stock'] = np.array(stock)
-            trades['is_signal'] = np.array(is_signal)
-            trades['entry_price'] = np.array(entry_price)
-            trades['exit_price'] = np.array(exit_price)
-            trades['y']  = np.array(y)
-            trades['y_raw'] = np.array(y_raw)
-            trades['y%'] = np.array(y_perc)
-            trades['shares_to_trade'] = np.array(shares_to_trade_list)
-            trades['close_tomorrow'] = np.array(close_tomorrow)
-
-            trades['iVPN' + str(VPN_period)] = np.array(VPN_ot)
-            
-            trades['max'] = np.array(max_price)
-            trades['min'] = np.array(min_price)
-            trades['y2'] = np.array(y2)
-            trades['y3'] = np.array(y3)
-            trades['y2_raw'] = np.array(y2_raw)
-            trades['y3_raw'] = np.array(y3_raw)"""
 
             # endregion
 
