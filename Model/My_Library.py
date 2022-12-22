@@ -161,9 +161,11 @@ def SPY_df(SPY_SMA_Period) :
     iSPY_SMA_global = pd.DataFrame({'date' : SPY_global.index, 'SMA' : SPY_SMA})
     iSPY_SMA_global.set_index(iSPY_SMA_global['date'], inplace=True)
 
+    print('------------------------------------------------------------')
+
     return SPY_global, iSPY_SMA_global
 
-def Survivorship_Bias(Start_Date) :
+def Survivorship_Bias(Start_Date, Directory_Path="Model/SP500_historical.csv") :
 
     print('Survivorship Bias Process!')
 
@@ -176,7 +178,7 @@ def Survivorship_Bias(Start_Date) :
 
     # Here the SP500 historical constituents file is read, 
     # then the dates are standarized to avoid dates missinterpretation.
-    SP500_historical = pd.read_csv("Model/SP500_historical.csv")
+    SP500_historical = pd.read_csv(Directory_Path)
     SP500_historical['DATE'] = pd.to_datetime(SP500_historical['DATE'], format='%m/%d/%Y')
 
     # region FIRST CLEANING
@@ -329,7 +331,6 @@ def Survivorship_Bias(Start_Date) :
 
     # endregion
 
-    print('------------------------------------------------------------')
     print("Survivorship Bias done!")
 
     return tickers_directory, cleaned_tickers
