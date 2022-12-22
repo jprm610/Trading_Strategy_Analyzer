@@ -112,13 +112,13 @@ class Trade :
             self.y2 = round(self.y2_raw * self.shares_to_trade, 2)
             self.y3 = round(self.y3_raw * self.shares_to_trade, 2)
 
-            # Add the new trade at the end of the trades dataframe with all its characteristics.
-            Trades.loc[len(Trades)] = [self.entry_date, self.exit_date, self.trade_type, self.stock, 
-                                        self.is_signal, self.entry_price, self.exit_price, self.y, 
-                                        self.y_raw, self.y_perc, self.shares_to_trade, self.close_tomorrow, 
-                                        self.max_price, self.min_price, self.y2, self.y3, self.y2_raw, self.y3_raw]
+        # Add the new trade at the end of the trades dataframe with all its characteristics.
+        Trades.loc[len(Trades)] = [self.entry_date, self.exit_date, self.trade_type, self.stock, 
+                                    self.is_signal, self.entry_price, self.exit_price, self.y, 
+                                    self.y_raw, self.y_perc, self.shares_to_trade, self.close_tomorrow, 
+                                    self.max_price, self.min_price, self.y2, self.y3, self.y2_raw, self.y3_raw]
 
-            return Trades
+        return Trades
 
 def SPY_df(SPY_SMA_Period) :
 
